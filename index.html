@@ -17,6 +17,8 @@
     }
     body { font-family: 'Vazirmatn', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; direction: rtl; }
     .hidden { display: none !important; }
+
+    /* WELCOME */
     #welcome-screen { height: 100vh; display: flex; align-items: center; justify-content: center; background-image: radial-gradient(ellipse at 50% 0%, rgba(124,110,247,0.15) 0%, transparent 60%); }
     .welcome-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 48px 40px; width: 380px; text-align: center; box-shadow: 0 40px 80px rgba(0,0,0,0.4); }
     .logo-icon { font-size: 36px; color: var(--accent); margin-bottom: 12px; display: block; }
@@ -29,6 +31,26 @@
     .input-group button { padding: 14px; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); font-family: 'Vazirmatn', sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; transition: background 0.2s; }
     .input-group button:hover { background: var(--accent2); }
     #welcome-error { display: block; color: #f87171; font-size: 13px; margin-top: 12px; min-height: 18px; }
+
+    /* API KEY SCREEN */
+    #apikey-screen { height: 100vh; display: flex; align-items: center; justify-content: center; background-image: radial-gradient(ellipse at 50% 0%, rgba(124,110,247,0.15) 0%, transparent 60%); }
+    .apikey-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 48px 40px; width: 420px; text-align: center; box-shadow: 0 40px 80px rgba(0,0,0,0.4); }
+    .apikey-card .logo-icon { font-size: 36px; color: var(--accent); margin-bottom: 12px; display: block; }
+    .apikey-card h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .apikey-card p { font-size: 13px; color: var(--text2); margin-bottom: 24px; line-height: 1.6; }
+    .apikey-input-wrap { position: relative; margin-bottom: 12px; }
+    .apikey-input-wrap input { width: 100%; padding: 14px 46px 14px 16px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'Vazirmatn', sans-serif; font-size: 14px; outline: none; direction: ltr; text-align: left; transition: border-color 0.2s; }
+    .apikey-input-wrap input:focus { border-color: var(--accent); }
+    .apikey-input-wrap input::placeholder { color: var(--text3); }
+    .eye-btn { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text3); cursor: pointer; font-size: 18px; padding: 4px; }
+    .eye-btn:hover { color: var(--text); }
+    .save-key-btn { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); font-family: 'Vazirmatn', sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .save-key-btn:hover { background: var(--accent2); }
+    #apikey-error { display: block; color: #f87171; font-size: 13px; margin-top: 12px; min-height: 18px; }
+    .key-hint { font-size: 12px; color: var(--text3); margin-top: 16px; }
+    .key-hint a { color: var(--accent2); text-decoration: none; }
+
+    /* CHAT */
     #chat-screen { display: flex; height: 100vh; }
     .sidebar { width: 240px; background: var(--sidebar); border-left: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
     .sidebar-header { padding: 18px 16px; border-bottom: 1px solid var(--border); }
@@ -37,12 +59,12 @@
     .group-item.active { background: rgba(124,110,247,0.15); color: var(--accent2); }
     .group-icon { font-weight: 700; font-size: 16px; color: var(--text3); }
     .group-item.active .group-icon { color: var(--accent); }
-    .sidebar-footer { margin-top: auto; padding: 12px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-    .current-user { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .sidebar-footer { margin-top: auto; padding: 12px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+    .current-user { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
     .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; flex-shrink: 0; }
     #sidebar-username { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    #logout-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; padding: 4px 6px; border-radius: 6px; }
-    #logout-btn:hover { color: var(--text); }
+    .icon-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; padding: 4px 6px; border-radius: 6px; flex-shrink: 0; transition: color 0.2s; }
+    .icon-btn:hover { color: var(--text); background: var(--bg3); }
     .chat-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
     .chat-header { padding: 0 20px; height: 56px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--bg2); flex-shrink: 0; }
     .chat-header-right { display: flex; align-items: center; gap: 10px; }
@@ -85,10 +107,26 @@
     #send-btn:hover { background: var(--accent2); }
     #send-btn:active { transform: scale(0.95); }
     #send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* API KEY MODAL */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
+    .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 36px; width: 400px; text-align: center; }
+    .modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .modal p { font-size: 13px; color: var(--text2); margin-bottom: 20px; line-height: 1.6; }
+    .modal-status { font-size: 13px; padding: 8px 12px; border-radius: var(--radius-sm); margin-bottom: 16px; }
+    .modal-status.has-key { background: rgba(34,197,94,0.1); color: #4ade80; border: 1px solid rgba(34,197,94,0.2); }
+    .modal-status.no-key { background: rgba(248,113,113,0.1); color: #f87171; border: 1px solid rgba(248,113,113,0.2); }
+    .modal-btns { display: flex; gap: 10px; margin-top: 16px; }
+    .modal-btns button { flex: 1; padding: 11px; border-radius: var(--radius-sm); font-family: 'Vazirmatn', sans-serif; font-size: 14px; cursor: pointer; border: 1px solid var(--border); }
+    .btn-danger { background: rgba(248,113,113,0.1); color: #f87171; }
+    .btn-danger:hover { background: rgba(248,113,113,0.2); }
+    .btn-cancel { background: var(--bg3); color: var(--text2); }
+    .btn-cancel:hover { background: var(--border); }
   </style>
 </head>
 <body>
 
+  <!-- صفحه انتخاب اسم -->
   <div id="welcome-screen">
     <div class="welcome-card">
       <div class="logo-icon">✦</div>
@@ -102,6 +140,24 @@
     </div>
   </div>
 
+  <!-- صفحه وارد کردن API Key -->
+  <div id="apikey-screen" class="hidden">
+    <div class="apikey-card">
+      <div class="logo-icon">🔑</div>
+      <h2>API Key کلاد</h2>
+      <p>برای فعال کردن Claude AI، کلید API خودت رو وارد کن. این کلید فقط روی همین مرورگر ذخیره میشه و هیچکس دیگه‌ای نمیبینه.</p>
+      <div class="apikey-input-wrap">
+        <input type="password" id="apikey-input" placeholder="sk-ant-api03-..." />
+        <button class="eye-btn" id="eye-btn">👁</button>
+      </div>
+      <button class="save-key-btn" id="save-key-btn">🔒 ذخیره و قفل کردن</button>
+      <span id="apikey-error"></span>
+      <p class="key-hint">کلید API رو از <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> بگیر</p>
+      <button style="margin-top:16px; background:none; border:none; color:var(--text3); font-family:'Vazirmatn',sans-serif; font-size:13px; cursor:pointer;" id="skip-key-btn">بعداً تنظیم می‌کنم</button>
+    </div>
+  </div>
+
+  <!-- صفحه چت -->
   <div id="chat-screen" class="hidden">
     <div class="sidebar">
       <div class="sidebar-header">
@@ -116,7 +172,8 @@
           <div class="avatar" id="sidebar-avatar"></div>
           <span id="sidebar-username"></span>
         </div>
-        <button id="logout-btn" title="خروج">↩</button>
+        <button class="icon-btn" id="key-btn" title="تنظیم API Key">🔑</button>
+        <button class="icon-btn" id="logout-btn" title="خروج">↩</button>
       </div>
     </div>
     <div class="chat-area">
@@ -148,11 +205,27 @@
     </div>
   </div>
 
+  <!-- مودال مدیریت API Key -->
+  <div id="key-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <h3>🔑 مدیریت API Key</h3>
+      <p>کلید API فقط روی این مرورگر ذخیره میشه و کاملاً خصوصیه.</p>
+      <div id="modal-status"></div>
+      <div class="apikey-input-wrap">
+        <input type="password" id="modal-key-input" placeholder="sk-ant-api03-..." />
+        <button class="eye-btn" id="modal-eye-btn">👁</button>
+      </div>
+      <div class="modal-btns">
+        <button class="btn-danger" id="delete-key-btn">🗑 حذف key</button>
+        <button class="save-key-btn" id="modal-save-btn" style="flex:2">🔒 ذخیره</button>
+        <button class="btn-cancel" id="modal-cancel-btn">بستن</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-    const ANTHROPIC_API_KEY = "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";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAKX7Qphz83ImmoLplsdlLvoHknnny1nU4",
@@ -172,7 +245,13 @@
     let isClaudeTyping = false;
     let claudeEnabled = true;
 
+    function getApiKey() { return localStorage.getItem("claude_api_key") || ""; }
+    function saveApiKey(k) { localStorage.setItem("claude_api_key", k); }
+    function deleteApiKey() { localStorage.removeItem("claude_api_key"); }
+
+    // DOM
     const welcomeScreen = document.getElementById("welcome-screen");
+    const apikeyScreen = document.getElementById("apikey-screen");
     const chatScreen = document.getElementById("chat-screen");
     const usernameInput = document.getElementById("username-input");
     const enterBtn = document.getElementById("enter-btn");
@@ -185,10 +264,16 @@
     const sidebarAvatar = document.getElementById("sidebar-avatar");
     const memberCount = document.getElementById("member-count");
     const logoutBtn = document.getElementById("logout-btn");
+    const keyBtn = document.getElementById("key-btn");
+    const keyModal = document.getElementById("key-modal");
 
+    // WELCOME
     function checkSavedUser() {
       const saved = localStorage.getItem("chat_username");
-      if (saved) { currentUser = saved; showChat(); }
+      if (saved) {
+        currentUser = saved;
+        if (!getApiKey()) { showApiKeyScreen(); } else { showChat(); }
+      }
     }
 
     enterBtn.addEventListener("click", handleEnter);
@@ -201,9 +286,39 @@
       welcomeError.textContent = "";
       currentUser = name;
       localStorage.setItem("chat_username", name);
-      showChat();
+      if (!getApiKey()) { showApiKeyScreen(); } else { showChat(); }
     }
 
+    // API KEY SCREEN
+    function showApiKeyScreen() {
+      welcomeScreen.classList.add("hidden");
+      chatScreen.classList.add("hidden");
+      apikeyScreen.classList.remove("hidden");
+    }
+
+    document.getElementById("eye-btn").addEventListener("click", () => {
+      const inp = document.getElementById("apikey-input");
+      inp.type = inp.type === "password" ? "text" : "password";
+    });
+
+    document.getElementById("save-key-btn").addEventListener("click", () => {
+      const key = document.getElementById("apikey-input").value.trim();
+      if (!key.startsWith("sk-ant-")) {
+        document.getElementById("apikey-error").textContent = "کلید معتبر نیست! باید با sk-ant- شروع بشه";
+        return;
+      }
+      saveApiKey(key);
+      document.getElementById("apikey-input").value = "";
+      apikeyScreen.classList.add("hidden");
+      showChat();
+    });
+
+    document.getElementById("skip-key-btn").addEventListener("click", () => {
+      apikeyScreen.classList.add("hidden");
+      showChat();
+    });
+
+    // LOGOUT
     logoutBtn.addEventListener("click", () => {
       localStorage.removeItem("chat_username");
       currentUser = null;
@@ -213,8 +328,39 @@
       usernameInput.value = "";
     });
 
+    // KEY MODAL
+    keyBtn.addEventListener("click", () => {
+      const hasKey = !!getApiKey();
+      document.getElementById("modal-status").innerHTML = hasKey
+        ? '<div class="modal-status has-key">✅ API Key ذخیره شده</div>'
+        : '<div class="modal-status no-key">❌ API Key تنظیم نشده</div>';
+      document.getElementById("modal-key-input").value = "";
+      keyModal.classList.remove("hidden");
+    });
+
+    document.getElementById("modal-cancel-btn").addEventListener("click", () => keyModal.classList.add("hidden"));
+    document.getElementById("modal-eye-btn").addEventListener("click", () => {
+      const inp = document.getElementById("modal-key-input");
+      inp.type = inp.type === "password" ? "text" : "password";
+    });
+    document.getElementById("modal-save-btn").addEventListener("click", () => {
+      const key = document.getElementById("modal-key-input").value.trim();
+      if (!key.startsWith("sk-ant-")) { alert("کلید معتبر نیست!"); return; }
+      saveApiKey(key);
+      keyModal.classList.add("hidden");
+      document.getElementById("modal-key-input").value = "";
+    });
+    document.getElementById("delete-key-btn").addEventListener("click", () => {
+      if (confirm("مطمئنی میخوای key رو حذف کنی؟")) {
+        deleteApiKey();
+        keyModal.classList.add("hidden");
+      }
+    });
+
+    // SHOW CHAT
     function showChat() {
       welcomeScreen.classList.add("hidden");
+      apikeyScreen.classList.add("hidden");
       chatScreen.classList.remove("hidden");
       sidebarUsername.textContent = currentUser;
       sidebarAvatar.textContent = currentUser.charAt(0).toUpperCase();
@@ -300,6 +446,11 @@
     claudeToggle.addEventListener("change", () => { claudeEnabled = claudeToggle.checked; });
 
     async function askClaude(userMessage) {
+      const apiKey = getApiKey();
+      if (!apiKey) {
+        showApiKeyScreen();
+        return;
+      }
       if (isClaudeTyping) return;
       isClaudeTyping = true;
       const typingEl = showTypingIndicator();
@@ -315,7 +466,7 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-api-key": ANTHROPIC_API_KEY,
+            "x-api-key": apiKey,
             "anthropic-version": "2023-06-01",
             "anthropic-dangerous-direct-browser-access": "true"
           },
