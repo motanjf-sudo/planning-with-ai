@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Planning With AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0e0f13; --bg2: #16181f; --bg3: #1e2029; --sidebar: #13141a;
+      --border: rgba(255,255,255,0.07); --accent: #7c6ef7; --accent2: #a89af9;
+      --text: #e8e9f0; --text2: #9a9baa; --text3: #5a5b6a;
+      --claude-bg: #1a1f2e; --claude-border: rgba(124,110,247,0.3);
+      --radius: 12px; --radius-sm: 8px;
+    }
+    body { font-family: 'Vazirmatn', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; direction: rtl; }
+    .hidden { display: none !important; }
+    #welcome-screen { height: 100vh; display: flex; align-items: center; justify-content: center; background-image: radial-gradient(ellipse at 50% 0%, rgba(124,110,247,0.15) 0%, transparent 60%); }
+    .welcome-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 48px 40px; width: 380px; text-align: center; box-shadow: 0 40px 80px rgba(0,0,0,0.4); }
+    .logo-icon { font-size: 36px; color: var(--accent); margin-bottom: 12px; display: block; }
+    .welcome-card h1 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .welcome-card p { font-size: 14px; color: var(--text2); margin-bottom: 32px; }
+    .input-group { display: flex; flex-direction: column; gap: 12px; }
+    .input-group input { width: 100%; padding: 14px 16px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'Vazirmatn', sans-serif; font-size: 15px; outline: none; text-align: right; direction: rtl; transition: border-color 0.2s; }
+    .input-group input:focus { border-color: var(--accent); }
+    .input-group input::placeholder { color: var(--text3); }
+    .input-group button { padding: 14px; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); font-family: 'Vazirmatn', sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; transition: background 0.2s; }
+    .input-group button:hover { background: var(--accent2); }
+    #welcome-error { display: block; color: #f87171; font-size: 13px; margin-top: 12px; min-height: 18px; }
+    #chat-screen { display: flex; height: 100vh; }
+    .sidebar { width: 240px; background: var(--sidebar); border-left: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+    .sidebar-header { padding: 18px 16px; border-bottom: 1px solid var(--border); }
+    .app-title { font-size: 15px; font-weight: 700; }
+    .group-item { display: flex; align-items: center; gap: 8px; padding: 10px 16px; margin: 8px 8px 0; border-radius: var(--radius-sm); font-size: 14px; color: var(--text2); }
+    .group-item.active { background: rgba(124,110,247,0.15); color: var(--accent2); }
+    .group-icon { font-weight: 700; font-size: 16px; color: var(--text3); }
+    .group-item.active .group-icon { color: var(--accent); }
+    .sidebar-footer { margin-top: auto; padding: 12px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .current-user { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; flex-shrink: 0; }
+    #sidebar-username { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #logout-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; padding: 4px 6px; border-radius: 6px; }
+    #logout-btn:hover { color: var(--text); }
+    .chat-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .chat-header { padding: 0 20px; height: 56px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--bg2); flex-shrink: 0; }
+    .chat-header-right { display: flex; align-items: center; gap: 10px; }
+    .channel-name { font-size: 15px; font-weight: 600; }
+    .member-count { font-size: 12px; color: var(--text3); }
+    .claude-toggle-wrap { display: flex; align-items: center; gap: 10px; }
+    .toggle-label { font-size: 13px; color: var(--text2); }
+    .toggle { position: relative; display: inline-block; width: 40px; height: 22px; }
+    .toggle input { display: none; }
+    .slider { position: absolute; inset: 0; background: var(--bg3); border-radius: 22px; cursor: pointer; transition: background 0.2s; border: 1px solid var(--border); }
+    .slider::before { content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%; background: var(--text3); top: 2px; right: 2px; transition: transform 0.2s, background 0.2s; }
+    .toggle input:checked + .slider { background: rgba(124,110,247,0.2); border-color: var(--accent); }
+    .toggle input:checked + .slider::before { background: var(--accent); transform: translateX(-18px); }
+    .messages-container { flex: 1; overflow-y: auto; padding: 20px 20px 8px; display: flex; flex-direction: column; gap: 2px; scroll-behavior: smooth; }
+    .messages-container::-webkit-scrollbar { width: 4px; }
+    .messages-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .loading-msgs { color: var(--text3); font-size: 14px; text-align: center; margin: auto; }
+    .msg-group { display: flex; gap: 10px; padding: 6px 8px; border-radius: var(--radius-sm); align-items: flex-start; }
+    .msg-group:hover { background: rgba(255,255,255,0.02); }
+    .msg-group.is-claude { background: var(--claude-bg); border: 1px solid var(--claude-border); margin: 4px 0; border-radius: var(--radius); }
+    .msg-group.is-claude:hover { background: var(--claude-bg); }
+    .msg-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; flex-shrink: 0; margin-top: 2px; }
+    .msg-avatar.claude { background: linear-gradient(135deg, #7c6ef7, #a89af9); font-size: 11px; }
+    .msg-content { flex: 1; min-width: 0; }
+    .msg-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 3px; }
+    .msg-name { font-size: 14px; font-weight: 600; }
+    .msg-name.claude-name { color: var(--accent2); }
+    .msg-time { font-size: 11px; color: var(--text3); }
+    .msg-text { font-size: 14px; line-height: 1.6; word-wrap: break-word; white-space: pre-wrap; }
+    .typing-indicator { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
+    .typing-indicator span { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: bounce 1.2s infinite; }
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%,60%,100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-5px); opacity: 1; } }
+    .input-area { padding: 12px 20px 20px; display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
+    #message-input { flex: 1; padding: 13px 16px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'Vazirmatn', sans-serif; font-size: 14px; outline: none; direction: rtl; transition: border-color 0.2s; }
+    #message-input:focus { border-color: rgba(124,110,247,0.5); }
+    #message-input::placeholder { color: var(--text3); }
+    #send-btn { width: 44px; height: 44px; background: var(--accent); border: none; border-radius: var(--radius-sm); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s, transform 0.1s; flex-shrink: 0; }
+    #send-btn:hover { background: var(--accent2); }
+    #send-btn:active { transform: scale(0.95); }
+    #send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+
+  <div id="welcome-screen">
+    <div class="welcome-card">
+      <div class="logo-icon">✦</div>
+      <h1>Planning With AI</h1>
+      <p>یک اسم برای خودت انتخاب کن</p>
+      <div class="input-group">
+        <input type="text" id="username-input" placeholder="اسمت رو بنویس..." maxlength="20" />
+        <button id="enter-btn">ورود</button>
+      </div>
+      <span id="welcome-error"></span>
+    </div>
+  </div>
+
+  <div id="chat-screen" class="hidden">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="app-title">✦ Planning With AI</div>
+      </div>
+      <div class="group-item active">
+        <span class="group-icon">#</span>
+        <span>گروه عمومی</span>
+      </div>
+      <div class="sidebar-footer">
+        <div class="current-user">
+          <div class="avatar" id="sidebar-avatar"></div>
+          <span id="sidebar-username"></span>
+        </div>
+        <button id="logout-btn" title="خروج">↩</button>
+      </div>
+    </div>
+    <div class="chat-area">
+      <div class="chat-header">
+        <div class="chat-header-right">
+          <span class="channel-name"># گروه عمومی</span>
+          <span class="member-count" id="member-count"></span>
+        </div>
+        <div class="claude-toggle-wrap">
+          <span class="toggle-label">Claude AI</span>
+          <label class="toggle">
+            <input type="checkbox" id="claude-toggle" checked />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+      <div class="messages-container" id="messages-container">
+        <div class="loading-msgs">در حال بارگذاری پیام‌ها...</div>
+      </div>
+      <div class="input-area">
+        <input type="text" id="message-input" placeholder="پیامت رو بنویس..." />
+        <button id="send-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const ANTHROPIC_API_KEY = "YOUR_API_KEY_HERE";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAKX7Qphz83ImmoLplsdlLvoHknnny1nU4",
+      authDomain: "planning-with-ai-46ccb.firebaseapp.com",
+      projectId: "planning-with-ai-46ccb",
+      storageBucket: "planning-with-ai-46ccb.firebasestorage.app",
+      messagingSenderId: "460552947425",
+      appId: "1:460552947425:web:feae278abe8d1d6e4b99a0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const messagesRef = collection(db, "group_messages");
+
+    let currentUser = null;
+    let allMessages = [];
+    let isClaudeTyping = false;
+    let claudeEnabled = true;
+
+    const welcomeScreen = document.getElementById("welcome-screen");
+    const chatScreen = document.getElementById("chat-screen");
+    const usernameInput = document.getElementById("username-input");
+    const enterBtn = document.getElementById("enter-btn");
+    const welcomeError = document.getElementById("welcome-error");
+    const messagesContainer = document.getElementById("messages-container");
+    const messageInput = document.getElementById("message-input");
+    const sendBtn = document.getElementById("send-btn");
+    const claudeToggle = document.getElementById("claude-toggle");
+    const sidebarUsername = document.getElementById("sidebar-username");
+    const sidebarAvatar = document.getElementById("sidebar-avatar");
+    const memberCount = document.getElementById("member-count");
+    const logoutBtn = document.getElementById("logout-btn");
+
+    function checkSavedUser() {
+      const saved = localStorage.getItem("chat_username");
+      if (saved) { currentUser = saved; showChat(); }
+    }
+
+    enterBtn.addEventListener("click", handleEnter);
+    usernameInput.addEventListener("keydown", e => { if (e.key === "Enter") handleEnter(); });
+
+    function handleEnter() {
+      const name = usernameInput.value.trim();
+      if (!name) { welcomeError.textContent = "اسمت رو بنویس!"; return; }
+      if (name.toLowerCase() === "claude") { welcomeError.textContent = "این اسم رزرو شده!"; return; }
+      welcomeError.textContent = "";
+      currentUser = name;
+      localStorage.setItem("chat_username", name);
+      showChat();
+    }
+
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("chat_username");
+      currentUser = null;
+      allMessages = [];
+      chatScreen.classList.add("hidden");
+      welcomeScreen.classList.remove("hidden");
+      usernameInput.value = "";
+    });
+
+    function showChat() {
+      welcomeScreen.classList.add("hidden");
+      chatScreen.classList.remove("hidden");
+      sidebarUsername.textContent = currentUser;
+      sidebarAvatar.textContent = currentUser.charAt(0).toUpperCase();
+      listenMessages();
+    }
+
+    function listenMessages() {
+      messagesContainer.innerHTML = '<div class="loading-msgs">در حال بارگذاری...</div>';
+      const q = query(messagesRef, orderBy("timestamp", "asc"));
+      onSnapshot(q, snapshot => {
+        allMessages = [];
+        snapshot.forEach(doc => allMessages.push({ id: doc.id, ...doc.data() }));
+        renderMessages();
+        updateMemberCount();
+      });
+    }
+
+    function renderMessages() {
+      const wasAtBottom = isScrolledToBottom();
+      messagesContainer.innerHTML = "";
+      if (allMessages.length === 0) {
+        messagesContainer.innerHTML = '<div class="loading-msgs">هنوز پیامی نیست. اولین نفر باش! 👋</div>';
+        return;
+      }
+      allMessages.forEach(msg => messagesContainer.appendChild(createMessageEl(msg)));
+      if (wasAtBottom || isMyMessage(allMessages[allMessages.length - 1])) scrollToBottom();
+    }
+
+    function isScrolledToBottom() {
+      return messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < 100;
+    }
+    function isMyMessage(msg) { return msg && msg.sender === currentUser; }
+
+    function createMessageEl(msg) {
+      const isC = msg.sender === "Claude";
+      const div = document.createElement("div");
+      div.className = "msg-group" + (isC ? " is-claude" : "");
+      let timeStr = "";
+      if (msg.timestamp) {
+        const d = msg.timestamp.toDate ? msg.timestamp.toDate() : new Date(msg.timestamp);
+        timeStr = d.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" });
+      }
+      div.innerHTML = `
+        <div class="msg-avatar ${isC ? 'claude' : ''}">${isC ? 'AI' : msg.sender.charAt(0).toUpperCase()}</div>
+        <div class="msg-content">
+          <div class="msg-header">
+            <span class="msg-name ${isC ? 'claude-name' : ''}">${esc(msg.sender)}</span>
+            <span class="msg-time">${timeStr}</span>
+          </div>
+          <div class="msg-text">${esc(msg.text)}</div>
+        </div>`;
+      return div;
+    }
+
+    function esc(s) {
+      return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+
+    function scrollToBottom() {
+      setTimeout(() => { messagesContainer.scrollTop = messagesContainer.scrollHeight; }, 50);
+    }
+
+    function updateMemberCount() {
+      const senders = new Set(allMessages.map(m => m.sender).filter(s => s !== "Claude"));
+      memberCount.textContent = senders.size > 0 ? `${senders.size} نفر` : "";
+    }
+
+    sendBtn.addEventListener("click", sendMessage);
+    messageInput.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+
+    async function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text || !currentUser) return;
+      messageInput.value = "";
+      sendBtn.disabled = true;
+      try {
+        await addDoc(messagesRef, { sender: currentUser, text, timestamp: serverTimestamp() });
+        if (claudeEnabled && !isClaudeTyping) await askClaude(text);
+      } catch (err) { console.error(err); }
+      finally { sendBtn.disabled = false; messageInput.focus(); }
+    }
+
+    claudeToggle.addEventListener("change", () => { claudeEnabled = claudeToggle.checked; });
+
+    async function askClaude(userMessage) {
+      if (isClaudeTyping) return;
+      isClaudeTyping = true;
+      const typingEl = showTypingIndicator();
+      try {
+        const history = allMessages.slice(-20).map(msg => ({
+          role: msg.sender === "Claude" ? "assistant" : "user",
+          content: msg.sender !== "Claude" ? `${msg.sender}: ${msg.text}` : msg.text
+        }));
+        if (!history.length || history[history.length-1].role !== "user") {
+          history.push({ role: "user", content: `${currentUser}: ${userMessage}` });
+        }
+        const res = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": ANTHROPIC_API_KEY,
+            "anthropic-version": "2023-06-01",
+            "anthropic-dangerous-direct-browser-access": "true"
+          },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 1024,
+            system: "تو یک دستیار هوش مصنوعی در یک گروه چت هستی به نام Planning With AI. اسمت Claude هست. به فارسی جواب بده مگر اینکه کاربر به زبان دیگه‌ای بنویسه. جواب‌هات کوتاه و مفید باشه.",
+            messages: history
+          })
+        });
+        const data = await res.json();
+        removeTypingIndicator(typingEl);
+        if (data.content?.[0]?.text) {
+          await addDoc(messagesRef, { sender: "Claude", text: data.content[0].text, timestamp: serverTimestamp() });
+        }
+      } catch (err) { removeTypingIndicator(typingEl); console.error(err); }
+      finally { isClaudeTyping = false; }
+    }
+
+    function showTypingIndicator() {
+      const div = document.createElement("div");
+      div.className = "msg-group is-claude";
+      div.innerHTML = `
+        <div class="msg-avatar claude">AI</div>
+        <div class="msg-content">
+          <div class="msg-header"><span class="msg-name claude-name">Claude</span></div>
+          <div class="typing-indicator"><span></span><span></span><span></span></div>
+        </div>`;
+      messagesContainer.appendChild(div);
+      scrollToBottom();
+      return div;
+    }
+
+    function removeTypingIndicator(el) { if (el?.parentNode) el.parentNode.removeChild(el); }
+
+    checkSavedUser();
+  </script>
+</body>
+</html>
