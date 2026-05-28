@@ -13,6 +13,7 @@
       --border: rgba(255,255,255,0.07); --accent: #7c6ef7; --accent2: #a89af9;
       --text: #e8e9f0; --text2: #9a9baa; --text3: #5a5b6a;
       --claude-bg: #1a1f2e; --claude-border: rgba(124,110,247,0.3);
+      --gemini-bg: #1a2a1a; --gemini-border: rgba(66,200,100,0.3); --gemini: #42c864;
       --radius: 12px; --radius-sm: 8px;
     }
     body { font-family: 'Vazirmatn', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; direction: rtl; }
@@ -34,20 +35,20 @@
 
     /* API KEY SCREEN */
     #apikey-screen { height: 100vh; display: flex; align-items: center; justify-content: center; background-image: radial-gradient(ellipse at 50% 0%, rgba(124,110,247,0.15) 0%, transparent 60%); }
-    .apikey-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 48px 40px; width: 420px; text-align: center; box-shadow: 0 40px 80px rgba(0,0,0,0.4); }
-    .apikey-card .logo-icon { font-size: 36px; color: var(--accent); margin-bottom: 12px; display: block; }
+    .apikey-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 40px; width: 440px; text-align: center; box-shadow: 0 40px 80px rgba(0,0,0,0.4); }
     .apikey-card h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
-    .apikey-card p { font-size: 13px; color: var(--text2); margin-bottom: 24px; line-height: 1.6; }
-    .apikey-input-wrap { position: relative; margin-bottom: 12px; }
-    .apikey-input-wrap input { width: 100%; padding: 14px 46px 14px 16px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'Vazirmatn', sans-serif; font-size: 14px; outline: none; direction: ltr; text-align: left; transition: border-color 0.2s; }
+    .apikey-card > p { font-size: 13px; color: var(--text2); margin-bottom: 24px; line-height: 1.6; }
+    .key-section { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; text-align: right; }
+    .key-section-title { font-size: 13px; font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .apikey-input-wrap { position: relative; }
+    .apikey-input-wrap input { width: 100%; padding: 11px 14px 11px 40px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'Vazirmatn', sans-serif; font-size: 13px; outline: none; direction: ltr; text-align: left; transition: border-color 0.2s; }
     .apikey-input-wrap input:focus { border-color: var(--accent); }
     .apikey-input-wrap input::placeholder { color: var(--text3); }
-    .eye-btn { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text3); cursor: pointer; font-size: 18px; padding: 4px; }
-    .eye-btn:hover { color: var(--text); }
-    .save-key-btn { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); font-family: 'Vazirmatn', sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .eye-btn { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text3); cursor: pointer; font-size: 15px; padding: 2px; }
+    .save-key-btn { width: 100%; padding: 13px; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); font-family: 'Vazirmatn', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.2s; margin-top: 16px; }
     .save-key-btn:hover { background: var(--accent2); }
-    #apikey-error { display: block; color: #f87171; font-size: 13px; margin-top: 12px; min-height: 18px; }
-    .key-hint { font-size: 12px; color: var(--text3); margin-top: 16px; }
+    #apikey-error { display: block; color: #f87171; font-size: 13px; margin-top: 10px; min-height: 18px; }
+    .key-hint { font-size: 12px; color: var(--text3); margin-top: 6px; }
     .key-hint a { color: var(--accent2); text-decoration: none; }
 
     /* CHAT */
@@ -66,18 +67,21 @@
     .icon-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; padding: 4px 6px; border-radius: 6px; flex-shrink: 0; transition: color 0.2s; }
     .icon-btn:hover { color: var(--text); background: var(--bg3); }
     .chat-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-    .chat-header { padding: 0 20px; height: 56px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--bg2); flex-shrink: 0; }
-    .chat-header-right { display: flex; align-items: center; gap: 10px; }
+    .chat-header { padding: 0 16px; height: 56px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--bg2); flex-shrink: 0; gap: 12px; }
+    .chat-header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
     .channel-name { font-size: 15px; font-weight: 600; }
     .member-count { font-size: 12px; color: var(--text3); }
-    .claude-toggle-wrap { display: flex; align-items: center; gap: 10px; }
-    .toggle-label { font-size: 13px; color: var(--text2); }
-    .toggle { position: relative; display: inline-block; width: 40px; height: 22px; }
+    .ai-toggles { display: flex; align-items: center; gap: 14px; }
+    .toggle-wrap { display: flex; align-items: center; gap: 7px; }
+    .toggle-label { font-size: 12px; color: var(--text2); white-space: nowrap; }
+    .toggle { position: relative; display: inline-block; width: 36px; height: 20px; }
     .toggle input { display: none; }
-    .slider { position: absolute; inset: 0; background: var(--bg3); border-radius: 22px; cursor: pointer; transition: background 0.2s; border: 1px solid var(--border); }
-    .slider::before { content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%; background: var(--text3); top: 2px; right: 2px; transition: transform 0.2s, background 0.2s; }
+    .slider { position: absolute; inset: 0; background: var(--bg3); border-radius: 20px; cursor: pointer; transition: background 0.2s; border: 1px solid var(--border); }
+    .slider::before { content: ''; position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--text3); top: 2px; right: 2px; transition: transform 0.2s, background 0.2s; }
     .toggle input:checked + .slider { background: rgba(124,110,247,0.2); border-color: var(--accent); }
-    .toggle input:checked + .slider::before { background: var(--accent); transform: translateX(-18px); }
+    .toggle input:checked + .slider::before { background: var(--accent); transform: translateX(-16px); }
+    .toggle.gemini input:checked + .slider { background: rgba(66,200,100,0.15); border-color: var(--gemini); }
+    .toggle.gemini input:checked + .slider::before { background: var(--gemini); }
     .messages-container { flex: 1; overflow-y: auto; padding: 20px 20px 8px; display: flex; flex-direction: column; gap: 2px; scroll-behavior: smooth; }
     .messages-container::-webkit-scrollbar { width: 4px; }
     .messages-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -86,16 +90,21 @@
     .msg-group:hover { background: rgba(255,255,255,0.02); }
     .msg-group.is-claude { background: var(--claude-bg); border: 1px solid var(--claude-border); margin: 4px 0; border-radius: var(--radius); }
     .msg-group.is-claude:hover { background: var(--claude-bg); }
+    .msg-group.is-gemini { background: var(--gemini-bg); border: 1px solid var(--gemini-border); margin: 4px 0; border-radius: var(--radius); }
+    .msg-group.is-gemini:hover { background: var(--gemini-bg); }
     .msg-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; flex-shrink: 0; margin-top: 2px; }
     .msg-avatar.claude { background: linear-gradient(135deg, #7c6ef7, #a89af9); font-size: 11px; }
+    .msg-avatar.gemini { background: linear-gradient(135deg, #42c864, #1a9e3f); font-size: 11px; }
     .msg-content { flex: 1; min-width: 0; }
     .msg-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 3px; }
     .msg-name { font-size: 14px; font-weight: 600; }
     .msg-name.claude-name { color: var(--accent2); }
+    .msg-name.gemini-name { color: var(--gemini); }
     .msg-time { font-size: 11px; color: var(--text3); }
     .msg-text { font-size: 14px; line-height: 1.6; word-wrap: break-word; white-space: pre-wrap; }
     .typing-indicator { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
     .typing-indicator span { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: bounce 1.2s infinite; }
+    .typing-indicator.gemini-typing span { background: var(--gemini); }
     .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
     .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
     @keyframes bounce { 0%,60%,100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-5px); opacity: 1; } }
@@ -108,25 +117,24 @@
     #send-btn:active { transform: scale(0.95); }
     #send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* API KEY MODAL */
+    /* MODAL */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
-    .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 36px; width: 400px; text-align: center; }
-    .modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
-    .modal p { font-size: 13px; color: var(--text2); margin-bottom: 20px; line-height: 1.6; }
-    .modal-status { font-size: 13px; padding: 8px 12px; border-radius: var(--radius-sm); margin-bottom: 16px; }
+    .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 36px; width: 440px; text-align: center; }
+    .modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+    .modal-status { font-size: 13px; padding: 7px 12px; border-radius: var(--radius-sm); margin-bottom: 10px; }
     .modal-status.has-key { background: rgba(34,197,94,0.1); color: #4ade80; border: 1px solid rgba(34,197,94,0.2); }
     .modal-status.no-key { background: rgba(248,113,113,0.1); color: #f87171; border: 1px solid rgba(248,113,113,0.2); }
     .modal-btns { display: flex; gap: 10px; margin-top: 16px; }
-    .modal-btns button { flex: 1; padding: 11px; border-radius: var(--radius-sm); font-family: 'Vazirmatn', sans-serif; font-size: 14px; cursor: pointer; border: 1px solid var(--border); }
+    .modal-btns button { flex: 1; padding: 11px; border-radius: var(--radius-sm); font-family: 'Vazirmatn', sans-serif; font-size: 13px; cursor: pointer; border: 1px solid var(--border); }
     .btn-danger { background: rgba(248,113,113,0.1); color: #f87171; }
     .btn-danger:hover { background: rgba(248,113,113,0.2); }
     .btn-cancel { background: var(--bg3); color: var(--text2); }
-    .btn-cancel:hover { background: var(--border); }
+    .btn-save { background: var(--accent); color: white; border-color: var(--accent) !important; }
+    .btn-save:hover { background: var(--accent2); }
   </style>
 </head>
 <body>
 
-  <!-- صفحه انتخاب اسم -->
   <div id="welcome-screen">
     <div class="welcome-card">
       <div class="logo-icon">✦</div>
@@ -140,24 +148,36 @@
     </div>
   </div>
 
-  <!-- صفحه وارد کردن API Key -->
   <div id="apikey-screen" class="hidden">
     <div class="apikey-card">
       <div class="logo-icon">🔑</div>
-      <h2>API Key کلاد</h2>
-      <p>برای فعال کردن Claude AI، کلید API خودت رو وارد کن. این کلید فقط روی همین مرورگر ذخیره میشه و هیچکس دیگه‌ای نمیبینه.</p>
-      <div class="apikey-input-wrap">
-        <input type="password" id="apikey-input" placeholder="sk-ant-api03-..." />
-        <button class="eye-btn" id="eye-btn">👁</button>
+      <h2>تنظیم API Key ها</h2>
+      <p>حداقل یکی از کلیدها رو وارد کن. کلیدها فقط روی همین مرورگر ذخیره میشن.</p>
+
+      <div class="key-section">
+        <div class="key-section-title">✦ Claude (Anthropic)</div>
+        <div class="apikey-input-wrap">
+          <input type="password" id="claude-key-input" placeholder="sk-ant-api03-..." />
+          <button class="eye-btn" id="claude-eye-btn">👁</button>
+        </div>
+        <p class="key-hint">از <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></p>
       </div>
-      <button class="save-key-btn" id="save-key-btn">🔒 ذخیره و قفل کردن</button>
+
+      <div class="key-section">
+        <div class="key-section-title" style="color:var(--gemini)">✦ Gemini (Google)</div>
+        <div class="apikey-input-wrap">
+          <input type="password" id="gemini-key-input" placeholder="AIza..." />
+          <button class="eye-btn" id="gemini-eye-btn">👁</button>
+        </div>
+        <p class="key-hint">از <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com</a></p>
+      </div>
+
+      <button class="save-key-btn" id="save-keys-btn">🔒 ذخیره و ورود</button>
       <span id="apikey-error"></span>
-      <p class="key-hint">کلید API رو از <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> بگیر</p>
-      <button style="margin-top:16px; background:none; border:none; color:var(--text3); font-family:'Vazirmatn',sans-serif; font-size:13px; cursor:pointer;" id="skip-key-btn">بعداً تنظیم می‌کنم</button>
+      <button style="margin-top:14px; background:none; border:none; color:var(--text3); font-family:'Vazirmatn',sans-serif; font-size:13px; cursor:pointer;" id="skip-key-btn">بعداً تنظیم می‌کنم</button>
     </div>
   </div>
 
-  <!-- صفحه چت -->
   <div id="chat-screen" class="hidden">
     <div class="sidebar">
       <div class="sidebar-header">
@@ -182,12 +202,21 @@
           <span class="channel-name"># گروه عمومی</span>
           <span class="member-count" id="member-count"></span>
         </div>
-        <div class="claude-toggle-wrap">
-          <span class="toggle-label">Claude AI</span>
-          <label class="toggle">
-            <input type="checkbox" id="claude-toggle" checked />
-            <span class="slider"></span>
-          </label>
+        <div class="ai-toggles">
+          <div class="toggle-wrap">
+            <span class="toggle-label">Claude</span>
+            <label class="toggle">
+              <input type="checkbox" id="claude-toggle" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="toggle-wrap">
+            <span class="toggle-label">Gemini</span>
+            <label class="toggle gemini">
+              <input type="checkbox" id="gemini-toggle" />
+              <span class="slider"></span>
+            </label>
+          </div>
         </div>
       </div>
       <div class="messages-container" id="messages-container">
@@ -205,19 +234,32 @@
     </div>
   </div>
 
-  <!-- مودال مدیریت API Key -->
+  <!-- مودال مدیریت Key -->
   <div id="key-modal" class="modal-overlay hidden">
     <div class="modal">
-      <h3>🔑 مدیریت API Key</h3>
-      <p>کلید API فقط روی این مرورگر ذخیره میشه و کاملاً خصوصیه.</p>
-      <div id="modal-status"></div>
-      <div class="apikey-input-wrap">
-        <input type="password" id="modal-key-input" placeholder="sk-ant-api03-..." />
-        <button class="eye-btn" id="modal-eye-btn">👁</button>
+      <h3>🔑 مدیریت API Key ها</h3>
+
+      <div id="claude-modal-status"></div>
+      <div class="key-section" style="margin-bottom:12px; text-align:right">
+        <div class="key-section-title">✦ Claude</div>
+        <div class="apikey-input-wrap">
+          <input type="password" id="modal-claude-input" placeholder="sk-ant-api03-..." />
+          <button class="eye-btn" id="modal-claude-eye">👁</button>
+        </div>
       </div>
+
+      <div id="gemini-modal-status"></div>
+      <div class="key-section" style="text-align:right">
+        <div class="key-section-title" style="color:var(--gemini)">✦ Gemini</div>
+        <div class="apikey-input-wrap">
+          <input type="password" id="modal-gemini-input" placeholder="AIza..." />
+          <button class="eye-btn" id="modal-gemini-eye">👁</button>
+        </div>
+      </div>
+
       <div class="modal-btns">
-        <button class="btn-danger" id="delete-key-btn">🗑 حذف key</button>
-        <button class="save-key-btn" id="modal-save-btn" style="flex:2">🔒 ذخیره</button>
+        <button class="btn-danger" id="delete-keys-btn">🗑 حذف همه</button>
+        <button class="btn-save" id="modal-save-btn">🔒 ذخیره</button>
         <button class="btn-cancel" id="modal-cancel-btn">بستن</button>
       </div>
     </div>
@@ -242,14 +284,16 @@
 
     let currentUser = null;
     let allMessages = [];
-    let isClaudeTyping = false;
+    let claudeTyping = false;
+    let geminiTyping = false;
     let claudeEnabled = true;
+    let geminiEnabled = false;
 
-    function getApiKey() { return localStorage.getItem("claude_api_key") || ""; }
-    function saveApiKey(k) { localStorage.setItem("claude_api_key", k); }
-    function deleteApiKey() { localStorage.removeItem("claude_api_key"); }
+    const getClaudeKey = () => localStorage.getItem("claude_api_key") || "";
+    const getGeminiKey = () => localStorage.getItem("gemini_api_key") || "";
+    const saveClaudeKey = k => localStorage.setItem("claude_api_key", k);
+    const saveGeminiKey = k => localStorage.setItem("gemini_api_key", k);
 
-    // DOM
     const welcomeScreen = document.getElementById("welcome-screen");
     const apikeyScreen = document.getElementById("apikey-screen");
     const chatScreen = document.getElementById("chat-screen");
@@ -260,19 +304,30 @@
     const messageInput = document.getElementById("message-input");
     const sendBtn = document.getElementById("send-btn");
     const claudeToggle = document.getElementById("claude-toggle");
+    const geminiToggle = document.getElementById("gemini-toggle");
     const sidebarUsername = document.getElementById("sidebar-username");
     const sidebarAvatar = document.getElementById("sidebar-avatar");
     const memberCount = document.getElementById("member-count");
-    const logoutBtn = document.getElementById("logout-btn");
-    const keyBtn = document.getElementById("key-btn");
     const keyModal = document.getElementById("key-modal");
 
-    // WELCOME
+    // eye toggles
+    const makeEye = (btnId, inputId) => {
+      document.getElementById(btnId).addEventListener("click", () => {
+        const inp = document.getElementById(inputId);
+        inp.type = inp.type === "password" ? "text" : "password";
+      });
+    };
+    makeEye("claude-eye-btn", "claude-key-input");
+    makeEye("gemini-eye-btn", "gemini-key-input");
+    makeEye("modal-claude-eye", "modal-claude-input");
+    makeEye("modal-gemini-eye", "modal-gemini-input");
+
     function checkSavedUser() {
       const saved = localStorage.getItem("chat_username");
       if (saved) {
         currentUser = saved;
-        if (!getApiKey()) { showApiKeyScreen(); } else { showChat(); }
+        if (!getClaudeKey() && !getGeminiKey()) showApiKeyScreen();
+        else showChat();
       }
     }
 
@@ -282,33 +337,26 @@
     function handleEnter() {
       const name = usernameInput.value.trim();
       if (!name) { welcomeError.textContent = "اسمت رو بنویس!"; return; }
-      if (name.toLowerCase() === "claude") { welcomeError.textContent = "این اسم رزرو شده!"; return; }
+      if (["claude","gemini"].includes(name.toLowerCase())) { welcomeError.textContent = "این اسم رزرو شده!"; return; }
       welcomeError.textContent = "";
       currentUser = name;
       localStorage.setItem("chat_username", name);
-      if (!getApiKey()) { showApiKeyScreen(); } else { showChat(); }
+      if (!getClaudeKey() && !getGeminiKey()) showApiKeyScreen();
+      else showChat();
     }
 
-    // API KEY SCREEN
     function showApiKeyScreen() {
       welcomeScreen.classList.add("hidden");
       chatScreen.classList.add("hidden");
       apikeyScreen.classList.remove("hidden");
     }
 
-    document.getElementById("eye-btn").addEventListener("click", () => {
-      const inp = document.getElementById("apikey-input");
-      inp.type = inp.type === "password" ? "text" : "password";
-    });
-
-    document.getElementById("save-key-btn").addEventListener("click", () => {
-      const key = document.getElementById("apikey-input").value.trim();
-      if (!key.startsWith("sk-ant-")) {
-        document.getElementById("apikey-error").textContent = "کلید معتبر نیست! باید با sk-ant- شروع بشه";
-        return;
-      }
-      saveApiKey(key);
-      document.getElementById("apikey-input").value = "";
+    document.getElementById("save-keys-btn").addEventListener("click", () => {
+      const ck = document.getElementById("claude-key-input").value.trim();
+      const gk = document.getElementById("gemini-key-input").value.trim();
+      if (!ck && !gk) { document.getElementById("apikey-error").textContent = "حداقل یه کلید وارد کن!"; return; }
+      if (ck) saveClaudeKey(ck);
+      if (gk) saveGeminiKey(gk);
       apikeyScreen.classList.add("hidden");
       showChat();
     });
@@ -318,52 +366,51 @@
       showChat();
     });
 
-    // LOGOUT
-    logoutBtn.addEventListener("click", () => {
+    document.getElementById("logout-btn").addEventListener("click", () => {
       localStorage.removeItem("chat_username");
-      currentUser = null;
-      allMessages = [];
+      currentUser = null; allMessages = [];
       chatScreen.classList.add("hidden");
       welcomeScreen.classList.remove("hidden");
       usernameInput.value = "";
     });
 
     // KEY MODAL
-    keyBtn.addEventListener("click", () => {
-      const hasKey = !!getApiKey();
-      document.getElementById("modal-status").innerHTML = hasKey
-        ? '<div class="modal-status has-key">✅ API Key ذخیره شده</div>'
-        : '<div class="modal-status no-key">❌ API Key تنظیم نشده</div>';
-      document.getElementById("modal-key-input").value = "";
+    document.getElementById("key-btn").addEventListener("click", () => {
+      document.getElementById("claude-modal-status").innerHTML = getClaudeKey()
+        ? '<div class="modal-status has-key">✅ Claude Key ذخیره شده</div>'
+        : '<div class="modal-status no-key">❌ Claude Key تنظیم نشده</div>';
+      document.getElementById("gemini-modal-status").innerHTML = getGeminiKey()
+        ? '<div class="modal-status has-key" style="border-color:rgba(66,200,100,0.3);color:#42c864;background:rgba(66,200,100,0.1)">✅ Gemini Key ذخیره شده</div>'
+        : '<div class="modal-status no-key">❌ Gemini Key تنظیم نشده</div>';
+      document.getElementById("modal-claude-input").value = "";
+      document.getElementById("modal-gemini-input").value = "";
       keyModal.classList.remove("hidden");
     });
 
     document.getElementById("modal-cancel-btn").addEventListener("click", () => keyModal.classList.add("hidden"));
-    document.getElementById("modal-eye-btn").addEventListener("click", () => {
-      const inp = document.getElementById("modal-key-input");
-      inp.type = inp.type === "password" ? "text" : "password";
-    });
     document.getElementById("modal-save-btn").addEventListener("click", () => {
-      const key = document.getElementById("modal-key-input").value.trim();
-      if (!key.startsWith("sk-ant-")) { alert("کلید معتبر نیست!"); return; }
-      saveApiKey(key);
+      const ck = document.getElementById("modal-claude-input").value.trim();
+      const gk = document.getElementById("modal-gemini-input").value.trim();
+      if (ck) saveClaudeKey(ck);
+      if (gk) saveGeminiKey(gk);
       keyModal.classList.add("hidden");
-      document.getElementById("modal-key-input").value = "";
     });
-    document.getElementById("delete-key-btn").addEventListener("click", () => {
-      if (confirm("مطمئنی میخوای key رو حذف کنی؟")) {
-        deleteApiKey();
+    document.getElementById("delete-keys-btn").addEventListener("click", () => {
+      if (confirm("همه کلیدها حذف بشن؟")) {
+        localStorage.removeItem("claude_api_key");
+        localStorage.removeItem("gemini_api_key");
         keyModal.classList.add("hidden");
       }
     });
 
-    // SHOW CHAT
     function showChat() {
       welcomeScreen.classList.add("hidden");
       apikeyScreen.classList.add("hidden");
       chatScreen.classList.remove("hidden");
       sidebarUsername.textContent = currentUser;
       sidebarAvatar.textContent = currentUser.charAt(0).toUpperCase();
+      // اگه Gemini key هست toggle رو فعال کن
+      if (getGeminiKey()) { geminiToggle.checked = true; geminiEnabled = true; }
       listenMessages();
     }
 
@@ -396,18 +443,22 @@
 
     function createMessageEl(msg) {
       const isC = msg.sender === "Claude";
+      const isG = msg.sender === "Gemini";
       const div = document.createElement("div");
-      div.className = "msg-group" + (isC ? " is-claude" : "");
+      div.className = "msg-group" + (isC ? " is-claude" : isG ? " is-gemini" : "");
       let timeStr = "";
       if (msg.timestamp) {
         const d = msg.timestamp.toDate ? msg.timestamp.toDate() : new Date(msg.timestamp);
         timeStr = d.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" });
       }
+      const avatarClass = isC ? "claude" : isG ? "gemini" : "";
+      const avatarText = isC ? "AI" : isG ? "G" : msg.sender.charAt(0).toUpperCase();
+      const nameClass = isC ? "claude-name" : isG ? "gemini-name" : "";
       div.innerHTML = `
-        <div class="msg-avatar ${isC ? 'claude' : ''}">${isC ? 'AI' : msg.sender.charAt(0).toUpperCase()}</div>
+        <div class="msg-avatar ${avatarClass}">${avatarText}</div>
         <div class="msg-content">
           <div class="msg-header">
-            <span class="msg-name ${isC ? 'claude-name' : ''}">${esc(msg.sender)}</span>
+            <span class="msg-name ${nameClass}">${esc(msg.sender)}</span>
             <span class="msg-time">${timeStr}</span>
           </div>
           <div class="msg-text">${esc(msg.text)}</div>
@@ -418,13 +469,11 @@
     function esc(s) {
       return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
     }
-
     function scrollToBottom() {
       setTimeout(() => { messagesContainer.scrollTop = messagesContainer.scrollHeight; }, 50);
     }
-
     function updateMemberCount() {
-      const senders = new Set(allMessages.map(m => m.sender).filter(s => s !== "Claude"));
+      const senders = new Set(allMessages.map(m => m.sender).filter(s => s !== "Claude" && s !== "Gemini"));
       memberCount.textContent = senders.size > 0 ? `${senders.size} نفر` : "";
     }
 
@@ -438,22 +487,20 @@
       sendBtn.disabled = true;
       try {
         await addDoc(messagesRef, { sender: currentUser, text, timestamp: serverTimestamp() });
-        if (claudeEnabled && !isClaudeTyping) await askClaude(text);
+        const promises = [];
+        if (claudeEnabled && !claudeTyping && getClaudeKey()) promises.push(askClaude(text));
+        if (geminiEnabled && !geminiTyping && getGeminiKey()) promises.push(askGemini(text));
+        await Promise.all(promises);
       } catch (err) { console.error(err); }
       finally { sendBtn.disabled = false; messageInput.focus(); }
     }
 
     claudeToggle.addEventListener("change", () => { claudeEnabled = claudeToggle.checked; });
+    geminiToggle.addEventListener("change", () => { geminiEnabled = geminiToggle.checked; });
 
     async function askClaude(userMessage) {
-      const apiKey = getApiKey();
-      if (!apiKey) {
-        showApiKeyScreen();
-        return;
-      }
-      if (isClaudeTyping) return;
-      isClaudeTyping = true;
-      const typingEl = showTypingIndicator();
+      claudeTyping = true;
+      const typingEl = showTypingIndicator("Claude");
       try {
         const history = allMessages.slice(-20).map(msg => ({
           role: msg.sender === "Claude" ? "assistant" : "user",
@@ -466,10 +513,9 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-api-key": apiKey,
+            "x-api-key": getClaudeKey(),
             "anthropic-version": "2023-06-01",
-            "anthropic-dangerous-direct-browser-access": "true",
-            "Access-Control-Allow-Origin": "*"
+            "anthropic-dangerous-direct-browser-access": "true"
           },
           body: JSON.stringify({
             model: "claude-sonnet-4-5",
@@ -483,18 +529,50 @@
         if (data.content?.[0]?.text) {
           await addDoc(messagesRef, { sender: "Claude", text: data.content[0].text, timestamp: serverTimestamp() });
         }
-      } catch (err) { removeTypingIndicator(typingEl); console.error(err); }
-      finally { isClaudeTyping = false; }
+      } catch (err) { removeTypingIndicator(typingEl); console.error("Claude error:", err); }
+      finally { claudeTyping = false; }
     }
 
-    function showTypingIndicator() {
+    async function askGemini(userMessage) {
+      geminiTyping = true;
+      const typingEl = showTypingIndicator("Gemini");
+      try {
+        const history = allMessages.slice(-20)
+          .filter(m => m.sender !== "Claude")
+          .map(msg => ({
+            role: msg.sender === "Gemini" ? "model" : "user",
+            parts: [{ text: msg.sender !== "Gemini" ? `${msg.sender}: ${msg.text}` : msg.text }]
+          }));
+        if (!history.length || history[history.length-1].role !== "user") {
+          history.push({ role: "user", parts: [{ text: `${currentUser}: ${userMessage}` }] });
+        }
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${getGeminiKey()}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: "تو یک دستیار هوش مصنوعی در یک گروه چت هستی به نام Planning With AI. اسمت Gemini هست. به فارسی جواب بده مگر اینکه کاربر به زبان دیگه‌ای بنویسه. جواب‌هات کوتاه و مفید باشه." }] },
+            contents: history
+          })
+        });
+        const data = await res.json();
+        removeTypingIndicator(typingEl);
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) {
+          await addDoc(messagesRef, { sender: "Gemini", text, timestamp: serverTimestamp() });
+        }
+      } catch (err) { removeTypingIndicator(typingEl); console.error("Gemini error:", err); }
+      finally { geminiTyping = false; }
+    }
+
+    function showTypingIndicator(who) {
+      const isG = who === "Gemini";
       const div = document.createElement("div");
-      div.className = "msg-group is-claude";
+      div.className = "msg-group " + (isG ? "is-gemini" : "is-claude");
       div.innerHTML = `
-        <div class="msg-avatar claude">AI</div>
+        <div class="msg-avatar ${isG ? 'gemini' : 'claude'}">${isG ? 'G' : 'AI'}</div>
         <div class="msg-content">
-          <div class="msg-header"><span class="msg-name claude-name">Claude</span></div>
-          <div class="typing-indicator"><span></span><span></span><span></span></div>
+          <div class="msg-header"><span class="msg-name ${isG ? 'gemini-name' : 'claude-name'}">${who}</span></div>
+          <div class="typing-indicator ${isG ? 'gemini-typing' : ''}"><span></span><span></span><span></span></div>
         </div>`;
       messagesContainer.appendChild(div);
       scrollToBottom();
