@@ -381,12 +381,17 @@
       const typingEl = showTypingIndicator("Perplexity");
       const doSearch = isSearchRequest(userMessage);
       try {
-        const history = allMessages.slice(-10)
+        const rawHistory = allMessages.slice(-10)
           .filter(m => m.sender !== "Claude")
           .map(msg => ({
             role: msg.sender === "Perplexity" ? "assistant" : "user",
             content: msg.sender !== "Perplexity" ? `${msg.sender}: ${msg.text}` : msg.text
           }));
+        const history = [];
+        for (const msg of rawHistory) {
+          if (history.length > 0 && history[history.length-1].role === msg.role) continue;
+          history.push(msg);
+        }
         if (!history.length || history[history.length-1].role !== "user") {
           history.push({ role: "user", content: `${currentUser}: ${userMessage}` });
         }
