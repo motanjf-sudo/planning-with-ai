@@ -13,7 +13,7 @@
       --border: rgba(255,255,255,0.07); --accent: #7c6ef7; --accent2: #a89af9;
       --text: #e8e9f0; --text2: #9a9baa; --text3: #5a5b6a;
       --claude-bg: #1a1f2e; --claude-border: rgba(124,110,247,0.3);
-      --hf-bg: #1a2a1f; --hf-border: rgba(255,166,0,0.3); --hf: #ffa600;
+      --gemini-bg: #1a2a1f; --gemini-border: rgba(66,200,100,0.3); --gemini: #42c864;
       --radius: 12px; --radius-sm: 8px;
     }
     body { font-family: 'Vazirmatn', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; direction: rtl; }
@@ -31,23 +31,6 @@
     .input-group button { padding: 14px; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); font-family: 'Vazirmatn', sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; transition: background 0.2s; }
     .input-group button:hover { background: var(--accent2); }
     #welcome-error { display: block; color: #f87171; font-size: 13px; margin-top: 12px; min-height: 18px; }
-
-    #apikey-screen { height: 100vh; display: flex; align-items: center; justify-content: center; background-image: radial-gradient(ellipse at 50% 0%, rgba(124,110,247,0.15) 0%, transparent 60%); }
-    .apikey-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 40px; width: 440px; text-align: center; box-shadow: 0 40px 80px rgba(0,0,0,0.4); }
-    .apikey-card h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
-    .apikey-card > p { font-size: 13px; color: var(--text2); margin-bottom: 24px; line-height: 1.6; }
-    .key-section { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; text-align: right; }
-    .key-section-title { font-size: 13px; font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
-    .apikey-input-wrap { position: relative; }
-    .apikey-input-wrap input { width: 100%; padding: 11px 14px 11px 40px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'Vazirmatn', sans-serif; font-size: 13px; outline: none; direction: ltr; text-align: left; transition: border-color 0.2s; }
-    .apikey-input-wrap input:focus { border-color: var(--accent); }
-    .apikey-input-wrap input::placeholder { color: var(--text3); }
-    .eye-btn { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text3); cursor: pointer; font-size: 15px; padding: 2px; }
-    .save-key-btn { width: 100%; padding: 13px; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); font-family: 'Vazirmatn', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.2s; margin-top: 16px; }
-    .save-key-btn:hover { background: var(--accent2); }
-    #apikey-error { display: block; color: #f87171; font-size: 13px; margin-top: 10px; min-height: 18px; }
-    .key-hint { font-size: 12px; color: var(--text3); margin-top: 6px; }
-    .key-hint a { color: var(--accent2); text-decoration: none; }
 
     #chat-screen { display: flex; height: 100vh; }
     .sidebar { width: 240px; background: var(--sidebar); border-left: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
@@ -77,8 +60,8 @@
     .slider::before { content: ''; position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--text3); top: 2px; right: 2px; transition: transform 0.2s, background 0.2s; }
     .toggle input:checked + .slider { background: rgba(124,110,247,0.2); border-color: var(--accent); }
     .toggle input:checked + .slider::before { background: var(--accent); transform: translateX(-16px); }
-    .toggle.hf input:checked + .slider { background: rgba(255,166,0,0.15); border-color: var(--hf); }
-    .toggle.hf input:checked + .slider::before { background: var(--hf); }
+    .toggle.gemini input:checked + .slider { background: rgba(66,200,100,0.15); border-color: var(--gemini); }
+    .toggle.gemini input:checked + .slider::before { background: var(--gemini); }
     .messages-container { flex: 1; overflow-y: auto; padding: 20px 20px 8px; display: flex; flex-direction: column; gap: 2px; scroll-behavior: smooth; }
     .messages-container::-webkit-scrollbar { width: 4px; }
     .messages-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -87,22 +70,22 @@
     .msg-group:hover { background: rgba(255,255,255,0.02); }
     .msg-group.is-claude { background: var(--claude-bg); border: 1px solid var(--claude-border); margin: 4px 0; border-radius: var(--radius); }
     .msg-group.is-claude:hover { background: var(--claude-bg); }
-    .msg-group.is-hf { background: var(--hf-bg); border: 1px solid var(--hf-border); margin: 4px 0; border-radius: var(--radius); }
-    .msg-group.is-hf:hover { background: var(--hf-bg); }
+    .msg-group.is-gemini { background: var(--gemini-bg); border: 1px solid var(--gemini-border); margin: 4px 0; border-radius: var(--radius); }
+    .msg-group.is-gemini:hover { background: var(--gemini-bg); }
     .msg-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; flex-shrink: 0; margin-top: 2px; }
     .msg-avatar.claude { background: linear-gradient(135deg, #7c6ef7, #a89af9); font-size: 11px; }
-    .msg-avatar.hf { background: linear-gradient(135deg, #ffa600, #ff6b00); font-size: 11px; }
+    .msg-avatar.gemini { background: linear-gradient(135deg, #42c864, #1a9e3f); font-size: 11px; }
     .msg-content { flex: 1; min-width: 0; }
     .msg-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 3px; }
     .msg-name { font-size: 14px; font-weight: 600; }
     .msg-name.claude-name { color: var(--accent2); }
-    .msg-name.hf-name { color: var(--hf); }
+    .msg-name.gemini-name { color: var(--gemini); }
     .msg-time { font-size: 11px; color: var(--text3); }
     .msg-text { font-size: 14px; line-height: 1.6; word-wrap: break-word; white-space: pre-wrap; }
-    .msg-img { max-width: 300px; max-height: 300px; border-radius: var(--radius-sm); margin-top: 8px; display: block; border: 1px solid var(--hf-border); }
+    .msg-img { max-width: 300px; max-height: 300px; border-radius: var(--radius-sm); margin-top: 8px; display: block; border: 1px solid var(--gemini-border); }
     .typing-indicator { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
     .typing-indicator span { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: bounce 1.2s infinite; }
-    .typing-indicator.hf-typing span { background: var(--hf); }
+    .typing-indicator.gemini-typing span { background: var(--gemini); }
     .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
     .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
     @keyframes bounce { 0%,60%,100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-5px); opacity: 1; } }
@@ -114,20 +97,6 @@
     #send-btn:hover { background: var(--accent2); }
     #send-btn:active { transform: scale(0.95); }
     #send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
-    .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 36px; width: 440px; text-align: center; }
-    .modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
-    .modal-status { font-size: 13px; padding: 7px 12px; border-radius: var(--radius-sm); margin-bottom: 10px; }
-    .modal-status.has-key { background: rgba(34,197,94,0.1); color: #4ade80; border: 1px solid rgba(34,197,94,0.2); }
-    .modal-status.no-key { background: rgba(248,113,113,0.1); color: #f87171; border: 1px solid rgba(248,113,113,0.2); }
-    .modal-btns { display: flex; gap: 10px; margin-top: 16px; }
-    .modal-btns button { flex: 1; padding: 11px; border-radius: var(--radius-sm); font-family: 'Vazirmatn', sans-serif; font-size: 13px; cursor: pointer; border: 1px solid var(--border); }
-    .btn-danger { background: rgba(248,113,113,0.1); color: #f87171; }
-    .btn-danger:hover { background: rgba(248,113,113,0.2); }
-    .btn-cancel { background: var(--bg3); color: var(--text2); }
-    .btn-save { background: var(--accent); color: white; border-color: var(--accent) !important; }
-    .btn-save:hover { background: var(--accent2); }
   </style>
 </head>
 <body>
@@ -145,33 +114,6 @@
     </div>
   </div>
 
-  <div id="apikey-screen" class="hidden">
-    <div class="apikey-card">
-      <div class="logo-icon">🔑</div>
-      <h2>تنظیم API Key ها</h2>
-      <p>حداقل یکی از کلیدها رو وارد کن. کلیدها فقط روی همین مرورگر ذخیره میشن.</p>
-      <div class="key-section">
-        <div class="key-section-title">✦ Claude (Anthropic)</div>
-        <div class="apikey-input-wrap">
-          <input type="password" id="claude-key-input" placeholder="sk-ant-api03-..." />
-          <button class="eye-btn" id="claude-eye-btn">👁</button>
-        </div>
-        <p class="key-hint">از <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></p>
-      </div>
-      <div class="key-section">
-        <div class="key-section-title" style="color:var(--hf)">🤗 Hugging Face</div>
-        <div class="apikey-input-wrap">
-          <input type="password" id="hf-key-input" placeholder="hf_..." />
-          <button class="eye-btn" id="hf-eye-btn">👁</button>
-        </div>
-        <p class="key-hint">از <a href="https://huggingface.co/settings/tokens" target="_blank">huggingface.co/settings/tokens</a></p>
-      </div>
-      <button class="save-key-btn" id="save-keys-btn">🔒 ذخیره و ورود</button>
-      <span id="apikey-error"></span>
-      <button style="margin-top:14px; background:none; border:none; color:var(--text3); font-family:'Vazirmatn',sans-serif; font-size:13px; cursor:pointer;" id="skip-key-btn">بعداً تنظیم می‌کنم</button>
-    </div>
-  </div>
-
   <div id="chat-screen" class="hidden">
     <div class="sidebar">
       <div class="sidebar-header">
@@ -186,7 +128,6 @@
           <div class="avatar" id="sidebar-avatar"></div>
           <span id="sidebar-username"></span>
         </div>
-        <button class="icon-btn" id="key-btn" title="تنظیم API Key">🔑</button>
         <button class="icon-btn" id="logout-btn" title="خروج">↩</button>
       </div>
     </div>
@@ -205,9 +146,9 @@
             </label>
           </div>
           <div class="toggle-wrap">
-            <span class="toggle-label">HuggingFace</span>
-            <label class="toggle hf">
-              <input type="checkbox" id="hf-toggle" />
+            <span class="toggle-label">Gemini</span>
+            <label class="toggle gemini">
+              <input type="checkbox" id="gemini-toggle" checked />
               <span class="slider"></span>
             </label>
           </div>
@@ -228,36 +169,12 @@
     </div>
   </div>
 
-  <div id="key-modal" class="modal-overlay hidden">
-    <div class="modal">
-      <h3>🔑 مدیریت API Key ها</h3>
-      <div id="claude-modal-status"></div>
-      <div class="key-section" style="margin-bottom:12px; text-align:right">
-        <div class="key-section-title">✦ Claude</div>
-        <div class="apikey-input-wrap">
-          <input type="password" id="modal-claude-input" placeholder="sk-ant-api03-..." />
-          <button class="eye-btn" id="modal-claude-eye">👁</button>
-        </div>
-      </div>
-      <div id="hf-modal-status"></div>
-      <div class="key-section" style="text-align:right">
-        <div class="key-section-title" style="color:var(--hf)">🤗 Hugging Face</div>
-        <div class="apikey-input-wrap">
-          <input type="password" id="modal-hf-input" placeholder="hf_..." />
-          <button class="eye-btn" id="modal-hf-eye">👁</button>
-        </div>
-      </div>
-      <div class="modal-btns">
-        <button class="btn-danger" id="delete-keys-btn">🗑 حذف همه</button>
-        <button class="btn-save" id="modal-save-btn">🔒 ذخیره</button>
-        <button class="btn-cancel" id="modal-cancel-btn">بستن</button>
-      </div>
-    </div>
-  </div>
-
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // ===== CONFIG =====
+    const WORKER_URL = "https://planning-ai.motanjf.workers.dev";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAKX7Qphz83ImmoLplsdlLvoHknnny1nU4",
@@ -275,33 +192,13 @@
     let currentUser = null;
     let allMessages = [];
     let claudeTyping = false;
-    let hfTyping = false;
+    let geminiTyping = false;
     let claudeEnabled = true;
-    let hfEnabled = false;
-
-    const getClaudeKey = () => localStorage.getItem("claude_api_key") || "";
-    const getHfKey = () => localStorage.getItem("hf_api_key") || "";
-    const saveClaudeKey = k => localStorage.setItem("claude_api_key", k);
-    const saveHfKey = k => localStorage.setItem("hf_api_key", k);
-
-    const makeEye = (btnId, inputId) => {
-      document.getElementById(btnId).addEventListener("click", () => {
-        const inp = document.getElementById(inputId);
-        inp.type = inp.type === "password" ? "text" : "password";
-      });
-    };
-    makeEye("claude-eye-btn", "claude-key-input");
-    makeEye("hf-eye-btn", "hf-key-input");
-    makeEye("modal-claude-eye", "modal-claude-input");
-    makeEye("modal-hf-eye", "modal-hf-input");
+    let geminiEnabled = true;
 
     function checkSavedUser() {
       const saved = localStorage.getItem("chat_username");
-      if (saved) {
-        currentUser = saved;
-        if (!getClaudeKey() && !getHfKey()) showApiKeyScreen();
-        else showChat();
-      }
+      if (saved) { currentUser = saved; showChat(); }
     }
 
     document.getElementById("enter-btn").addEventListener("click", handleEnter);
@@ -310,34 +207,12 @@
     function handleEnter() {
       const name = document.getElementById("username-input").value.trim();
       if (!name) { document.getElementById("welcome-error").textContent = "اسمت رو بنویس!"; return; }
-      if (["claude","huggingface","hf"].includes(name.toLowerCase())) { document.getElementById("welcome-error").textContent = "این اسم رزرو شده!"; return; }
+      if (["claude","gemini"].includes(name.toLowerCase())) { document.getElementById("welcome-error").textContent = "این اسم رزرو شده!"; return; }
       document.getElementById("welcome-error").textContent = "";
       currentUser = name;
       localStorage.setItem("chat_username", name);
-      if (!getClaudeKey() && !getHfKey()) showApiKeyScreen();
-      else showChat();
-    }
-
-    function showApiKeyScreen() {
-      document.getElementById("welcome-screen").classList.add("hidden");
-      document.getElementById("chat-screen").classList.add("hidden");
-      document.getElementById("apikey-screen").classList.remove("hidden");
-    }
-
-    document.getElementById("save-keys-btn").addEventListener("click", () => {
-      const ck = document.getElementById("claude-key-input").value.trim();
-      const hk = document.getElementById("hf-key-input").value.trim();
-      if (!ck && !hk) { document.getElementById("apikey-error").textContent = "حداقل یه کلید وارد کن!"; return; }
-      if (ck) saveClaudeKey(ck);
-      if (hk) saveHfKey(hk);
-      document.getElementById("apikey-screen").classList.add("hidden");
       showChat();
-    });
-
-    document.getElementById("skip-key-btn").addEventListener("click", () => {
-      document.getElementById("apikey-screen").classList.add("hidden");
-      showChat();
-    });
+    }
 
     document.getElementById("logout-btn").addEventListener("click", () => {
       localStorage.removeItem("chat_username");
@@ -347,41 +222,11 @@
       document.getElementById("username-input").value = "";
     });
 
-    document.getElementById("key-btn").addEventListener("click", () => {
-      document.getElementById("claude-modal-status").innerHTML = getClaudeKey()
-        ? '<div class="modal-status has-key">✅ Claude Key ذخیره شده</div>'
-        : '<div class="modal-status no-key">❌ Claude Key تنظیم نشده</div>';
-      document.getElementById("hf-modal-status").innerHTML = getHfKey()
-        ? '<div class="modal-status has-key" style="border-color:rgba(255,166,0,0.3);color:#ffa600;background:rgba(255,166,0,0.1)">✅ HuggingFace Key ذخیره شده</div>'
-        : '<div class="modal-status no-key">❌ HuggingFace Key تنظیم نشده</div>';
-      document.getElementById("modal-claude-input").value = "";
-      document.getElementById("modal-hf-input").value = "";
-      document.getElementById("key-modal").classList.remove("hidden");
-    });
-
-    document.getElementById("modal-cancel-btn").addEventListener("click", () => document.getElementById("key-modal").classList.add("hidden"));
-    document.getElementById("modal-save-btn").addEventListener("click", () => {
-      const ck = document.getElementById("modal-claude-input").value.trim();
-      const hk = document.getElementById("modal-hf-input").value.trim();
-      if (ck) saveClaudeKey(ck);
-      if (hk) saveHfKey(hk);
-      document.getElementById("key-modal").classList.add("hidden");
-    });
-    document.getElementById("delete-keys-btn").addEventListener("click", () => {
-      if (confirm("همه کلیدها حذف بشن؟")) {
-        localStorage.removeItem("claude_api_key");
-        localStorage.removeItem("hf_api_key");
-        document.getElementById("key-modal").classList.add("hidden");
-      }
-    });
-
     function showChat() {
       document.getElementById("welcome-screen").classList.add("hidden");
-      document.getElementById("apikey-screen").classList.add("hidden");
       document.getElementById("chat-screen").classList.remove("hidden");
       document.getElementById("sidebar-username").textContent = currentUser;
       document.getElementById("sidebar-avatar").textContent = currentUser.charAt(0).toUpperCase();
-      if (getHfKey()) { document.getElementById("hf-toggle").checked = true; hfEnabled = true; }
       listenMessages();
     }
 
@@ -406,24 +251,24 @@
         return;
       }
       allMessages.forEach(msg => mc.appendChild(createMessageEl(msg)));
-      if (wasAtBottom || (allMessages[allMessages.length-1]?.sender === currentUser)) scrollToBottom();
+      if (wasAtBottom || allMessages[allMessages.length-1]?.sender === currentUser) scrollToBottom();
     }
 
     function createMessageEl(msg) {
       const isC = msg.sender === "Claude";
-      const isH = msg.sender === "HuggingFace";
+      const isG = msg.sender === "Gemini";
       const div = document.createElement("div");
-      div.className = "msg-group" + (isC ? " is-claude" : isH ? " is-hf" : "");
+      div.className = "msg-group" + (isC ? " is-claude" : isG ? " is-gemini" : "");
       let timeStr = "";
       if (msg.timestamp) {
         const d = msg.timestamp.toDate ? msg.timestamp.toDate() : new Date(msg.timestamp);
         timeStr = d.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" });
       }
-      const avatarClass = isC ? "claude" : isH ? "hf" : "";
-      const avatarText = isC ? "AI" : isH ? "HF" : msg.sender.charAt(0).toUpperCase();
-      const nameClass = isC ? "claude-name" : isH ? "hf-name" : "";
+      const avatarClass = isC ? "claude" : isG ? "gemini" : "";
+      const avatarText = isC ? "AI" : isG ? "G" : msg.sender.charAt(0).toUpperCase();
+      const nameClass = isC ? "claude-name" : isG ? "gemini-name" : "";
       let content = `<div class="msg-text">${esc(msg.text)}</div>`;
-      if (msg.imageUrl) content += `<img class="msg-img" src="${msg.imageUrl}" alt="تصویر تولید شده" />`;
+      if (msg.imageUrl) content += `<img class="msg-img" src="${msg.imageUrl}" alt="تصویر" />`;
       div.innerHTML = `
         <div class="msg-avatar ${avatarClass}">${avatarText}</div>
         <div class="msg-content">
@@ -444,7 +289,7 @@
       setTimeout(() => { mc.scrollTop = mc.scrollHeight; }, 50);
     }
     function updateMemberCount() {
-      const senders = new Set(allMessages.map(m => m.sender).filter(s => s !== "Claude" && s !== "HuggingFace"));
+      const senders = new Set(allMessages.map(m => m.sender).filter(s => s !== "Claude" && s !== "Gemini"));
       document.getElementById("member-count").textContent = senders.size > 0 ? `${senders.size} نفر` : "";
     }
 
@@ -459,31 +304,24 @@
       try {
         await addDoc(messagesRef, { sender: currentUser, text, timestamp: serverTimestamp() });
         const promises = [];
-        if (claudeEnabled && !claudeTyping && getClaudeKey()) promises.push(askClaude(text));
-        if (hfEnabled && !hfTyping && getHfKey()) promises.push(askHF(text));
+        if (claudeEnabled && !claudeTyping) promises.push(askClaude(text));
+        if (geminiEnabled && !geminiTyping) promises.push(askGemini(text));
         await Promise.all(promises);
       } catch (err) { console.error(err); }
       finally { document.getElementById("send-btn").disabled = false; document.getElementById("message-input").focus(); }
     }
 
     document.getElementById("claude-toggle").addEventListener("change", e => { claudeEnabled = e.target.checked; });
-    document.getElementById("hf-toggle").addEventListener("change", e => { hfEnabled = e.target.checked; });
+    document.getElementById("gemini-toggle").addEventListener("change", e => { geminiEnabled = e.target.checked; });
 
-    // سیستم پرامپت مشترک
-    const SYSTEM_CONTEXT = `تو یک دستیار هوش مصنوعی در یک گروه چت هستی به نام "Planning With AI".
-در این گروه دو هوش مصنوعی هستند: Claude (تو) و HuggingFace (یک دستیار دیگه).
-هر دو با هم در این گروه هستید و از حضور هم خبر دارید.
-با HuggingFace دوستانه و محترمانه رفتار کن.
-به فارسی جواب بده مگر اینکه کاربر به زبان دیگه‌ای بنویسه.
-جواب‌هات کوتاه و مفید باشه.`;
+    const CLAUDE_SYSTEM = `تو یک دستیار هوش مصنوعی در یک گروه چت هستی به نام "Planning With AI". اسمت Claude هست.
+در این گروه یک هوش مصنوعی دیگه هم هست به اسم Gemini که تصویر می‌سازه و چت می‌کنه.
+با Gemini دوستانه رفتار کن. به فارسی جواب بده مگر اینکه کاربر به زبان دیگه‌ای بنویسه. جواب‌هات کوتاه و مفید باشه.`;
 
-    const HF_SYSTEM_CONTEXT = `تو یک دستیار هوش مصنوعی در یک گروه چت هستی به نام "Planning With AI". اسمت HuggingFace هست.
-در این گروه دو هوش مصنوعی هستند: Claude و HuggingFace (تو).
-هر دو با هم در این گروه هستید و از حضور هم خبر دارید.
-با Claude دوستانه و محترمانه رفتار کن.
-اگر کاربر تصویر خواست (مثلاً گفت "یه تصویر از..." یا "عکس بساز") بگو که داری تصویر می‌سازی.
-به فارسی جواب بده مگر اینکه کاربر به زبان دیگه‌ای بنویسه.
-جواب‌هات کوتاه و مفید باشه.`;
+    const GEMINI_SYSTEM = `تو یک دستیار هوش مصنوعی در یک گروه چت هستی به نام "Planning With AI". اسمت Gemini هست.
+در این گروه یک هوش مصنوعی دیگه هم هست به اسم Claude که خیلی باهوشه.
+با Claude دوستانه رفتار کن. اگر کاربر تصویر خواست بگو داری می‌سازی.
+به فارسی جواب بده مگر اینکه کاربر به زبان دیگه‌ای بنویسه. جواب‌هات کوتاه و مفید باشه.`;
 
     async function askClaude(userMessage) {
       claudeTyping = true;
@@ -496,18 +334,13 @@
         if (!history.length || history[history.length-1].role !== "user") {
           history.push({ role: "user", content: `${currentUser}: ${userMessage}` });
         }
-        const res = await fetch("https://api.anthropic.com/v1/messages", {
+        const res = await fetch(`${WORKER_URL}/claude`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": getClaudeKey(),
-            "anthropic-version": "2023-06-01",
-            "anthropic-dangerous-direct-browser-access": "true"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             model: "claude-sonnet-4-5",
             max_tokens: 1024,
-            system: SYSTEM_CONTEXT,
+            system: CLAUDE_SYSTEM,
             messages: history
           })
         });
@@ -521,94 +354,82 @@
     }
 
     function isImageRequest(text) {
-      const keywords = ["تصویر", "عکس", "عکسی", "تصویری", "بساز", "بکش", "نقاشی", "image", "photo", "picture", "draw", "generate image", "create image"];
+      const keywords = ["تصویر", "عکس", "عکسی", "تصویری", "بساز", "بکش", "نقاشی", "image", "photo", "picture", "draw"];
       return keywords.some(k => text.toLowerCase().includes(k));
     }
 
-    function extractImagePrompt(text) {
-      const persian = text.replace(/یه تصویر از|یک تصویر از|عکسی از|عکس از|تصویری از|تصویر از|نقاشی از|بساز|بکش/g, "").trim();
-      return persian || text;
-    }
-
-    async function askHF(userMessage) {
-      hfTyping = true;
-      const typingEl = showTypingIndicator("HuggingFace");
+    async function askGemini(userMessage) {
+      geminiTyping = true;
+      const typingEl = showTypingIndicator("Gemini");
       try {
-        // اول چت جواب بده
-        const chatHistory = allMessages.slice(-20)
+        const history = allMessages.slice(-20)
           .filter(m => m.sender !== "Claude")
           .map(msg => ({
-            role: msg.sender === "HuggingFace" ? "assistant" : "user",
-            content: msg.sender !== "HuggingFace" ? `${msg.sender}: ${msg.text}` : msg.text
+            role: msg.sender === "Gemini" ? "model" : "user",
+            parts: [{ text: msg.sender !== "Gemini" ? `${msg.sender}: ${msg.text}` : msg.text }]
           }));
-        if (!chatHistory.length || chatHistory[chatHistory.length-1].role !== "user") {
-          chatHistory.push({ role: "user", content: `${currentUser}: ${userMessage}` });
+        if (!history.length || history[history.length-1].role !== "user") {
+          history.push({ role: "user", parts: [{ text: `${currentUser}: ${userMessage}` }] });
         }
 
-        const chatRes = await fetch("https://router.huggingface.co/v1/chat/completions", {
+        const chatRes = await fetch(`${WORKER_URL}/gemini`, {
           method: "POST",
-          headers: {
-            "Authorization": `Bearer ${getHfKey()}`,
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: "meta-llama/Llama-3.3-70B-Instruct:novita",
-            messages: [{ role: "system", content: HF_SYSTEM_CONTEXT }, ...chatHistory],
-            max_tokens: 512,
-            stream: false
+            system_instruction: { parts: [{ text: GEMINI_SYSTEM }] },
+            contents: history
           })
         });
-
         const chatData = await chatRes.json();
-        const chatText = chatData.choices?.[0]?.message?.content || "";
+        const chatText = chatData.candidates?.[0]?.content?.parts?.[0]?.text || "";
         removeTypingIndicator(typingEl);
 
-        // اگه درخواست تصویر هست
         if (isImageRequest(userMessage)) {
-          const imagePrompt = extractImagePrompt(userMessage);
-          await addDoc(messagesRef, { sender: "HuggingFace", text: chatText || "داری تصویر می‌سازم... 🎨", timestamp: serverTimestamp() });
-          // تصویر بساز
-          const imgTyping = showTypingIndicator("HuggingFace");
+          await addDoc(messagesRef, { sender: "Gemini", text: chatText || "دارم تصویر می‌سازم... 🎨", timestamp: serverTimestamp() });
+          const imgTyping = showTypingIndicator("Gemini");
           try {
-            const imgRes = await fetch("https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell", {
+            const imgRes = await fetch(`${WORKER_URL}/gemini-image`, {
               method: "POST",
-              headers: {
-                "Authorization": `Bearer ${getHfKey()}`,
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({ inputs: imagePrompt })
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: userMessage }] }],
+                generationConfig: { responseModalities: ["TEXT", "IMAGE"] }
+              })
             });
-            if (imgRes.ok) {
-              const blob = await imgRes.blob();
-              const imageUrl = URL.createObjectURL(blob);
-              removeTypingIndicator(imgTyping);
-              await addDoc(messagesRef, { sender: "HuggingFace", text: "تصویر آماده شد! 🎨", imageUrl, timestamp: serverTimestamp() });
-            } else {
-              removeTypingIndicator(imgTyping);
-              await addDoc(messagesRef, { sender: "HuggingFace", text: "متأسفم، نتونستم تصویر بسازم. دوباره امتحان کن.", timestamp: serverTimestamp() });
-            }
-          } catch (e) {
+            const imgData = await imgRes.json();
             removeTypingIndicator(imgTyping);
-            console.error("Image error:", e);
-          }
+            const parts = imgData.candidates?.[0]?.content?.parts || [];
+            let imageUrl = null;
+            for (const part of parts) {
+              if (part.inlineData) {
+                imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+                break;
+              }
+            }
+            if (imageUrl) {
+              await addDoc(messagesRef, { sender: "Gemini", text: "تصویر آماده شد! 🎨", imageUrl, timestamp: serverTimestamp() });
+            } else {
+              await addDoc(messagesRef, { sender: "Gemini", text: "متأسفم، نتونستم تصویر بسازم.", timestamp: serverTimestamp() });
+            }
+          } catch (e) { removeTypingIndicator(imgTyping); console.error("Image error:", e); }
         } else {
           if (chatText) {
-            await addDoc(messagesRef, { sender: "HuggingFace", text: chatText, timestamp: serverTimestamp() });
+            await addDoc(messagesRef, { sender: "Gemini", text: chatText, timestamp: serverTimestamp() });
           }
         }
-      } catch (err) { removeTypingIndicator(typingEl); console.error("HF error:", err); }
-      finally { hfTyping = false; }
+      } catch (err) { removeTypingIndicator(typingEl); console.error("Gemini error:", err); }
+      finally { geminiTyping = false; }
     }
 
     function showTypingIndicator(who) {
-      const isH = who === "HuggingFace";
+      const isG = who === "Gemini";
       const div = document.createElement("div");
-      div.className = "msg-group " + (isH ? "is-hf" : "is-claude");
+      div.className = "msg-group " + (isG ? "is-gemini" : "is-claude");
       div.innerHTML = `
-        <div class="msg-avatar ${isH ? 'hf' : 'claude'}">${isH ? 'HF' : 'AI'}</div>
+        <div class="msg-avatar ${isG ? 'gemini' : 'claude'}">${isG ? 'G' : 'AI'}</div>
         <div class="msg-content">
-          <div class="msg-header"><span class="msg-name ${isH ? 'hf-name' : 'claude-name'}">${who}</span></div>
-          <div class="typing-indicator ${isH ? 'hf-typing' : ''}"><span></span><span></span><span></span></div>
+          <div class="msg-header"><span class="msg-name ${isG ? 'gemini-name' : 'claude-name'}">${who}</span></div>
+          <div class="typing-indicator ${isG ? 'gemini-typing' : ''}"><span></span><span></span><span></span></div>
         </div>`;
       document.getElementById("messages-container").appendChild(div);
       scrollToBottom();
