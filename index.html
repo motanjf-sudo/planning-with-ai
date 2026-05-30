@@ -89,7 +89,7 @@
     .msg-name.perplexity-name { color: var(--perplexity); }
     .msg-time { font-size: 11px; color: var(--text3); }
     .msg-text { font-size: 14px; line-height: 1.6; word-wrap: break-word; white-space: pre-wrap; }
-    .msg-img { max-width: 300px; max-height: 300px; border-radius: var(--radius-sm); margin-top: 8px; display: block; border: 1px solid var(--gemini-border); }
+    .msg-img { max-width: 300px; max-height: 300px; border-radius: var(--radius-sm); margin-top: 8px; display: block; border: 1px solid var(--gemini-border); cursor: pointer; transition: opacity 0.2s; } .msg-img:hover { opacity: 0.85; }
     .msg-sources { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
     .msg-source { font-size: 11px; color: var(--perplexity); background: rgba(32,156,238,0.1); padding: 2px 8px; border-radius: 20px; text-decoration: none; border: 1px solid rgba(32,156,238,0.2); }
     .msg-source:hover { background: rgba(32,156,238,0.2); }
@@ -100,6 +100,13 @@
     .msg-group:hover .msg-delete { display: inline-block; }
 
     .chat-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 42px; color: rgba(255,255,255,0.03); white-space: nowrap; pointer-events: none; user-select: none; font-weight: 700; letter-spacing: 2px; }
+
+    .img-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
+    .img-modal-overlay.active { display: flex; }
+    .img-modal-overlay img { max-width: 90vw; max-height: 80vh; border-radius: var(--radius); }
+    .img-modal-btns { display: flex; gap: 12px; }
+    .img-modal-btn { padding: 10px 20px; border: none; border-radius: var(--radius-sm); font-family: 'Vazirmatn', sans-serif; font-size: 14px; cursor: pointer; font-weight: 500; }
+    .img-modal-close { position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.1); color: white; border: none; border-radius: 50%; width: 36px; height: 36px; font-size: 18px; cursor: pointer; }
     .typing-indicator { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
     .typing-indicator span { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: bounce 1.2s infinite; }
     .typing-indicator.gemini-typing span { background: var(--gemini); }
@@ -192,6 +199,17 @@
           </svg>
         </button>
       </div>
+    </div>
+  </div>
+
+
+  <!-- Image Modal -->
+  <div class="img-modal-overlay" id="img-modal">
+    <button class="img-modal-close" id="img-modal-close">✕</button>
+    <img id="img-modal-img" src="" alt="تصویر" />
+    <div class="img-modal-btns">
+      <button class="img-modal-btn" id="img-modal-download" style="background:var(--accent);color:white;">⬇ دانلود</button>
+      <button class="img-modal-btn" id="img-modal-copy" style="background:var(--bg3);color:var(--text);">📋 کپی</button>
     </div>
   </div>
 
@@ -453,9 +471,10 @@
               if (part.inlineData) { imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`; break; }
             }
             if (imageUrl) {
+              // Store as base64 data URL directly
               await addDoc(messagesRef, { sender: "Gemini", text: "تصویر آماده شد! 🎨", imageUrl, timestamp: serverTimestamp() });
             } else {
-              await addDoc(messagesRef, { sender: "Gemini", text: "متأسفم، نتونستم تصویر بسازم.", timestamp: serverTimestamp() });
+              await addDoc(messagesRef, { sender: "Gemini", text: "متأسفم، نتونستم تصویر بسازم. دوباره امتحان کن.", timestamp: serverTimestamp() });
             }
           } catch (e) { removeTypingIndicator(imgTyping); }
         } else if (chatText) {
@@ -531,7 +550,40 @@
 
     function removeTypingIndicator(el) { if (el?.parentNode) el.parentNode.removeChild(el); }
 
-    checkSavedUser();
+
+    // Image modal
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('msg-img')) {
+        const src = e.target.src;
+        document.getElementById('img-modal-img').src = src;
+        document.getElementById('img-modal').classList.add('active');
+        document.getElementById('img-modal-download').onclick = () => {
+          const a = document.createElement('a');
+          a.href = src;
+          a.download = 'gemini-image.png';
+          a.click();
+        };
+        document.getElementById('img-modal-copy').onclick = async () => {
+          try {
+            const res = await fetch(src);
+            const blob = await res.blob();
+            await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+            document.getElementById('img-modal-copy').textContent = '✅ کپی شد!';
+            setTimeout(() => { document.getElementById('img-modal-copy').textContent = '📋 کپی'; }, 2000);
+          } catch { alert('کپی موفق نبود'); }
+        };
+      }
+    });
+    document.getElementById('img-modal-close').addEventListener('click', () => {
+      document.getElementById('img-modal').classList.remove('active');
+    });
+    document.getElementById('img-modal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('img-modal')) {
+        document.getElementById('img-modal').classList.remove('active');
+      }
+    });
+
+        checkSavedUser();
   </script>
 </body>
 </html>
