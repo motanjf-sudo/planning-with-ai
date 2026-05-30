@@ -94,6 +94,10 @@
     .msg-source { font-size: 11px; color: var(--perplexity); background: rgba(32,156,238,0.1); padding: 2px 8px; border-radius: 20px; text-decoration: none; border: 1px solid rgba(32,156,238,0.2); }
     .msg-source:hover { background: rgba(32,156,238,0.2); }
     .search-badge { font-size: 11px; color: var(--perplexity); background: rgba(32,156,238,0.1); padding: 2px 8px; border-radius: 20px; border: 1px solid rgba(32,156,238,0.2); margin-bottom: 6px; display: inline-block; }
+
+    .msg-delete { display: none; background: none; border: none; color: var(--text3); cursor: pointer; font-size: 13px; padding: 2px 6px; border-radius: 4px; margin-right: auto; transition: color 0.2s; }
+    .msg-delete:hover { color: #f87171; }
+    .msg-group:hover .msg-delete { display: inline-block; }
     .typing-indicator { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
     .typing-indicator span { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: bounce 1.2s infinite; }
     .typing-indicator.gemini-typing span { background: var(--gemini); }
@@ -301,15 +305,20 @@
         content += `</div>`;
       }
 
+      const canDelete = !isC && !isG && !isP && msg.sender === currentUser;
       div.innerHTML = `
         <div class="msg-avatar ${avatarClass}">${avatarText}</div>
         <div class="msg-content">
           <div class="msg-header">
             <span class="msg-name ${nameClass}">${esc(msg.sender)}</span>
             <span class="msg-time">${timeStr}</span>
+            ${canDelete ? `<button class="msg-delete" data-id="${msg.id}">🗑</button>` : ''}
           </div>
           ${content}
         </div>`;
+      if (canDelete) {
+        div.querySelector('.msg-delete').addEventListener('click', () => deleteMessage(msg.id));
+      }
       return div;
     }
 
@@ -366,7 +375,8 @@
     const GEMINI_SYSTEM = `تو یک دستیار هوش مصنوعی در یک گروه چت هستی به نام "Planning With AI". اسمت Gemini هست.
 در این گروه Claude (که برای استدلال عالیه) و Perplexity (که سرچ می‌کنه) هم هستن.
 با بقیه دوستانه رفتار کن. اگر کاربر تصویر خواست بگو داری می‌سازی.
-به فارسی جواب بده مگر اینکه کاربر به زبان دیگه‌ای بنویسه. جواب‌هات کوتاه و مفید باشه.`;
+به فارسی جواب بده مگر اینکه کاربر به زبان دیگه‌ای بنویسه. جواب‌هات کوتاه و مفید باشه.
+مهم: اسمت را همیشه به انگلیسی Gemini بنویس، نه به فارسی.`;
 
     const PERPLEXITY_CHAT_SYSTEM = `تو یک دستیار هوش مصنوعی در یک گروه چت هستی به نام "Planning With AI". اسمت Perplexity هست.
 در این گروه Claude و Gemini هم هستن. با بقیه دوستانه رفتار کن.
@@ -488,7 +498,15 @@
       finally { perplexityTyping = false; }
     }
 
-    function showTypingIndicator(who) {
+    async function deleteMessage(id) {
+      if (!confirm("پیام حذف بشه؟")) return;
+      try {
+        const { doc: fsDoc, deleteDoc: fsDeleteDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+        await fsDeleteDoc(fsDoc(db, "group_messages", id));
+      } catch (err) { console.error("Delete error:", err); }
+    }
+
+        function showTypingIndicator(who) {
       const isG = who === "Gemini";
       const isP = who === "Perplexity";
       const div = document.createElement("div");
