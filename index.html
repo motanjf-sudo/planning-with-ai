@@ -233,6 +233,7 @@
     const messagesRef = collection(db, "group_messages");
 
     let currentUser = null;
+    const imageCache = new Map(); // ذخیره عکس‌ها در حافظه
     let allMessages = [];
     let claudeTyping = false;
     let geminiTyping = false;
@@ -317,7 +318,9 @@
       let content = "";
       if (msg.isSearch) content += `<div class="search-badge">🔍 نتیجه سرچ</div>`;
       content += `<div class="msg-text">${esc(msg.text)}</div>`;
-      if (msg.imageUrl) content += `<img class="msg-img" src="${msg.imageUrl}" alt="تصویر" />`;
+      const cachedImg = msg.imageId ? imageCache.get(msg.imageId) : msg.imageUrl;
+      if (cachedImg) content += `<img class="msg-img" src="${cachedImg}" alt="تصویر" />`;
+      else if (msg.imageId) content += `<div style="font-size:12px;color:var(--text3);margin-top:6px">🖼 عکس فقط تا refresh قابل مشاهده بود</div>`;;
       if (msg.sources && msg.sources.length > 0) {
         content += `<div class="msg-sources">`;
         msg.sources.slice(0, 5).forEach((s, i) => {
@@ -395,9 +398,11 @@
 
     const GEMINI_SYSTEM = `تو یک دستیار هوش مصنوعی در یک گروه چت هستی به نام "Planning With AI". اسمت Gemini هست.
 در این گروه Claude (که برای استدلال عالیه) و Perplexity (که سرچ می‌کنه) هم هستن.
-با بقیه دوستانه رفتار کن. اگر کاربر تصویر خواست بگو داری می‌سازی.
+با بقیه دوستانه رفتار کن.
+مهم: تو کاملاً قادر به ساخت تصویر هستی! وقتی کاربر تصویر خواست، بگو "دارم تصویر می‌سازم" و سیستم خودکار تصویر رو می‌سازه.
+هیچوقت نگو که نمی‌تونی تصویر بسازی — چون می‌تونی!
 به فارسی جواب بده مگر اینکه کاربر به زبان دیگه‌ای بنویسه. جواب‌هات کوتاه و مفید باشه.
-مهم: اسمت را همیشه به انگلیسی Gemini بنویس، نه به فارسی.`;
+مهم: اسمت را همیشه به انگلیسی Gemini بنویس. در انتهای پیام‌هات ننویس "Gemini هستم".`;
 
     const PERPLEXITY_CHAT_SYSTEM = `تو یک دستیار هوش مصنوعی در یک گروه چت هستی به نام "Planning With AI". اسمت Perplexity هست.
 در این گروه Claude و Gemini هم هستن. با بقیه دوستانه رفتار کن.
@@ -471,8 +476,9 @@
               if (part.inlineData) { imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`; break; }
             }
             if (imageUrl) {
-              // Store as base64 data URL directly
-              await addDoc(messagesRef, { sender: "Gemini", text: "تصویر آماده شد! 🎨", imageUrl, timestamp: serverTimestamp() });
+              const imageId = "img_" + Date.now();
+              imageCache.set(imageId, imageUrl);
+              await addDoc(messagesRef, { sender: "Gemini", text: "تصویر آماده شد! 🎨", imageId, timestamp: serverTimestamp() });
             } else {
               await addDoc(messagesRef, { sender: "Gemini", text: "متأسفم، نتونستم تصویر بسازم. دوباره امتحان کن.", timestamp: serverTimestamp() });
             }
