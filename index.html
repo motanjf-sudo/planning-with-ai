@@ -426,54 +426,91 @@
 
     document.getElementById("quiz-generate-btn").addEventListener("click", generateQuiz);
 
+    function detectLanguage(subject) {
+      // تشخیص زبان بر اساس موضوع
+      const englishWords = ["english", "math", "science", "history", "geography", "biology", "chemistry", "physics", "literature", "grammar", "vocabulary"];
+      const lower = subject.toLowerCase();
+      if (englishWords.some(w => lower.includes(w))) return "English";
+      // اگر موضوع با حروف انگلیسی نوشته شده
+      if (/^[a-zA-Z\s]+$/.test(subject)) return "English";
+      return "Persian";
+    }
+
     async function generateQuiz() {
       const subject = document.getElementById("quiz-subject").value.trim();
       if (!subject) { alert("لطفاً موضوع آزمون رو بنویس!"); return; }
       const context = document.getElementById("quiz-context").value.trim();
-      const count = document.getElementById("quiz-count").value;
+      const count = parseInt(document.getElementById("quiz-count").value);
       const difficulty = document.getElementById("quiz-difficulty").value;
-      const typeLabels = { multiple: "تستی چند گزینه‌ای", descriptive: "تشریحی", fill: "جاخالی", truefalse: "درست/نادرست", mixed: "مخلوط" };
-      const diffLabels = { easy: "آسان", medium: "متوسط", hard: "دشوار" };
+      const typeLabels = { multiple: "Multiple Choice (4 options)", descriptive: "Descriptive (written answer)", fill: "Fill in the blank", truefalse: "True / False", mixed: "Mixed types" };
+      const diffLabels = { easy: "Easy", medium: "Medium", hard: "Hard" };
+      const lang = detectLanguage(subject);
+      const langInstruction = lang === "English"
+        ? "Write ALL questions, options, and answers in ENGLISH."
+        : "تمام سوالات، گزینه‌ها و جواب‌ها را به فارسی بنویس.";
 
       document.getElementById("quiz-setup-modal").classList.remove("active");
       document.getElementById("quiz-screen").classList.add("active");
-      document.getElementById("quiz-screen-title").textContent = `آزمون: ${subject}`;
-      document.getElementById("quiz-screen-meta").textContent = `${count} سوال • ${typeLabels[quizType]} • ${diffLabels[difficulty]}`;
+      document.getElementById("quiz-screen-title").textContent = subject;
+      document.getElementById("quiz-screen-meta").textContent = `${count} questions • ${typeLabels[quizType]} • ${diffLabels[difficulty]}`;
       document.getElementById("quiz-content").innerHTML = `
         <div class="quiz-loading">
           <div class="quiz-loading-spinner"></div>
-          <p>Perplexity در حال طراحی آزمون شماست...<br><small style="color:var(--text3)">لطفاً چند لحظه صبر کنید</small></p>
+          <p style="font-size:15px">Perplexity is creating your quiz...<br><small style="color:var(--text3)">Please wait a moment</small></p>
         </div>`;
 
       const typeInstructions = {
-        multiple: `سوالات تستی با 4 گزینه (الف، ب، پ، ت). جواب درست را مشخص کن.`,
-        descriptive: `سوالات تشریحی که کاربر باید با نوشتن جواب بده.`,
-        fill: `جملات با جای خالی که کاربر باید پر کنه.`,
-        truefalse: `جملاتی که کاربر باید درست یا نادرست بودنشان را مشخص کند.`,
-        mixed: `ترکیبی از تستی، تشریحی، جاخالی و درست/نادرست.`
+        multiple: `Multiple choice questions with exactly 4 options labeled A, B, C, D. Clearly mark the correct answer.`,
+        descriptive: `Open-ended questions requiring a written answer.`,
+        fill: `Fill-in-the-blank sentences with one blank each.`,
+        truefalse: `True or False statements.`,
+        mixed: `A mix of multiple choice, true/false, fill-in-the-blank, and descriptive questions.`
       };
 
-      const prompt = `یک آزمون کامل و حرفه‌ای طراحی کن با این مشخصات:
-موضوع: ${subject}
-${context ? `اطلاعات اضافه: ${context}` : ""}
-نوع: ${typeInstructions[quizType]}
-تعداد سوالات: ${count}
-سطح دشواری: ${diffLabels[difficulty]}
+      const prompt = `Create a professional quiz with these specifications:
+Subject: ${subject}
+${context ? `Additional context: ${context}` : ""}
+Question type: ${typeInstructions[quizType]}
+Number of questions: ${count}
+Difficulty: ${diffLabels[difficulty]}
+Language rule: ${langInstruction}
 
-خروجی را دقیقاً به صورت JSON برگردان با این ساختار:
+Return ONLY a valid JSON object with this exact structure:
 {
+  "lang": "${lang}",
   "questions": [
     {
+      "id": 0,
+      "type": "multiple",
+      "question": "Question text here",
+      "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
+      "answer": "A) option1",
+      "explanation": "Brief explanation"
+    },
+    {
       "id": 1,
-      "type": "multiple|descriptive|fill|truefalse",
-      "question": "متن سوال",
-      "options": ["الف) ...", "ب) ...", "پ) ...", "ت) ..."],  // فقط برای تستی
-      "answer": "جواب درست",
-      "explanation": "توضیح کوتاه"
+      "type": "truefalse",
+      "question": "Statement here",
+      "answer": "True",
+      "explanation": "Brief explanation"
+    },
+    {
+      "id": 2,
+      "type": "fill",
+      "question": "The capital of France is ___.",
+      "answer": "Paris",
+      "explanation": "Brief explanation"
+    },
+    {
+      "id": 3,
+      "type": "descriptive",
+      "question": "Explain the concept of...",
+      "answer": "Expected answer here",
+      "explanation": ""
     }
   ]
 }
-فقط JSON برگردان، بدون متن اضافه.`;
+IMPORTANT: Return ONLY the JSON. No markdown, no extra text. IDs must start from 0.`;
 
       try {
         const res = await fetch(`${WORKER_URL}/perplexity`, {
@@ -482,24 +519,31 @@ ${context ? `اطلاعات اضافه: ${context}` : ""}
           body: JSON.stringify({
             model: "sonar",
             messages: [
-              { role: "system", content: "تو یک طراح آزمون حرفه‌ای هستی. آزمون‌های دقیق و باکیفیت طراحی می‌کنی. فقط JSON برمی‌گردانی." },
+              { role: "system", content: `You are a professional quiz designer. Create high-quality quizzes. ${langInstruction} Return ONLY valid JSON, no markdown fences.` },
               { role: "user", content: prompt }
             ]
           })
         });
         const data = await res.json();
-        const text = data.choices?.[0]?.message?.content || "";
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error("JSON پیدا نشد");
-        currentQuiz = JSON.parse(jsonMatch[0]);
+        const rawText = data.choices?.[0]?.message?.content || "";
+        // clean and parse JSON
+        const cleaned = rawText.replace(/```json|```/gi, "").trim();
+        const jsonStart = cleaned.indexOf("{");
+        const jsonEnd = cleaned.lastIndexOf("}");
+        if (jsonStart === -1 || jsonEnd === -1) throw new Error("No JSON found");
+        const jsonStr = cleaned.substring(jsonStart, jsonEnd + 1);
+        currentQuiz = JSON.parse(jsonStr);
+        // normalize ids
+        currentQuiz.questions.forEach((q, i) => { q.id = i; });
         userAnswers = {};
         renderQuiz(currentQuiz, subject);
       } catch (err) {
+        console.error("Quiz generation error:", err);
         document.getElementById("quiz-content").innerHTML = `
           <div style="text-align:center;padding:60px;color:var(--text2)">
             <div style="font-size:40px;margin-bottom:16px">😕</div>
-            <p>مشکلی پیش اومد. دوباره امتحان کن.</p>
-            <button class="quiz-retry-btn" onclick="document.getElementById('quiz-screen').classList.remove('active')">برگشت</button>
+            <p>Something went wrong. Please try again.</p>
+            <button class="quiz-retry-btn" onclick="document.getElementById('quiz-screen').classList.remove('active')">Back</button>
           </div>`;
       }
     }
@@ -675,14 +719,19 @@ ${context ? `اطلاعات اضافه: ${context}` : ""}
 
         messages.push({
           role: "user",
-          content: `سوال ${i+1} از ${total}:
-نوع: ${qa.type}
-سوال: "${qa.question}"
-جواب صحیح: "${qa.correctAnswer}"
-جواب دانش‌آموز: "${qa.userAnswer}"
+          content: `Grade question ${i+1} of ${total}:
+Type: ${qa.type}
+Question: "${qa.question}"
+Correct answer: "${qa.correctAnswer}"
+Student answer: "${qa.userAnswer}"
 
-فقط این JSON را برگردان:
-{"correct": true/false, "explanation": "توضیح کوتاه فارسی (فقط اگر غلط بود)"}`
+Grading rules:
+- multiple/truefalse: exact match or clear equivalent required
+- fill/descriptive: if core meaning is correct, mark true. "No answer" is always false.
+- Student answer "${qa.userAnswer}" === "بدون پاسخ" or "No answer" → always false
+
+Return ONLY this JSON (no other text):
+{"correct": true_or_false, "explanation": "brief explanation in ${currentQuiz.lang === 'English' ? 'English' : 'Persian'} only if wrong"}`
         });
 
         try {
@@ -719,8 +768,8 @@ ${context ? `اطلاعات اضافه: ${context}` : ""}
       // دریافت نظر کلی
       messages.push({
         role: "user",
-        content: `تصحیح تمام شد. ${correctCount} از ${total} سوال درست بود.
-یک تحلیل کلی 2-3 جمله‌ای از عملکرد دانش‌آموز به فارسی بنویس.`
+        content: `Grading complete. ${correctCount} out of ${total} questions correct.
+Write a 2-3 sentence overall performance analysis in ${currentQuiz.lang === 'English' ? 'English' : 'Persian'}.`
       });
 
       let feedback = `${correctCount} از ${total} سوال درست پاسخ داده شد.`;
