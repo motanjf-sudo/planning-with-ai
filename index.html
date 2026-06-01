@@ -107,6 +107,9 @@
     .img-modal-btns { display: flex; gap: 12px; }
     .img-modal-btn { padding: 10px 20px; border: none; border-radius: var(--radius-sm); font-family: 'Vazirmatn', sans-serif; font-size: 14px; cursor: pointer; font-weight: 500; }
     .img-modal-close { position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.1); color: white; border: none; border-radius: 50%; width: 36px; height: 36px; font-size: 18px; cursor: pointer; }
+
+    .toggle.sound input:checked + .slider { background: rgba(255,200,0,0.15); border-color: #ffc800; }
+    .toggle.sound input:checked + .slider::before { background: #ffc800; }
     .typing-indicator { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
     .typing-indicator span { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: bounce 1.2s infinite; }
     .typing-indicator.gemini-typing span { background: var(--gemini); }
@@ -184,6 +187,13 @@
               <span class="slider"></span>
             </label>
           </div>
+          <div class="toggle-wrap">
+            <span class="toggle-label">🔊 صدا</span>
+            <label class="toggle sound">
+              <input type="checkbox" id="sound-toggle" />
+              <span class="slider"></span>
+            </label>
+          </div>
         </div>
       </div>
       <div class="messages-container" id="messages-container">
@@ -241,6 +251,7 @@
     let claudeEnabled = true;
     let geminiEnabled = true;
     let perplexityEnabled = true;
+    let soundEnabled = false;
 
     document.getElementById("enter-btn").addEventListener("click", handleEnter);
     document.getElementById("username-input").addEventListener("keydown", e => { if (e.key === "Enter") handleEnter(); });
@@ -431,7 +442,9 @@
         const data = await res.json();
         removeTypingIndicator(typingEl);
         if (data.content?.[0]?.text) {
-          await addDoc(messagesRef, { sender: "Claude", text: data.content[0].text, timestamp: serverTimestamp() });
+          const claudeText = data.content[0].text;
+          await addDoc(messagesRef, { sender: "Claude", text: claudeText, timestamp: serverTimestamp() });
+          speakText(claudeText);
         }
       } catch (err) { removeTypingIndicator(typingEl); console.error("Claude error:", err); }
       finally { claudeTyping = false; }
@@ -485,6 +498,7 @@
           } catch (e) { removeTypingIndicator(imgTyping); }
         } else if (chatText) {
           await addDoc(messagesRef, { sender: "Gemini", text: chatText, timestamp: serverTimestamp() });
+          speakText(chatText);
         }
       } catch (err) { removeTypingIndicator(typingEl); console.error("Gemini error:", err); }
       finally { geminiTyping = false; }
@@ -521,6 +535,7 @@
         const sources = doSearch ? (data.citations || []) : [];
         if (text) {
           await addDoc(messagesRef, { sender: "Perplexity", text, sources, isSearch: doSearch, timestamp: serverTimestamp() });
+          speakText(text);
         }
       } catch (err) { removeTypingIndicator(typingEl); console.error("Perplexity error:", err); }
       finally { perplexityTyping = false; }
@@ -532,6 +547,32 @@
         const { doc: fsDoc, deleteDoc: fsDeleteDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
         await fsDeleteDoc(fsDoc(db, "group_messages", id));
       } catch (err) { console.error("Delete error:", err); }
+    }
+
+        async function speakText(text) {
+      if (!soundEnabled) return;
+      try {
+        const cleanText = text.replace(/[#*_`]/g, '').substring(0, 500);
+        const res = await fetch(`${WORKER_URL}/tts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: cleanText }] }],
+            generationConfig: {
+              responseModalities: ["AUDIO"],
+              speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Kore" } } }
+            }
+          })
+        });
+        const data = await res.json();
+        const audioData = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+        if (audioData) {
+          const audioBlob = new Blob([Uint8Array.from(atob(audioData), c => c.charCodeAt(0))], { type: 'audio/wav' });
+          const audioUrl = URL.createObjectURL(audioBlob);
+          const audio = new Audio(audioUrl);
+          audio.play();
+        }
+      } catch (err) { console.error("TTS error:", err); }
     }
 
         function showTypingIndicator(who) {
