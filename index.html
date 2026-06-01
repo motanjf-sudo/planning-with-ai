@@ -509,6 +509,8 @@ ${context ? `اطلاعات اضافه: ${context}` : ""}
     function renderQuiz(quiz, subject) {
       currentQuestionIndex = 0;
       userAnswers = {};
+      // normalize all question ids to index-based
+      quiz.questions.forEach((q, i) => { q.id = i; });
       showQuestion(0);
     }
 
@@ -519,15 +521,14 @@ ${context ? `اطلاعات اضافه: ${context}` : ""}
       const letters = ["الف", "ب", "پ", "ت"];
       const isLast = index === total - 1;
       const isFirst = index === 0;
+      const saved = userAnswers[index];
 
       let answerHtml = "";
-      const saved = userAnswers[q.id];
-
       if (q.type === "multiple" && q.options) {
-        answerHtml = `<div class="quiz-options">`;
+        answerHtml = `<div class="quiz-options" id="options-${index}">`;
         q.options.forEach((opt, j) => {
           const sel = saved === j ? "selected" : "";
-          answerHtml += `<div class="quiz-option ${sel}" onclick="selectOption(this, ${q.id}, ${j})">
+          answerHtml += `<div class="quiz-option ${sel}" data-idx="${j}" onclick="selectOption(${index}, ${j})">
             <span class="quiz-option-letter">${letters[j]}</span>
             <span>${opt}</span>
           </div>`;
@@ -537,15 +538,15 @@ ${context ? `اطلاعات اضافه: ${context}` : ""}
         const selD = saved === "درست" ? "selected" : "";
         const selN = saved === "نادرست" ? "selected" : "";
         answerHtml = `<div class="quiz-tf-btns">
-          <button class="quiz-tf-btn ${selD}" onclick="selectTF(this, ${q.id}, 'درست')">✅ درست</button>
-          <button class="quiz-tf-btn ${selN}" onclick="selectTF(this, ${q.id}, 'نادرست')">❌ نادرست</button>
+          <button class="quiz-tf-btn ${selD}" id="tf-true-${index}" onclick="selectTF(${index}, 'درست')">✅ درست</button>
+          <button class="quiz-tf-btn ${selN}" id="tf-false-${index}" onclick="selectTF(${index}, 'نادرست')">❌ نادرست</button>
         </div>`;
       } else {
-        answerHtml = `<input class="quiz-text-input" type="text" id="answer-${q.id}" placeholder="جواب خود را بنویسید..." value="${saved || ''}" oninput="userAnswers[${q.id}] = this.value" />`;
+        const savedVal = saved || '';
+        answerHtml = `<input class="quiz-text-input" type="text" id="text-ans-${index}" placeholder="جواب خود را بنویسید..." value="${savedVal}" />`;
       }
 
       const progressPct = Math.round(((index + 1) / total) * 100);
-
       document.getElementById("quiz-content").innerHTML = `
         <div style="margin-bottom:20px">
           <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text3);margin-bottom:6px">
@@ -561,19 +562,39 @@ ${context ? `اطلاعات اضافه: ${context}` : ""}
           ${answerHtml}
         </div>
         <div style="display:flex;gap:10px;margin-top:20px">
-          ${!isFirst ? `<button class="quiz-cancel-btn" onclick="goQuestion(${index - 1})">← قبلی</button>` : '<div></div>'}
+          ${!isFirst ? `<button class="quiz-cancel-btn" onclick="goQuestion(${index - 1})">← قبلی</button>` : '<div style="flex:1"></div>'}
           ${!isLast
-            ? `<button class="quiz-start-btn" onclick="goQuestion(${index + 1})">بعدی ←</button>`
-            : `<button class="quiz-start-btn" id="quiz-submit-btn" onclick="submitQuiz()">✅ ثبت و تصحیح آزمون</button>`
+            ? `<button class="quiz-start-btn" onclick="saveAndGo(${index}, ${index + 1})">بعدی ←</button>`
+            : `<button class="quiz-start-btn" id="quiz-submit-btn" onclick="saveAndSubmit(${index})">✅ ثبت و تصحیح آزمون</button>`
           }
         </div>`;
 
-      // restore text input
       if (q.type !== "multiple" && q.type !== "truefalse") {
-        const inp = document.getElementById(`answer-${q.id}`);
-        if (inp) inp.addEventListener("input", () => { userAnswers[q.id] = inp.value; });
+        const inp = document.getElementById(`text-ans-${index}`);
+        if (inp) {
+          inp.focus();
+          inp.addEventListener("input", () => { userAnswers[index] = inp.value.trim(); });
+        }
       }
     }
+
+    function saveCurrentAnswer(index) {
+      const q = currentQuiz.questions[index];
+      if (q.type !== "multiple" && q.type !== "truefalse") {
+        const inp = document.getElementById(`text-ans-${index}`);
+        if (inp && inp.value.trim()) userAnswers[index] = inp.value.trim();
+      }
+    }
+
+    window.saveAndGo = function(currentIdx, nextIdx) {
+      saveCurrentAnswer(currentIdx);
+      goQuestion(nextIdx);
+    };
+
+    window.saveAndSubmit = function(currentIdx) {
+      saveCurrentAnswer(currentIdx);
+      submitQuiz();
+    };
 
     window.goQuestion = function(index) {
       currentQuestionIndex = index;
@@ -581,22 +602,22 @@ ${context ? `اطلاعات اضافه: ${context}` : ""}
       document.getElementById("quiz-screen").scrollTo(0, 0);
     };
 
-    window.selectOption = function(el, qId, optIdx) {
-      document.querySelectorAll(`[onclick*="selectOption"][onclick*="${qId}"]`).forEach(o => o.classList.remove("selected"));
-      el.classList.add("selected");
-      userAnswers[qId] = optIdx;
+    window.selectOption = function(index, optIdx) {
+      document.querySelectorAll(`#options-${index} .quiz-option`).forEach(o => o.classList.remove("selected"));
+      const el = document.querySelector(`#options-${index} [data-idx="${optIdx}"]`);
+      if (el) el.classList.add("selected");
+      userAnswers[index] = optIdx;
     };
 
-    window.selectTF = function(el, qId, val) {
-      document.querySelectorAll(`[onclick*="selectTF"][onclick*="${qId}"]`).forEach(o => o.classList.remove("selected"));
-      el.classList.add("selected");
-      userAnswers[qId] = val;
+    window.selectTF = function(index, val) {
+      document.getElementById(`tf-true-${index}`)?.classList.remove("selected");
+      document.getElementById(`tf-false-${index}`)?.classList.remove("selected");
+      if (val === "درست") document.getElementById(`tf-true-${index}`)?.classList.add("selected");
+      else document.getElementById(`tf-false-${index}`)?.classList.add("selected");
+      userAnswers[index] = val;
     };
 
     window.submitQuiz = async function() {
-      const btn = document.getElementById("quiz-submit-btn");
-      if (btn) { btn.disabled = true; btn.textContent = "در حال تصحیح..."; }
-
       document.getElementById("quiz-content").innerHTML = `
         <div class="quiz-loading">
           <div class="quiz-loading-spinner"></div>
@@ -605,39 +626,36 @@ ${context ? `اطلاعات اضافه: ${context}` : ""}
 
       let answersText = "";
       currentQuiz.questions.forEach((q, i) => {
-        const ua = userAnswers[q.id];
+        const ua = userAnswers[i];
         let userAns = "بدون پاسخ";
         if (ua !== undefined && ua !== null && ua !== "") {
           if (q.type === "multiple" && q.options && typeof ua === "number") {
-            userAns = q.options[ua] || ua;
+            userAns = q.options[ua] || String(ua);
           } else {
             userAns = String(ua);
           }
         }
-        answersText += `سوال ${i+1} (id:${q.id}): "${q.question}"\nجواب کاربر: ${userAns}\nجواب صحیح: ${q.answer}\n\n`;
+        answersText += `سوال ${i+1}: "${q.question}"\nجواب کاربر: ${userAns}\nجواب صحیح: ${q.answer}\n---\n`;
       });
 
-      const prompt = `این آزمون را دقیق تصحیح کن. اگر جواب کاربر "بدون پاسخ" بود آن را غلط حساب کن.
+      const prompt = `این آزمون را تصحیح کن:
 
 ${answersText}
 
-خروجی را دقیقاً به این صورت JSON برگردان:
+قوانین تصحیح:
+- برای تشریحی و جاخالی: اگر مفهوم درست بود، درست حساب کن حتی اگر عین جواب نمونه نباشد
+- برای درست/نادرست: دقیقاً مطابقت بده
+- برای تستی: گزینه انتخابی را با جواب صحیح مقایسه کن
+
+خروجی JSON:
 {
-  "score": عدد از 0 تا 100,
-  "correct": تعداد سوالات درست,
+  "score": عدد 0 تا 100,
+  "correct": تعداد درست,
   "total": ${currentQuiz.questions.length},
-  "feedback": "تحلیل کلی عملکرد به فارسی در 2-3 جمله",
-  "details": [
-    {
-      "id": شماره id سوال,
-      "correct": true یا false,
-      "userAnswer": "جواب کاربر",
-      "correctAnswer": "جواب صحیح",
-      "explanation": "توضیح کوتاه فارسی اگر غلط بود"
-    }
-  ]
+  "feedback": "تحلیل 2-3 جمله‌ای به فارسی",
+  "details": [{"qnum": شماره سوال از 1, "correct": true/false, "userAnswer": "جواب کاربر", "correctAnswer": "جواب صحیح", "explanation": "توضیح اگر غلط بود"}]
 }
-فقط JSON برگردان بدون هیچ متن اضافه.`;
+فقط JSON خالص.`;
 
       try {
         const res = await fetch(`${WORKER_URL}/perplexity`, {
@@ -646,7 +664,7 @@ ${answersText}
           body: JSON.stringify({
             model: "sonar",
             messages: [
-              { role: "system", content: "تو یک استاد مصحح دقیق هستی. آزمون‌ها را منصفانه تصحیح می‌کنی. فقط JSON خالص برمی‌گردانی بدون markdown." },
+              { role: "system", content: "تو استاد مصحح هستی. آزمون را منصفانه تصحیح می‌کنی. برای سوالات تشریحی اگر مفهوم درست بود درست حساب کن. فقط JSON خالص برمی‌گردانی." },
               { role: "user", content: prompt }
             ]
           })
@@ -663,7 +681,7 @@ ${answersText}
         document.getElementById("quiz-content").innerHTML = `
           <div style="text-align:center;padding:60px;color:var(--text2)">
             <p>مشکلی پیش اومد. دوباره امتحان کن.</p>
-            <button class="quiz-retry-btn" onclick="showQuestion(currentQuestionIndex)">برگشت به آزمون</button>
+            <button class="quiz-retry-btn" onclick="goQuestion(currentQuestionIndex)">برگشت به آزمون</button>
           </div>`;
       }
     };
@@ -690,9 +708,40 @@ ${answersText}
           <h3 style="margin-bottom:16px;font-size:16px">بررسی پاسخ‌ها</h3>
           ${reviewHtml}
         </div>
-        <button class="quiz-retry-btn" onclick="document.getElementById('quiz-screen').classList.remove('active')">🔙 برگشت به چت</button>
+        <div style="display:flex;gap:10px;margin-top:24px;justify-content:center">
+          <button class="quiz-retry-btn" onclick="reviewQuiz()">👁 مرور آزمون</button>
+          <button class="quiz-retry-btn" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border)" onclick="document.getElementById('quiz-screen').classList.remove('active')">🔙 برگشت به چت</button>
+        </div>
       `;
     }
+
+    window.reviewQuiz = function() {
+      // show all questions with answers highlighted
+      const quiz = currentQuiz;
+      const letters = ["الف", "ب", "پ", "ت"];
+      let html = `<h3 style="margin-bottom:20px;font-size:16px">مرور پاسخ‌های شما</h3>`;
+      quiz.questions.forEach((q, i) => {
+        const ua = userAnswers[i];
+        let userAnsText = "بدون پاسخ";
+        if (ua !== undefined && ua !== null && ua !== "") {
+          if (q.type === "multiple" && q.options && typeof ua === "number") userAnsText = q.options[ua] || String(ua);
+          else userAnsText = String(ua);
+        }
+        html += `<div class="quiz-question" style="margin-bottom:12px">
+          <div class="quiz-q-num">سوال ${i+1}</div>
+          <div class="quiz-q-text">${q.question}</div>
+          <div style="margin-top:8px;font-size:13px">
+            <span style="color:var(--text3)">جواب شما: </span><span style="color:var(--text)">${userAnsText}</span>
+          </div>
+          <div style="font-size:13px;margin-top:4px">
+            <span style="color:var(--text3)">جواب صحیح: </span><span style="color:var(--gemini)">${q.answer}</span>
+          </div>
+        </div>`;
+      });
+      html += `<button class="quiz-retry-btn" onclick="submitQuiz()" style="margin-top:8px">🔙 برگشت به نتیجه</button>`;
+      document.getElementById("quiz-content").innerHTML = html;
+      document.getElementById("quiz-screen").scrollTo(0,0);
+    };
 
     document.getElementById("quiz-close-btn").addEventListener("click", () => {
       document.getElementById("quiz-screen").classList.remove("active");
