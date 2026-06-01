@@ -34,7 +34,7 @@
     .input-group button:hover { background: var(--accent2); }
     #welcome-error { display: block; color: #f87171; font-size: 13px; margin-top: 12px; min-height: 18px; }
 
-    /* CHAT */
+    /* CHAT LAYOUT */
     #chat-screen { display: flex; height: 100vh; }
     .sidebar { width: 240px; background: var(--sidebar); border-left: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
     .sidebar-header { padding: 18px 16px; border-bottom: 1px solid var(--border); }
@@ -74,7 +74,7 @@
     .messages-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
     .loading-msgs { color: var(--text3); font-size: 14px; text-align: center; margin: auto; }
     .chat-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 42px; color: rgba(255,255,255,0.03); white-space: nowrap; pointer-events: none; user-select: none; font-weight: 700; letter-spacing: 2px; }
-    .msg-group { display: flex; gap: 10px; padding: 8px 10px; border-radius: var(--radius-sm); align-items: flex-start; transition: background 0.1s; }
+    .msg-group { display: flex; gap: 10px; padding: 8px 10px; border-radius: var(--radius-sm); align-items: flex-start; }
     .msg-group:hover { background: rgba(255,255,255,0.02); }
     .msg-group.is-claude { background: var(--claude-bg); border: 1px solid var(--claude-border); margin: 6px 0; border-radius: var(--radius); }
     .msg-group.is-claude:hover { background: var(--claude-bg); }
@@ -93,17 +93,14 @@
     .msg-name.gemini-name { color: var(--gemini); }
     .msg-name.perplexity-name { color: var(--perplexity); }
     .msg-time { font-size: 11px; color: var(--text3); }
-    .msg-delete { display: none; background: none; border: none; color: var(--text3); cursor: pointer; font-size: 13px; padding: 2px 6px; border-radius: 4px; margin-right: auto; transition: color 0.2s; }
+    .msg-delete { display: none; background: none; border: none; color: var(--text3); cursor: pointer; font-size: 13px; padding: 2px 6px; border-radius: 4px; margin-right: auto; }
     .msg-delete:hover { color: #f87171; }
     .msg-group:hover .msg-delete { display: inline-block; }
-    .msg-text { font-size: 14px; line-height: 1.7; word-wrap: break-word; white-space: pre-wrap; color: var(--text); }
+    .msg-text { font-size: 14px; line-height: 1.7; word-wrap: break-word; white-space: pre-wrap; }
     .msg-img { max-width: 320px; max-height: 320px; border-radius: var(--radius-sm); margin-top: 10px; display: block; border: 1px solid var(--gemini-border); cursor: pointer; transition: opacity 0.2s; }
     .msg-img:hover { opacity: 0.85; }
-    .msg-file { display: flex; align-items: center; gap: 8px; margin-top: 8px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 13px; color: var(--text2); }
-    .msg-file-icon { font-size: 20px; }
     .msg-sources { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
     .msg-source { font-size: 11px; color: var(--perplexity); background: rgba(32,156,238,0.1); padding: 3px 10px; border-radius: 20px; text-decoration: none; border: 1px solid rgba(32,156,238,0.2); }
-    .msg-source:hover { background: rgba(32,156,238,0.2); }
     .search-badge { font-size: 11px; color: var(--perplexity); background: rgba(32,156,238,0.1); padding: 2px 8px; border-radius: 20px; border: 1px solid rgba(32,156,238,0.2); margin-bottom: 6px; display: inline-block; }
 
     /* TYPING */
@@ -115,41 +112,99 @@
     .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
     @keyframes bounce { 0%,60%,100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-5px); opacity: 1; } }
 
-    /* INPUT AREA */
-    .input-area { padding: 12px 16px 20px; display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
-    .plus-btn { width: 40px; height: 40px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text2); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; transition: background 0.2s, color 0.2s; position: relative; }
+    /* INPUT */
+    .input-area { padding: 12px 16px 20px; display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; }
+    .plus-btn { width: 40px; height: 40px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text2); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; position: relative; transition: background 0.2s; }
     .plus-btn:hover { background: var(--bg2); color: var(--text); }
-    .plus-menu { position: absolute; bottom: 52px; right: 0; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px; min-width: 180px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); z-index: 10; }
+    .plus-menu { position: absolute; bottom: 52px; right: 0; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px; min-width: 200px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 10; }
     .plus-menu-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); cursor: pointer; font-size: 14px; color: var(--text2); transition: background 0.15s; }
     .plus-menu-item:hover { background: var(--bg3); color: var(--text); }
-    .plus-menu-item span { font-size: 18px; }
-    #message-input { flex: 1; padding: 12px 16px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'Vazirmatn', sans-serif; font-size: 14px; outline: none; direction: rtl; transition: border-color 0.2s; resize: none; min-height: 44px; max-height: 120px; overflow-y: auto; }
+    #message-input { flex: 1; padding: 12px 16px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'Vazirmatn', sans-serif; font-size: 14px; outline: none; direction: rtl; transition: border-color 0.2s; resize: none; min-height: 44px; max-height: 120px; }
     #message-input:focus { border-color: rgba(124,110,247,0.5); }
     #message-input::placeholder { color: var(--text3); }
     #send-btn { width: 44px; height: 44px; background: var(--accent); border: none; border-radius: var(--radius-sm); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s, transform 0.1s; flex-shrink: 0; }
     #send-btn:hover { background: var(--accent2); }
     #send-btn:active { transform: scale(0.95); }
     #send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    /* FILE PREVIEW */
-    .file-preview { padding: 8px 16px 0; display: flex; align-items: center; gap: 8px; }
-    .file-preview-item { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 10px; font-size: 12px; color: var(--text2); display: flex; align-items: center; gap: 6px; }
-    .file-preview-remove { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 14px; padding: 0 2px; }
+    .file-preview { padding: 6px 16px 0; }
+    .file-preview-item { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 10px; font-size: 12px; color: var(--text2); display: inline-flex; align-items: center; gap: 6px; }
+    .file-preview-remove { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 14px; }
     .file-preview-remove:hover { color: #f87171; }
 
     /* IMAGE MODAL */
     .img-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1000; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
     .img-modal-overlay.active { display: flex; }
-    .img-modal-overlay img { max-width: 90vw; max-height: 78vh; border-radius: var(--radius); box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+    .img-modal-overlay img { max-width: 90vw; max-height: 78vh; border-radius: var(--radius); }
     .img-modal-btns { display: flex; gap: 12px; }
-    .img-modal-btn { padding: 10px 24px; border: none; border-radius: var(--radius-sm); font-family: 'Vazirmatn', sans-serif; font-size: 14px; cursor: pointer; font-weight: 500; transition: opacity 0.2s; }
-    .img-modal-btn:hover { opacity: 0.85; }
-    .img-modal-close { position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.1); color: white; border: none; border-radius: 50%; width: 38px; height: 38px; font-size: 18px; cursor: pointer; transition: background 0.2s; }
-    .img-modal-close:hover { background: rgba(255,255,255,0.2); }
+    .img-modal-btn { padding: 10px 24px; border: none; border-radius: var(--radius-sm); font-family: 'Vazirmatn', sans-serif; font-size: 14px; cursor: pointer; font-weight: 500; }
+    .img-modal-close { position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.1); color: white; border: none; border-radius: 50%; width: 38px; height: 38px; font-size: 18px; cursor: pointer; }
+
+    /* ===== QUIZ SETUP MODAL ===== */
+    .quiz-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    .quiz-modal-overlay.active { display: flex; }
+    .quiz-modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 36px; width: 520px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 40px 80px rgba(0,0,0,0.5); }
+    .quiz-modal h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
+    .quiz-modal .subtitle { font-size: 13px; color: var(--text2); margin-bottom: 28px; }
+    .quiz-field { margin-bottom: 20px; }
+    .quiz-field label { display: block; font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 8px; }
+    .quiz-field input, .quiz-field select, .quiz-field textarea { width: 100%; padding: 12px 14px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'Vazirmatn', sans-serif; font-size: 14px; outline: none; direction: rtl; transition: border-color 0.2s; }
+    .quiz-field input:focus, .quiz-field select:focus, .quiz-field textarea:focus { border-color: var(--perplexity); }
+    .quiz-field textarea { resize: vertical; min-height: 80px; }
+    .quiz-field select option { background: var(--bg3); }
+    .quiz-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .quiz-type-btn { padding: 10px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text2); font-family: 'Vazirmatn', sans-serif; font-size: 13px; cursor: pointer; text-align: center; transition: all 0.2s; }
+    .quiz-type-btn.selected { background: rgba(32,156,238,0.15); border-color: var(--perplexity); color: var(--perplexity); font-weight: 600; }
+    .quiz-modal-footer { display: flex; gap: 10px; margin-top: 28px; }
+    .quiz-start-btn { flex: 1; padding: 14px; background: var(--perplexity); color: white; border: none; border-radius: var(--radius-sm); font-family: 'Vazirmatn', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+    .quiz-start-btn:hover { opacity: 0.9; }
+    .quiz-cancel-btn { padding: 14px 20px; background: var(--bg3); color: var(--text2); border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'Vazirmatn', sans-serif; font-size: 14px; cursor: pointer; }
+
+    /* ===== QUIZ SCREEN ===== */
+    #quiz-screen { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 300; overflow-y: auto; }
+    #quiz-screen.active { display: block; }
+    .quiz-container { max-width: 700px; margin: 0 auto; padding: 40px 24px; }
+    .quiz-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
+    .quiz-title { font-size: 22px; font-weight: 700; }
+    .quiz-meta { font-size: 13px; color: var(--text2); margin-top: 4px; }
+    .quiz-close-btn { background: var(--bg3); border: 1px solid var(--border); color: var(--text2); border-radius: var(--radius-sm); padding: 8px 16px; font-family: 'Vazirmatn', sans-serif; font-size: 13px; cursor: pointer; }
+    .quiz-loading { text-align: center; padding: 80px 20px; }
+    .quiz-loading-spinner { width: 48px; height: 48px; border: 3px solid var(--border); border-top-color: var(--perplexity); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .quiz-loading p { color: var(--text2); font-size: 15px; }
+    .quiz-question { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; }
+    .quiz-q-num { font-size: 12px; color: var(--perplexity); font-weight: 600; margin-bottom: 10px; }
+    .quiz-q-text { font-size: 16px; line-height: 1.7; margin-bottom: 16px; font-weight: 500; }
+    .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+    .quiz-option { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s; font-size: 14px; }
+    .quiz-option:hover { border-color: var(--perplexity); background: rgba(32,156,238,0.05); }
+    .quiz-option.selected { border-color: var(--perplexity); background: rgba(32,156,238,0.1); color: var(--perplexity); }
+    .quiz-option.correct { border-color: var(--gemini); background: rgba(66,200,100,0.1); color: var(--gemini); }
+    .quiz-option.wrong { border-color: #f87171; background: rgba(248,113,113,0.1); color: #f87171; }
+    .quiz-option-letter { width: 28px; height: 28px; border-radius: 50%; background: var(--bg2); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+    .quiz-text-input { width: 100%; padding: 12px 14px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'Vazirmatn', sans-serif; font-size: 14px; outline: none; direction: rtl; transition: border-color 0.2s; margin-top: 4px; }
+    .quiz-text-input:focus { border-color: var(--perplexity); }
+    .quiz-tf-btns { display: flex; gap: 10px; margin-top: 4px; }
+    .quiz-tf-btn { flex: 1; padding: 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text2); font-family: 'Vazirmatn', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .quiz-tf-btn.selected { border-color: var(--perplexity); background: rgba(32,156,238,0.1); color: var(--perplexity); }
+    .quiz-submit-btn { width: 100%; padding: 16px; background: var(--perplexity); color: white; border: none; border-radius: var(--radius-sm); font-family: 'Vazirmatn', sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 24px; transition: opacity 0.2s; }
+    .quiz-submit-btn:hover { opacity: 0.9; }
+    .quiz-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* QUIZ RESULT */
+    .quiz-result { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; margin-top: 24px; text-align: center; }
+    .quiz-score { font-size: 56px; font-weight: 700; color: var(--perplexity); margin-bottom: 8px; }
+    .quiz-score-label { font-size: 18px; color: var(--text2); margin-bottom: 24px; }
+    .quiz-feedback { text-align: right; background: var(--bg3); border-radius: var(--radius-sm); padding: 20px; margin-top: 20px; font-size: 14px; line-height: 1.8; color: var(--text); white-space: pre-wrap; }
+    .quiz-answer-review { margin-top: 24px; text-align: right; }
+    .quiz-answer-item { padding: 14px 16px; border-radius: var(--radius-sm); margin-bottom: 10px; font-size: 14px; line-height: 1.6; }
+    .quiz-answer-item.correct-ans { background: rgba(66,200,100,0.08); border: 1px solid rgba(66,200,100,0.2); }
+    .quiz-answer-item.wrong-ans { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.2); }
+    .quiz-retry-btn { margin-top: 24px; padding: 14px 32px; background: var(--perplexity); color: white; border: none; border-radius: var(--radius-sm); font-family: 'Vazirmatn', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; }
   </style>
 </head>
 <body>
 
+  <!-- WELCOME -->
   <div id="welcome-screen">
     <div class="welcome-card">
       <div class="logo-icon">✦</div>
@@ -163,15 +218,11 @@
     </div>
   </div>
 
+  <!-- CHAT -->
   <div id="chat-screen" class="hidden">
     <div class="sidebar">
-      <div class="sidebar-header">
-        <div class="app-title">✦ Planning With AI</div>
-      </div>
-      <div class="group-item active">
-        <span class="group-icon">#</span>
-        <span>گروه عمومی</span>
-      </div>
+      <div class="sidebar-header"><div class="app-title">✦ Planning With AI</div></div>
+      <div class="group-item active"><span class="group-icon">#</span><span>گروه عمومی</span></div>
       <div class="sidebar-footer">
         <div class="current-user">
           <div class="avatar" id="sidebar-avatar"></div>
@@ -190,24 +241,15 @@
         <div class="ai-toggles">
           <div class="toggle-wrap">
             <span class="toggle-label">Claude</span>
-            <label class="toggle">
-              <input type="checkbox" id="claude-toggle" checked />
-              <span class="slider"></span>
-            </label>
+            <label class="toggle"><input type="checkbox" id="claude-toggle" checked /><span class="slider"></span></label>
           </div>
           <div class="toggle-wrap">
             <span class="toggle-label">Gemini</span>
-            <label class="toggle gemini">
-              <input type="checkbox" id="gemini-toggle" checked />
-              <span class="slider"></span>
-            </label>
+            <label class="toggle gemini"><input type="checkbox" id="gemini-toggle" checked /><span class="slider"></span></label>
           </div>
           <div class="toggle-wrap">
             <span class="toggle-label">Perplexity</span>
-            <label class="toggle perplexity">
-              <input type="checkbox" id="perplexity-toggle" checked />
-              <span class="slider"></span>
-            </label>
+            <label class="toggle perplexity"><input type="checkbox" id="perplexity-toggle" checked /><span class="slider"></span></label>
           </div>
         </div>
       </div>
@@ -215,19 +257,15 @@
       <div class="messages-container" id="messages-container">
         <div class="loading-msgs">در حال بارگذاری پیام‌ها...</div>
       </div>
-
       <div class="chat-watermark">امیرطاها نجفی از مدرسه نیکان</div>
 
       <div class="file-preview hidden" id="file-preview"></div>
 
       <div class="input-area">
-        <div class="plus-btn" id="plus-btn">
-          <span>+</span>
+        <div class="plus-btn" id="plus-btn">+
           <div class="plus-menu hidden" id="plus-menu">
-            <div class="plus-menu-item" id="attach-file-btn">
-              <span>📎</span>
-              <span>پیوست فایل</span>
-            </div>
+            <div class="plus-menu-item" id="attach-file-btn">📎 پیوست فایل</div>
+            <div class="plus-menu-item" id="open-quiz-btn">📝 ساخت آزمون</div>
           </div>
         </div>
         <input type="file" id="file-input" style="display:none" accept="image/*,.pdf,.txt,.doc,.docx" />
@@ -242,7 +280,74 @@
     </div>
   </div>
 
-  <!-- Image Modal -->
+  <!-- QUIZ SETUP MODAL -->
+  <div class="quiz-modal-overlay" id="quiz-setup-modal">
+    <div class="quiz-modal">
+      <h2>📝 ساخت آزمون</h2>
+      <p class="subtitle">Perplexity برات آزمون طراحی می‌کنه و نتیجه رو تصحیح می‌کنه</p>
+
+      <div class="quiz-field">
+        <label>📚 موضوع آزمون *</label>
+        <input type="text" id="quiz-subject" placeholder="مثلاً: انقلاب فرانسه، ریاضی پایه دهم، Python..." />
+      </div>
+
+      <div class="quiz-field">
+        <label>📄 توضیحات اضافه (اختیاری)</label>
+        <textarea id="quiz-context" placeholder="اگه فایل یا مطلب خاصی داری، خلاصه‌اش رو اینجا بنویس..."></textarea>
+      </div>
+
+      <div class="quiz-field">
+        <label>🎯 نوع آزمون</label>
+        <div class="quiz-type-grid">
+          <div class="quiz-type-btn selected" data-type="multiple">تستی (چند گزینه‌ای)</div>
+          <div class="quiz-type-btn" data-type="descriptive">تشریحی</div>
+          <div class="quiz-type-btn" data-type="fill">جاخالی</div>
+          <div class="quiz-type-btn" data-type="truefalse">درست / نادرست</div>
+          <div class="quiz-type-btn" data-type="mixed">مخلوط</div>
+        </div>
+      </div>
+
+      <div class="quiz-field">
+        <label>🔢 تعداد سوالات</label>
+        <select id="quiz-count">
+          <option value="5">۵ سوال</option>
+          <option value="10" selected>۱۰ سوال</option>
+          <option value="15">۱۵ سوال</option>
+          <option value="20">۲۰ سوال</option>
+        </select>
+      </div>
+
+      <div class="quiz-field">
+        <label>⚡ سطح دشواری</label>
+        <select id="quiz-difficulty">
+          <option value="easy">آسان</option>
+          <option value="medium" selected>متوسط</option>
+          <option value="hard">دشوار</option>
+        </select>
+      </div>
+
+      <div class="quiz-modal-footer">
+        <button class="quiz-cancel-btn" id="quiz-cancel-btn">انصراف</button>
+        <button class="quiz-start-btn" id="quiz-generate-btn">🚀 ساخت آزمون</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUIZ SCREEN -->
+  <div id="quiz-screen">
+    <div class="quiz-container">
+      <div class="quiz-header">
+        <div>
+          <div class="quiz-title" id="quiz-screen-title">آزمون</div>
+          <div class="quiz-meta" id="quiz-screen-meta"></div>
+        </div>
+        <button class="quiz-close-btn" id="quiz-close-btn">✕ بستن</button>
+      </div>
+      <div id="quiz-content"></div>
+    </div>
+  </div>
+
+  <!-- IMAGE MODAL -->
   <div class="img-modal-overlay" id="img-modal">
     <button class="img-modal-close" id="img-modal-close">✕</button>
     <img id="img-modal-img" src="" alt="تصویر" />
@@ -257,7 +362,6 @@
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const WORKER_URL = "https://planning-ai.motanjf.workers.dev";
-
     const firebaseConfig = {
       apiKey: "AIzaSyAKX7Qphz83ImmoLplsdlLvoHknnny1nU4",
       authDomain: "planning-with-ai-46ccb.firebaseapp.com",
@@ -266,20 +370,20 @@
       messagingSenderId: "460552947425",
       appId: "1:460552947425:web:feae278abe8d1d6e4b99a0"
     };
-
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const messagesRef = collection(db, "group_messages");
 
     let currentUser = null;
     let allMessages = [];
-    let claudeEnabled = true;
-    let geminiEnabled = true;
-    let perplexityEnabled = true;
+    let claudeEnabled = true, geminiEnabled = true, perplexityEnabled = true;
     let pendingFile = null;
     const imageCache = new Map();
+    let quizType = "multiple";
+    let currentQuiz = null;
+    let userAnswers = {};
 
-    // AUTO-RESIZE TEXTAREA
+    // TEXTAREA AUTO-RESIZE
     const msgInput = document.getElementById("message-input");
     msgInput.addEventListener("input", () => {
       msgInput.style.height = "auto";
@@ -289,34 +393,246 @@
     // PLUS MENU
     const plusBtn = document.getElementById("plus-btn");
     const plusMenu = document.getElementById("plus-menu");
-    plusBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      plusMenu.classList.toggle("hidden");
-    });
+    plusBtn.addEventListener("click", e => { e.stopPropagation(); plusMenu.classList.toggle("hidden"); });
     document.addEventListener("click", () => plusMenu.classList.add("hidden"));
 
-    document.getElementById("attach-file-btn").addEventListener("click", () => {
-      document.getElementById("file-input").click();
-    });
-
-    document.getElementById("file-input").addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+    document.getElementById("attach-file-btn").addEventListener("click", () => document.getElementById("file-input").click());
+    document.getElementById("file-input").addEventListener("change", e => {
+      const file = e.target.files[0]; if (!file) return;
       pendingFile = file;
       const preview = document.getElementById("file-preview");
       preview.classList.remove("hidden");
-      preview.innerHTML = `
-        <div class="file-preview-item">
-          <span>${file.type.startsWith("image/") ? "🖼" : "📄"}</span>
-          <span>${file.name}</span>
-          <button class="file-preview-remove" id="remove-file">✕</button>
-        </div>`;
+      preview.innerHTML = `<div class="file-preview-item">${file.type.startsWith("image/") ? "🖼" : "📄"} ${file.name} <button class="file-preview-remove" id="remove-file">✕</button></div>`;
       document.getElementById("remove-file").addEventListener("click", () => {
-        pendingFile = null;
-        preview.classList.add("hidden");
-        preview.innerHTML = "";
-        e.target.value = "";
+        pendingFile = null; preview.classList.add("hidden"); preview.innerHTML = ""; e.target.value = "";
       });
+    });
+
+    // QUIZ SETUP
+    document.getElementById("open-quiz-btn").addEventListener("click", () => {
+      document.getElementById("quiz-setup-modal").classList.add("active");
+    });
+    document.getElementById("quiz-cancel-btn").addEventListener("click", () => {
+      document.getElementById("quiz-setup-modal").classList.remove("active");
+    });
+
+    document.querySelectorAll(".quiz-type-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".quiz-type-btn").forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        quizType = btn.dataset.type;
+      });
+    });
+
+    document.getElementById("quiz-generate-btn").addEventListener("click", generateQuiz);
+
+    async function generateQuiz() {
+      const subject = document.getElementById("quiz-subject").value.trim();
+      if (!subject) { alert("لطفاً موضوع آزمون رو بنویس!"); return; }
+      const context = document.getElementById("quiz-context").value.trim();
+      const count = document.getElementById("quiz-count").value;
+      const difficulty = document.getElementById("quiz-difficulty").value;
+      const typeLabels = { multiple: "تستی چند گزینه‌ای", descriptive: "تشریحی", fill: "جاخالی", truefalse: "درست/نادرست", mixed: "مخلوط" };
+      const diffLabels = { easy: "آسان", medium: "متوسط", hard: "دشوار" };
+
+      document.getElementById("quiz-setup-modal").classList.remove("active");
+      document.getElementById("quiz-screen").classList.add("active");
+      document.getElementById("quiz-screen-title").textContent = `آزمون: ${subject}`;
+      document.getElementById("quiz-screen-meta").textContent = `${count} سوال • ${typeLabels[quizType]} • ${diffLabels[difficulty]}`;
+      document.getElementById("quiz-content").innerHTML = `
+        <div class="quiz-loading">
+          <div class="quiz-loading-spinner"></div>
+          <p>Perplexity در حال طراحی آزمون شماست...<br><small style="color:var(--text3)">لطفاً چند لحظه صبر کنید</small></p>
+        </div>`;
+
+      const typeInstructions = {
+        multiple: `سوالات تستی با 4 گزینه (الف، ب، پ، ت). جواب درست را مشخص کن.`,
+        descriptive: `سوالات تشریحی که کاربر باید با نوشتن جواب بده.`,
+        fill: `جملات با جای خالی که کاربر باید پر کنه.`,
+        truefalse: `جملاتی که کاربر باید درست یا نادرست بودنشان را مشخص کند.`,
+        mixed: `ترکیبی از تستی، تشریحی، جاخالی و درست/نادرست.`
+      };
+
+      const prompt = `یک آزمون کامل و حرفه‌ای طراحی کن با این مشخصات:
+موضوع: ${subject}
+${context ? `اطلاعات اضافه: ${context}` : ""}
+نوع: ${typeInstructions[quizType]}
+تعداد سوالات: ${count}
+سطح دشواری: ${diffLabels[difficulty]}
+
+خروجی را دقیقاً به صورت JSON برگردان با این ساختار:
+{
+  "questions": [
+    {
+      "id": 1,
+      "type": "multiple|descriptive|fill|truefalse",
+      "question": "متن سوال",
+      "options": ["الف) ...", "ب) ...", "پ) ...", "ت) ..."],  // فقط برای تستی
+      "answer": "جواب درست",
+      "explanation": "توضیح کوتاه"
+    }
+  ]
+}
+فقط JSON برگردان، بدون متن اضافه.`;
+
+      try {
+        const res = await fetch(`${WORKER_URL}/perplexity`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "sonar",
+            messages: [
+              { role: "system", content: "تو یک طراح آزمون حرفه‌ای هستی. آزمون‌های دقیق و باکیفیت طراحی می‌کنی. فقط JSON برمی‌گردانی." },
+              { role: "user", content: prompt }
+            ]
+          })
+        });
+        const data = await res.json();
+        const text = data.choices?.[0]?.message?.content || "";
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error("JSON پیدا نشد");
+        currentQuiz = JSON.parse(jsonMatch[0]);
+        userAnswers = {};
+        renderQuiz(currentQuiz, subject);
+      } catch (err) {
+        document.getElementById("quiz-content").innerHTML = `
+          <div style="text-align:center;padding:60px;color:var(--text2)">
+            <div style="font-size:40px;margin-bottom:16px">😕</div>
+            <p>مشکلی پیش اومد. دوباره امتحان کن.</p>
+            <button class="quiz-retry-btn" onclick="document.getElementById('quiz-screen').classList.remove('active')">برگشت</button>
+          </div>`;
+      }
+    }
+
+    function renderQuiz(quiz, subject) {
+      let html = "";
+      quiz.questions.forEach((q, i) => {
+        html += `<div class="quiz-question">
+          <div class="quiz-q-num">سوال ${i + 1} از ${quiz.questions.length}</div>
+          <div class="quiz-q-text">${q.question}</div>`;
+
+        if (q.type === "multiple" && q.options) {
+          html += `<div class="quiz-options">`;
+          const letters = ["الف", "ب", "پ", "ت"];
+          q.options.forEach((opt, j) => {
+            html += `<div class="quiz-option" data-q="${q.id}" data-opt="${j}" onclick="selectOption(this, ${q.id}, ${j})">
+              <span class="quiz-option-letter">${letters[j]}</span>
+              <span>${opt}</span>
+            </div>`;
+          });
+          html += `</div>`;
+        } else if (q.type === "truefalse") {
+          html += `<div class="quiz-tf-btns">
+            <button class="quiz-tf-btn" data-q="${q.id}" data-val="درست" onclick="selectTF(this, ${q.id}, 'درست')">✅ درست</button>
+            <button class="quiz-tf-btn" data-q="${q.id}" data-val="نادرست" onclick="selectTF(this, ${q.id}, 'نادرست')">❌ نادرست</button>
+          </div>`;
+        } else {
+          html += `<input class="quiz-text-input" type="text" id="answer-${q.id}" placeholder="جواب خود را بنویسید..." oninput="userAnswers[${q.id}] = this.value" />`;
+        }
+        html += `</div>`;
+      });
+
+      html += `<button class="quiz-submit-btn" id="quiz-submit-btn" onclick="submitQuiz()">✅ ثبت و تصحیح آزمون</button>`;
+      document.getElementById("quiz-content").innerHTML = html;
+    }
+
+    window.selectOption = function(el, qId, optIdx) {
+      document.querySelectorAll(`[data-q="${qId}"]`).forEach(o => o.classList.remove("selected"));
+      el.classList.add("selected");
+      userAnswers[qId] = optIdx;
+    };
+
+    window.selectTF = function(el, qId, val) {
+      document.querySelectorAll(`[data-q="${qId}"]`).forEach(o => o.classList.remove("selected"));
+      el.classList.add("selected");
+      userAnswers[qId] = val;
+    };
+
+    window.submitQuiz = async function() {
+      const btn = document.getElementById("quiz-submit-btn");
+      btn.disabled = true;
+      btn.textContent = "در حال تصحیح...";
+
+      let answersText = "";
+      let correct = 0;
+      currentQuiz.questions.forEach(q => {
+        const ua = userAnswers[q.id];
+        let userAns = ua !== undefined ? ua : "بدون پاسخ";
+        if (q.type === "multiple" && q.options && typeof ua === "number") {
+          userAns = q.options[ua];
+        }
+        answersText += `سوال ${q.id}: "${q.question}"\nجواب کاربر: ${userAns}\nجواب صحیح: ${q.answer}\n\n`;
+      });
+
+      const prompt = `آزمون زیر را تصحیح کن و نتیجه را به صورت JSON برگردان:
+
+${answersText}
+
+خروجی JSON:
+{
+  "score": عدد (از 100),
+  "correct": تعداد درست,
+  "total": کل سوالات,
+  "feedback": "تحلیل کلی عملکرد به فارسی",
+  "details": [
+    {"id": شماره سوال, "correct": true/false, "comment": "توضیح کوتاه"}
+  ]
+}
+فقط JSON برگردان.`;
+
+      try {
+        const res = await fetch(`${WORKER_URL}/perplexity`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "sonar",
+            messages: [
+              { role: "system", content: "تو یک استاد مصحح هستی. آزمون‌ها را دقیق و منصفانه تصحیح می‌کنی. فقط JSON برمی‌گردانی." },
+              { role: "user", content: prompt }
+            ]
+          })
+        });
+        const data = await res.json();
+        const text = data.choices?.[0]?.message?.content || "";
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error("خطا");
+        const result = JSON.parse(jsonMatch[0]);
+        renderResult(result);
+      } catch {
+        btn.disabled = false;
+        btn.textContent = "✅ ثبت و تصحیح آزمون";
+        alert("خطا در تصحیح. دوباره امتحان کن.");
+      }
+    };
+
+    function renderResult(result) {
+      const scoreColor = result.score >= 70 ? "var(--gemini)" : result.score >= 50 ? "#ffa600" : "#f87171";
+      let reviewHtml = "";
+      if (result.details) {
+        result.details.forEach((d, i) => {
+          const q = currentQuiz.questions.find(q => q.id === d.id || q.id === i + 1);
+          reviewHtml += `<div class="quiz-answer-item ${d.correct ? 'correct-ans' : 'wrong-ans'}">
+            ${d.correct ? '✅' : '❌'} <strong>سوال ${d.id}:</strong> ${d.comment || ''}
+          </div>`;
+        });
+      }
+
+      document.getElementById("quiz-content").innerHTML = `
+        <div class="quiz-result">
+          <div class="quiz-score" style="color:${scoreColor}">${result.score}%</div>
+          <div class="quiz-score-label">${result.correct} از ${result.total} سوال درست</div>
+          <div class="quiz-feedback">${result.feedback || ''}</div>
+        </div>
+        <div class="quiz-answer-review">
+          <h3 style="margin-bottom:16px;font-size:16px">بررسی پاسخ‌ها</h3>
+          ${reviewHtml}
+        </div>
+        <button class="quiz-retry-btn" onclick="document.getElementById('quiz-screen').classList.remove('active')">🔙 برگشت به چت</button>
+      `;
+    }
+
+    document.getElementById("quiz-close-btn").addEventListener("click", () => {
+      document.getElementById("quiz-screen").classList.remove("active");
     });
 
     // WELCOME
@@ -370,18 +686,13 @@
       const mc = document.getElementById("messages-container");
       const wasAtBottom = mc.scrollHeight - mc.scrollTop - mc.clientHeight < 100;
       mc.innerHTML = "";
-      if (allMessages.length === 0) {
-        mc.innerHTML = '<div class="loading-msgs">هنوز پیامی نیست. اولین نفر باش! 👋</div>';
-        return;
-      }
+      if (allMessages.length === 0) { mc.innerHTML = '<div class="loading-msgs">هنوز پیامی نیست. اولین نفر باش! 👋</div>'; return; }
       allMessages.forEach(msg => mc.appendChild(createMessageEl(msg)));
       if (wasAtBottom || allMessages[allMessages.length-1]?.sender === currentUser) scrollToBottom();
     }
 
     function createMessageEl(msg) {
-      const isC = msg.sender === "Claude";
-      const isG = msg.sender === "Gemini";
-      const isP = msg.sender === "Perplexity";
+      const isC = msg.sender === "Claude", isG = msg.sender === "Gemini", isP = msg.sender === "Perplexity";
       const isMe = msg.sender === currentUser;
       const div = document.createElement("div");
       div.className = "msg-group" + (isC ? " is-claude" : isG ? " is-gemini" : isP ? " is-perplexity" : "");
@@ -397,18 +708,12 @@
       let content = "";
       if (msg.isSearch) content += `<div class="search-badge">🔍 نتیجه سرچ</div>`;
       content += `<div class="msg-text">${esc(msg.text)}</div>`;
-
-      const cachedImg = msg.imageId ? imageCache.get(msg.imageId) : msg.imageUrl;
+      const cachedImg = msg.imageId ? imageCache.get(msg.imageId) : null;
       if (cachedImg) content += `<img class="msg-img" src="${cachedImg}" alt="تصویر" />`;
-      else if (msg.imageId) content += `<div style="font-size:12px;color:var(--text3);margin-top:6px">🖼 عکس پس از refresh قابل نمایش نیست — دوباره بساز</div>`;
-
-      if (msg.fileName) content += `<div class="msg-file"><span class="msg-file-icon">${msg.fileType?.startsWith("image/") ? "🖼" : "📄"}</span><span>${esc(msg.fileName)}</span></div>`;
-
-      if (msg.sources && msg.sources.length > 0) {
+      else if (msg.imageId) content += `<div style="font-size:12px;color:var(--text3);margin-top:6px">🖼 عکس پس از refresh قابل نمایش نیست</div>`;
+      if (msg.sources?.length) {
         content += `<div class="msg-sources">`;
-        msg.sources.slice(0, 5).forEach((s, i) => {
-          content += `<a class="msg-source" href="${s}" target="_blank">منبع ${i+1}</a>`;
-        });
+        msg.sources.slice(0,5).forEach((s,i) => { content += `<a class="msg-source" href="${s}" target="_blank">منبع ${i+1}</a>`; });
         content += `</div>`;
       }
 
@@ -422,278 +727,151 @@
           </div>
           ${content}
         </div>`;
-
-      if (isMe) {
-        div.querySelector('.msg-delete').addEventListener('click', () => deleteMessage(msg.id));
-      }
+      if (isMe) div.querySelector('.msg-delete').addEventListener('click', () => deleteMessage(msg.id));
       return div;
     }
 
     async function deleteMessage(id) {
       if (!confirm("پیام حذف بشه؟")) return;
-      try { await deleteDoc(doc(db, "group_messages", id)); }
-      catch (err) { console.error("Delete error:", err); }
+      try { await deleteDoc(doc(db, "group_messages", id)); } catch(e) { console.error(e); }
     }
 
-    function esc(s) {
-      return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-    }
-    function scrollToBottom() {
-      const mc = document.getElementById("messages-container");
-      setTimeout(() => { mc.scrollTop = mc.scrollHeight; }, 50);
-    }
+    function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+    function scrollToBottom() { setTimeout(() => { document.getElementById("messages-container").scrollTop = 999999; }, 50); }
     function updateMemberCount() {
-      const senders = new Set(allMessages.map(m => m.sender).filter(s => !["Claude","Gemini","Perplexity"].includes(s)));
-      document.getElementById("member-count").textContent = senders.size > 0 ? `${senders.size} نفر` : "";
+      const s = new Set(allMessages.map(m => m.sender).filter(s => !["Claude","Gemini","Perplexity"].includes(s)));
+      document.getElementById("member-count").textContent = s.size > 0 ? `${s.size} نفر` : "";
     }
 
-    // SEND
     document.getElementById("send-btn").addEventListener("click", sendMessage);
     msgInput.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
-
-    async function fileToBase64(file) {
-      return new Promise((res, rej) => {
-        const reader = new FileReader();
-        reader.onload = () => res(reader.result.split(",")[1]);
-        reader.onerror = rej;
-        reader.readAsDataURL(file);
-      });
-    }
 
     async function sendMessage() {
       const text = msgInput.value.trim();
       if (!text && !pendingFile) return;
-      if (!currentUser) return;
-
-      msgInput.value = "";
-      msgInput.style.height = "auto";
+      msgInput.value = ""; msgInput.style.height = "auto";
       document.getElementById("send-btn").disabled = true;
 
-      let fileData = null;
-      let fileName = null;
-      let fileType = null;
-      let fileBase64 = null;
-
+      let fileData = null, fileName = null, fileType = null;
       if (pendingFile) {
-        fileName = pendingFile.name;
-        fileType = pendingFile.type;
-        fileBase64 = await fileToBase64(pendingFile);
-        fileData = { base64: fileBase64, mimeType: fileType };
+        fileName = pendingFile.name; fileType = pendingFile.type;
+        const b64 = await new Promise((res,rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = rej; r.readAsDataURL(pendingFile); });
+        fileData = { base64: b64, mimeType: fileType };
         pendingFile = null;
         document.getElementById("file-preview").classList.add("hidden");
         document.getElementById("file-preview").innerHTML = "";
         document.getElementById("file-input").value = "";
       }
 
-      const msgText = text || `📎 فایل: ${fileName}`;
-
       try {
-        await addDoc(messagesRef, {
-          sender: currentUser,
-          text: msgText,
-          ...(fileName && { fileName, fileType }),
-          timestamp: serverTimestamp()
-        });
-
+        await addDoc(messagesRef, { sender: currentUser, text: text || `📎 ${fileName}`, ...(fileName && {fileName, fileType}), timestamp: serverTimestamp() });
         const promises = [];
-        if (claudeEnabled) promises.push(askClaude(text || `فایل ارسال شد: ${fileName}`, fileData));
-        if (geminiEnabled) promises.push(askGemini(text || `فایل ارسال شد: ${fileName}`, fileData));
-        if (perplexityEnabled) promises.push(askPerplexity(text || `فایل ارسال شد: ${fileName}`));
+        if (claudeEnabled) promises.push(askClaude(text || `فایل: ${fileName}`, fileData));
+        if (geminiEnabled) promises.push(askGemini(text || `فایل: ${fileName}`, fileData));
+        if (perplexityEnabled) promises.push(askPerplexity(text || `فایل: ${fileName}`));
         await Promise.all(promises);
-      } catch (err) { console.error(err); }
+      } catch(e) { console.error(e); }
       finally { document.getElementById("send-btn").disabled = false; msgInput.focus(); }
     }
 
-    // TOGGLES
     document.getElementById("claude-toggle").addEventListener("change", e => { claudeEnabled = e.target.checked; });
     document.getElementById("gemini-toggle").addEventListener("change", e => { geminiEnabled = e.target.checked; });
     document.getElementById("perplexity-toggle").addEventListener("change", e => { perplexityEnabled = e.target.checked; });
 
-    function isImageRequest(text) {
-      const keywords = ["تصویر", "عکس", "عکسی", "تصویری", "بساز", "بکش", "نقاشی", "image", "photo", "picture", "draw"];
-      return keywords.some(k => text.toLowerCase().includes(k));
-    }
+    function isImageRequest(t) { return ["تصویر","عکس","بساز","بکش","نقاشی","image","photo","picture","draw"].some(k => t.toLowerCase().includes(k)); }
+    function isSearchRequest(t) { return ["سرچ کن","جستجو کن","پیدا کن","بگرد","اینترنت","اخبار","جدیدترین","آخرین","امروز","search","find","look up","تحقیق کن","چک کن"].some(k => t.toLowerCase().includes(k.toLowerCase())); }
 
-    function isSearchRequest(text) {
-      const keywords = ["سرچ کن", "جستجو کن", "پیدا کن", "بگرد", "اینترنت", "آنلاین", "اخبار", "جدیدترین", "آخرین", "امروز", "این هفته", "search", "find", "look up", "بررسی کن", "تحقیق کن", "چک کن", "ببین الان"];
-      return keywords.some(k => text.toLowerCase().includes(k.toLowerCase()));
-    }
+    const SYS_CLAUDE = `تو Claude هستی در گروه "Planning With AI". Gemini و Perplexity هم هستن. با بقیه دوستانه رفتار کن. به فارسی جواب بده. کوتاه و مفید.`;
+    const SYS_GEMINI = `تو Gemini هستی در گروه "Planning With AI". Claude و Perplexity هم هستن. می‌تونی تصویر بسازی. به فارسی جواب بده. کوتاه و مفید. اسمت را Gemini بنویس.`;
+    const SYS_PERP = `تو Perplexity هستی در گروه "Planning With AI". Claude و Gemini هم هستن. به فارسی جواب بده. کوتاه و مفید.`;
+    const SYS_PERP_SEARCH = `تو Perplexity هستی — متخصص سرچ. اطلاعات به‌روز بده. به فارسی جواب بده.`;
 
-    const CLAUDE_SYSTEM = `تو یک دستیار هوش مصنوعی در یک گروه چت هستی به نام "Planning With AI". اسمت Claude هست.
-در این گروه Gemini (که تصویر می‌سازه و چت می‌کنه) و Perplexity (که سرچ اینترنت می‌کنه) هم هستن.
-با بقیه دوستانه رفتار کن. هدف همه اینه که بهترین جواب رو به کاربر بدن.
-به فارسی جواب بده مگر اینکه کاربر به زبان دیگه‌ای بنویسه. جواب‌هات کوتاه و مفید باشه.`;
-
-    const GEMINI_SYSTEM = `تو یک دستیار هوش مصنوعی در یک گروه چت هستی به نام "Planning With AI". اسمت Gemini هست.
-در این گروه Claude و Perplexity هم هستن. با بقیه دوستانه رفتار کن.
-تو کاملاً قادر به ساخت تصویر هستی! وقتی کاربر تصویر خواست، بگو داری می‌سازی.
-به فارسی جواب بده. جواب‌هات کوتاه و مفید باشه.
-مهم: اسمت را همیشه Gemini بنویس. در انتهای پیام‌هات ننویس "Gemini هستم".`;
-
-    const PERPLEXITY_CHAT = `تو Perplexity هستی در گروه "Planning With AI". Claude و Gemini هم هستن.
-به فارسی جواب بده. جواب‌هات کوتاه و مفید باشه.`;
-
-    const PERPLEXITY_SEARCH = `تو Perplexity هستی — متخصص سرچ اینترنت. اطلاعات به‌روز و دقیق بده. به فارسی جواب بده.`;
-
-    async function askClaude(userMessage, fileData = null) {
+    async function askClaude(userMessage, fileData=null) {
       const typingEl = showTypingIndicator("Claude");
       try {
         const userContent = [];
-        if (fileData && fileData.mimeType.startsWith("image/")) {
-          userContent.push({ type: "image", source: { type: "base64", media_type: fileData.mimeType, data: fileData.base64 } });
-        }
-        userContent.push({ type: "text", text: `${currentUser}: ${userMessage}` });
-
-        const history = allMessages.slice(-20).map(msg => ({
-          role: msg.sender === "Claude" ? "assistant" : "user",
-          content: msg.sender !== "Claude" ? `${msg.sender}: ${msg.text}` : msg.text
-        }));
-        if (!history.length || history[history.length-1].role !== "user") {
-          history.push({ role: "user", content: userContent.length === 1 ? userContent[0].text : userContent });
-        }
-
-        const res = await fetch(`${WORKER_URL}/claude`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ model: "claude-sonnet-4-5", max_tokens: 1024, system: CLAUDE_SYSTEM, messages: history })
-        });
+        if (fileData?.mimeType.startsWith("image/")) userContent.push({ type:"image", source:{type:"base64", media_type:fileData.mimeType, data:fileData.base64} });
+        userContent.push({ type:"text", text:`${currentUser}: ${userMessage}` });
+        const history = allMessages.slice(-20).map(m => ({ role: m.sender==="Claude"?"assistant":"user", content: m.sender!=="Claude"?`${m.sender}: ${m.text}`:m.text }));
+        if (!history.length || history[history.length-1].role !== "user") history.push({ role:"user", content: userContent.length===1 ? userContent[0].text : userContent });
+        const res = await fetch(`${WORKER_URL}/claude`, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({model:"claude-sonnet-4-5", max_tokens:1024, system:SYS_CLAUDE, messages:history}) });
         const data = await res.json();
         removeTypingIndicator(typingEl);
-        if (data.content?.[0]?.text) {
-          await addDoc(messagesRef, { sender: "Claude", text: data.content[0].text, timestamp: serverTimestamp() });
-        }
-      } catch (err) { removeTypingIndicator(typingEl); console.error("Claude:", err); }
+        if (data.content?.[0]?.text) await addDoc(messagesRef, {sender:"Claude", text:data.content[0].text, timestamp:serverTimestamp()});
+      } catch(e) { removeTypingIndicator(typingEl); }
     }
 
-    async function askGemini(userMessage, fileData = null) {
+    async function askGemini(userMessage, fileData=null) {
       const typingEl = showTypingIndicator("Gemini");
       try {
         const userParts = [];
-        if (fileData) {
-          userParts.push({ inlineData: { mimeType: fileData.mimeType, data: fileData.base64 } });
-        }
-        userParts.push({ text: `${currentUser}: ${userMessage}` });
-
-        const history = allMessages.slice(-20)
-          .filter(m => m.sender !== "Claude" && m.sender !== "Perplexity")
-          .map(msg => ({
-            role: msg.sender === "Gemini" ? "model" : "user",
-            parts: [{ text: msg.sender !== "Gemini" ? `${msg.sender}: ${msg.text}` : msg.text }]
-          }));
-        if (!history.length || history[history.length-1].role !== "user") {
-          history.push({ role: "user", parts: userParts });
-        }
-
-        const chatRes = await fetch(`${WORKER_URL}/gemini`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ system_instruction: { parts: [{ text: GEMINI_SYSTEM }] }, contents: history })
-        });
+        if (fileData) userParts.push({ inlineData:{mimeType:fileData.mimeType, data:fileData.base64} });
+        userParts.push({ text:`${currentUser}: ${userMessage}` });
+        const history = allMessages.slice(-20).filter(m=>m.sender!=="Claude"&&m.sender!=="Perplexity").map(m => ({ role:m.sender==="Gemini"?"model":"user", parts:[{text:m.sender!=="Gemini"?`${m.sender}: ${m.text}`:m.text}] }));
+        if (!history.length || history[history.length-1].role!=="user") history.push({role:"user", parts:userParts});
+        const chatRes = await fetch(`${WORKER_URL}/gemini`, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({system_instruction:{parts:[{text:SYS_GEMINI}]}, contents:history}) });
         const chatData = await chatRes.json();
-        const chatText = chatData.candidates?.[0]?.content?.parts?.find(p => p.text)?.text || "";
+        const chatText = chatData.candidates?.[0]?.content?.parts?.find(p=>p.text)?.text || "";
         removeTypingIndicator(typingEl);
-
         if (isImageRequest(userMessage)) {
-          await addDoc(messagesRef, { sender: "Gemini", text: chatText || "دارم تصویر می‌سازم... 🎨", timestamp: serverTimestamp() });
+          await addDoc(messagesRef, {sender:"Gemini", text:chatText||"دارم تصویر می‌سازم... 🎨", timestamp:serverTimestamp()});
           const imgTyping = showTypingIndicator("Gemini");
           try {
-            const imgRes = await fetch(`${WORKER_URL}/gemini-image`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ contents: [{ parts: [{ text: userMessage }] }], generationConfig: { responseModalities: ["TEXT", "IMAGE"] } })
-            });
+            const imgRes = await fetch(`${WORKER_URL}/gemini-image`, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({contents:[{parts:[{text:userMessage}]}], generationConfig:{responseModalities:["TEXT","IMAGE"]}}) });
             const imgData = await imgRes.json();
             removeTypingIndicator(imgTyping);
             const parts = imgData.candidates?.[0]?.content?.parts || [];
             let imageUrl = null;
-            for (const part of parts) {
-              if (part.inlineData) { imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`; break; }
-            }
-            if (imageUrl) {
-              const imageId = "img_" + Date.now();
-              imageCache.set(imageId, imageUrl);
-              await addDoc(messagesRef, { sender: "Gemini", text: "تصویر آماده شد! 🎨", imageId, timestamp: serverTimestamp() });
-            } else {
-              await addDoc(messagesRef, { sender: "Gemini", text: "متأسفم، نتونستم تصویر بسازم. دوباره امتحان کن.", timestamp: serverTimestamp() });
-            }
-          } catch (e) { removeTypingIndicator(imgTyping); }
-        } else if (chatText) {
-          await addDoc(messagesRef, { sender: "Gemini", text: chatText, timestamp: serverTimestamp() });
-        }
-      } catch (err) { removeTypingIndicator(typingEl); console.error("Gemini:", err); }
+            for (const p of parts) { if (p.inlineData) { imageUrl = `data:${p.inlineData.mimeType};base64,${p.inlineData.data}`; break; } }
+            if (imageUrl) { const imageId = "img_"+Date.now(); imageCache.set(imageId, imageUrl); await addDoc(messagesRef, {sender:"Gemini", text:"تصویر آماده شد! 🎨", imageId, timestamp:serverTimestamp()}); }
+            else await addDoc(messagesRef, {sender:"Gemini", text:"متأسفم، نتونستم تصویر بسازم.", timestamp:serverTimestamp()});
+          } catch(e) { removeTypingIndicator(imgTyping); }
+        } else if (chatText) await addDoc(messagesRef, {sender:"Gemini", text:chatText, timestamp:serverTimestamp()});
+      } catch(e) { removeTypingIndicator(typingEl); }
     }
 
     async function askPerplexity(userMessage) {
       const typingEl = showTypingIndicator("Perplexity");
       const doSearch = isSearchRequest(userMessage);
       try {
-        const rawHistory = allMessages.slice(-10)
-          .filter(m => m.sender !== "Claude" && m.sender !== "Gemini")
-          .map(msg => ({
-            role: msg.sender === "Perplexity" ? "assistant" : "user",
-            content: msg.sender !== "Perplexity" ? `${msg.sender}: ${msg.text}` : msg.text
-          }));
+        const rawH = allMessages.slice(-10).filter(m=>m.sender!=="Claude"&&m.sender!=="Gemini").map(m => ({ role:m.sender==="Perplexity"?"assistant":"user", content:m.sender!=="Perplexity"?`${m.sender}: ${m.text}`:m.text }));
         const history = [];
-        for (const msg of rawHistory) {
-          if (history.length > 0 && history[history.length-1].role === msg.role) continue;
-          history.push(msg);
-        }
-        if (!history.length || history[history.length-1].role !== "user") {
-          history.push({ role: "user", content: `${currentUser}: ${userMessage}` });
-        }
-        const res = await fetch(`${WORKER_URL}/perplexity`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ model: "sonar", messages: [{ role: "system", content: doSearch ? PERPLEXITY_SEARCH : PERPLEXITY_CHAT }, ...history] })
-        });
+        for (const m of rawH) { if (history.length>0 && history[history.length-1].role===m.role) continue; history.push(m); }
+        if (!history.length || history[history.length-1].role!=="user") history.push({role:"user", content:`${currentUser}: ${userMessage}`});
+        const res = await fetch(`${WORKER_URL}/perplexity`, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({model:"sonar", messages:[{role:"system", content:doSearch?SYS_PERP_SEARCH:SYS_PERP}, ...history]}) });
         const data = await res.json();
         removeTypingIndicator(typingEl);
         const text = data.choices?.[0]?.message?.content;
-        const sources = doSearch ? (data.citations || []) : [];
-        if (text) {
-          await addDoc(messagesRef, { sender: "Perplexity", text, sources, isSearch: doSearch, timestamp: serverTimestamp() });
-        }
-      } catch (err) { removeTypingIndicator(typingEl); console.error("Perplexity:", err); }
+        const sources = doSearch ? (data.citations||[]) : [];
+        if (text) await addDoc(messagesRef, {sender:"Perplexity", text, sources, isSearch:doSearch, timestamp:serverTimestamp()});
+      } catch(e) { removeTypingIndicator(typingEl); }
     }
 
     function showTypingIndicator(who) {
-      const isG = who === "Gemini"; const isP = who === "Perplexity";
+      const isG=who==="Gemini", isP=who==="Perplexity";
       const div = document.createElement("div");
-      div.className = "msg-group " + (isG ? "is-gemini" : isP ? "is-perplexity" : "is-claude");
-      div.innerHTML = `
-        <div class="msg-avatar ${isG ? 'gemini' : isP ? 'perplexity' : 'claude'}">${isG ? 'G' : isP ? 'P' : 'AI'}</div>
-        <div class="msg-content">
-          <div class="msg-header"><span class="msg-name ${isG ? 'gemini-name' : isP ? 'perplexity-name' : 'claude-name'}">${who}</span></div>
-          <div class="typing-indicator ${isG ? 'gemini-typing' : isP ? 'perplexity-typing' : ''}"><span></span><span></span><span></span></div>
-        </div>`;
+      div.className = "msg-group "+(isG?"is-gemini":isP?"is-perplexity":"is-claude");
+      div.innerHTML = `<div class="msg-avatar ${isG?"gemini":isP?"perplexity":"claude"}">${isG?"G":isP?"P":"AI"}</div><div class="msg-content"><div class="msg-header"><span class="msg-name ${isG?"gemini-name":isP?"perplexity-name":"claude-name"}">${who}</span></div><div class="typing-indicator ${isG?"gemini-typing":isP?"perplexity-typing":""}"><span></span><span></span><span></span></div></div>`;
       document.getElementById("messages-container").appendChild(div);
       scrollToBottom();
       return div;
     }
-
     function removeTypingIndicator(el) { if (el?.parentNode) el.parentNode.removeChild(el); }
 
     // IMAGE MODAL
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', e => {
       if (e.target.classList.contains('msg-img')) {
         const src = e.target.src;
         document.getElementById('img-modal-img').src = src;
         document.getElementById('img-modal').classList.add('active');
-        document.getElementById('img-modal-download').onclick = () => {
-          const a = document.createElement('a'); a.href = src; a.download = 'gemini-image.png'; a.click();
-        };
+        document.getElementById('img-modal-download').onclick = () => { const a=document.createElement('a');a.href=src;a.download='image.png';a.click(); };
         document.getElementById('img-modal-copy').onclick = async () => {
-          try {
-            const res = await fetch(src); const blob = await res.blob();
-            await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
-            document.getElementById('img-modal-copy').textContent = '✅ کپی شد!';
-            setTimeout(() => { document.getElementById('img-modal-copy').textContent = '📋 کپی'; }, 2000);
-          } catch { alert('کپی موفق نبود'); }
+          try { const r=await fetch(src);const b=await r.blob();await navigator.clipboard.write([new ClipboardItem({[b.type]:b})]);document.getElementById('img-modal-copy').textContent='✅ کپی شد!';setTimeout(()=>{document.getElementById('img-modal-copy').textContent='📋 کپی';},2000); } catch { alert('کپی موفق نبود'); }
         };
       }
     });
     document.getElementById('img-modal-close').addEventListener('click', () => document.getElementById('img-modal').classList.remove('active'));
-    document.getElementById('img-modal').addEventListener('click', (e) => { if (e.target === document.getElementById('img-modal')) document.getElementById('img-modal').classList.remove('active'); });
+    document.getElementById('img-modal').addEventListener('click', e => { if (e.target===document.getElementById('img-modal')) document.getElementById('img-modal').classList.remove('active'); });
 
     checkSavedUser();
   </script>
