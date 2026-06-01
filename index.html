@@ -618,14 +618,10 @@ ${context ? `اطلاعات اضافه: ${context}` : ""}
     };
 
     window.submitQuiz = async function() {
-      document.getElementById("quiz-content").innerHTML = `
-        <div class="quiz-loading">
-          <div class="quiz-loading-spinner"></div>
-          <p>Perplexity در حال تصحیح آزمون شماست...</p>
-        </div>`;
+      const total = currentQuiz.questions.length;
 
-      let answersText = "";
-      currentQuiz.questions.forEach((q, i) => {
+      // ساخت لیست سوال‌ها و جواب‌ها
+      const qaList = currentQuiz.questions.map((q, i) => {
         const ua = userAnswers[i];
         let userAns = "بدون پاسخ";
         if (ua !== undefined && ua !== null && ua !== "") {
@@ -635,55 +631,111 @@ ${context ? `اطلاعات اضافه: ${context}` : ""}
             userAns = String(ua);
           }
         }
-        answersText += `سوال ${i+1}: "${q.question}"\nجواب کاربر: ${userAns}\nجواب صحیح: ${q.answer}\n---\n`;
+        return { index: i, question: q.question, type: q.type, correctAnswer: q.answer, userAnswer: userAns };
       });
 
-      const prompt = `این آزمون را تصحیح کن:
+      // نمایش progress تصحیح
+      const showProgress = (current, statusText) => {
+        const pct = Math.round((current / total) * 100);
+        document.getElementById("quiz-content").innerHTML = `
+          <div style="text-align:center;padding:60px 20px">
+            <div class="quiz-loading-spinner" style="width:56px;height:56px;margin:0 auto 24px"></div>
+            <p style="font-size:16px;font-weight:600;margin-bottom:8px">Perplexity در حال تصحیح آزمون...</p>
+            <p style="font-size:13px;color:var(--text3);margin-bottom:20px">${statusText}</p>
+            <div style="height:6px;background:var(--bg3);border-radius:3px;max-width:300px;margin:0 auto">
+              <div style="height:100%;width:${pct}%;background:var(--perplexity);border-radius:3px;transition:width 0.4s"></div>
+            </div>
+            <p style="font-size:12px;color:var(--text3);margin-top:8px">${current} از ${total} سوال بررسی شد</p>
+          </div>`;
+      };
 
-${answersText}
+      showProgress(0, "در حال آماده‌سازی...");
 
+      // تصحیح یک به یک با مکالمه چندمرحله‌ای
+      const messages = [
+        {
+          role: "system",
+          content: `تو یک استاد مصحح دقیق و منصف هستی. قرار است یک آزمون را تصحیح کنی.
 قوانین تصحیح:
-- برای تشریحی و جاخالی: اگر مفهوم درست بود، درست حساب کن حتی اگر عین جواب نمونه نباشد
-- برای درست/نادرست: دقیقاً مطابقت بده
-- برای تستی: گزینه انتخابی را با جواب صحیح مقایسه کن
+- تستی: اگر گزینه انتخابی با جواب صحیح یکی است → درست
+- درست/نادرست: دقیقاً مطابقت کامل لازم است
+- تشریحی: اگر مفهوم کلی درست بود حتی با کلمات متفاوت → درست
+- جاخالی: اگر کلمه/عبارت معادل باشد → درست
+- بدون پاسخ: همیشه غلط
+برای هر سوال فقط یک JSON کوچک برگردان.`
+        }
+      ];
 
-خروجی JSON:
-{
-  "score": عدد 0 تا 100,
-  "correct": تعداد درست,
-  "total": ${currentQuiz.questions.length},
-  "feedback": "تحلیل 2-3 جمله‌ای به فارسی",
-  "details": [{"qnum": شماره سوال از 1, "correct": true/false, "userAnswer": "جواب کاربر", "correctAnswer": "جواب صحیح", "explanation": "توضیح اگر غلط بود"}]
-}
-فقط JSON خالص.`;
+      const details = [];
+      let correctCount = 0;
 
+      for (let i = 0; i < qaList.length; i++) {
+        const qa = qaList[i];
+        showProgress(i, `بررسی سوال ${i+1}: "${qa.question.substring(0, 40)}..."`);
+
+        messages.push({
+          role: "user",
+          content: `سوال ${i+1} از ${total}:
+نوع: ${qa.type}
+سوال: "${qa.question}"
+جواب صحیح: "${qa.correctAnswer}"
+جواب دانش‌آموز: "${qa.userAnswer}"
+
+فقط این JSON را برگردان:
+{"correct": true/false, "explanation": "توضیح کوتاه فارسی (فقط اگر غلط بود)"}`
+        });
+
+        try {
+          const res = await fetch(`${WORKER_URL}/perplexity`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ model: "sonar", messages: [...messages] })
+          });
+          const data = await res.json();
+          const text = data.choices?.[0]?.message?.content || "";
+          const clean = text.replace(/```json|```/g, "").trim();
+          const jsonMatch = clean.match(/\{[\s\S]*?\}/);
+          let detail = { qnum: i+1, correct: false, userAnswer: qa.userAnswer, correctAnswer: qa.correctAnswer, explanation: "" };
+          if (jsonMatch) {
+            try {
+              const parsed = JSON.parse(jsonMatch[0]);
+              detail.correct = parsed.correct === true;
+              detail.explanation = parsed.explanation || "";
+            } catch(e) {}
+          }
+          if (detail.correct) correctCount++;
+          details.push(detail);
+
+          // اضافه کردن جواب AI به تاریخچه مکالمه
+          messages.push({ role: "assistant", content: text });
+        } catch(e) {
+          details.push({ qnum: i+1, correct: false, userAnswer: qa.userAnswer, correctAnswer: qa.correctAnswer, explanation: "خطا در تصحیح" });
+        }
+
+        showProgress(i + 1, i + 1 < total ? `بررسی سوال ${i+2}...` : "در حال محاسبه نمره...");
+        await new Promise(r => setTimeout(r, 300));
+      }
+
+      // دریافت نظر کلی
+      messages.push({
+        role: "user",
+        content: `تصحیح تمام شد. ${correctCount} از ${total} سوال درست بود.
+یک تحلیل کلی 2-3 جمله‌ای از عملکرد دانش‌آموز به فارسی بنویس.`
+      });
+
+      let feedback = `${correctCount} از ${total} سوال درست پاسخ داده شد.`;
       try {
         const res = await fetch(`${WORKER_URL}/perplexity`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "sonar",
-            messages: [
-              { role: "system", content: "تو استاد مصحح هستی. آزمون را منصفانه تصحیح می‌کنی. برای سوالات تشریحی اگر مفهوم درست بود درست حساب کن. فقط JSON خالص برمی‌گردانی." },
-              { role: "user", content: prompt }
-            ]
-          })
+          body: JSON.stringify({ model: "sonar", messages: [...messages] })
         });
         const data = await res.json();
-        const text = data.choices?.[0]?.message?.content || "";
-        const clean = text.replace(/```json|```/g, "").trim();
-        const jsonMatch = clean.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error("JSON نامعتبر");
-        const result = JSON.parse(jsonMatch[0]);
-        renderResult(result);
-      } catch(err) {
-        console.error(err);
-        document.getElementById("quiz-content").innerHTML = `
-          <div style="text-align:center;padding:60px;color:var(--text2)">
-            <p>مشکلی پیش اومد. دوباره امتحان کن.</p>
-            <button class="quiz-retry-btn" onclick="goQuestion(currentQuestionIndex)">برگشت به آزمون</button>
-          </div>`;
-      }
+        feedback = data.choices?.[0]?.message?.content || feedback;
+      } catch(e) {}
+
+      const score = Math.round((correctCount / total) * 100);
+      renderResult({ score, correct: correctCount, total, feedback, details });
     };
 
     function renderResult(result) {
