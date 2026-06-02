@@ -308,15 +308,6 @@
       </div>
 
       <div class="quiz-field">
-        <label>🌐 زبان آزمون</label>
-        <select id="quiz-lang">
-          <option value="auto">خودکار (بر اساس موضوع)</option>
-          <option value="Persian">فارسی</option>
-          <option value="English">English</option>
-        </select>
-      </div>
-
-      <div class="quiz-field">
         <label>🔢 تعداد سوالات</label>
         <select id="quiz-count">
           <option value="5">۵ سوال</option>
@@ -438,13 +429,17 @@
     function detectLanguage(subject) {
       const lower = subject.toLowerCase();
       // کلماتی که نشان می‌دهند آزمون باید انگلیسی باشد
-      const englishSubjects = [
-        "english", "انگلیسی", "زبان انگلیسی", "grammar", "vocabulary", "reading",
-        "writing", "listening", "toefl", "ielts", "conversation"
+      const englishKeywords = [
+        "english", "انگلیسی", "زبان انگلیسی", "زبان خارجی",
+        "grammar", "vocabulary", "reading", "writing", "listening",
+        "toefl", "ielts", "conversation", "pronunciation",
+        "زبان ششم", "زبان هفتم", "زبان هشتم", "زبان نهم",
+        "زبان دهم", "زبان یازدهم", "زبان دوازدهم",
+        "زبان پایه", "کتاب زبان", "درس زبان"
       ];
-      if (englishSubjects.some(w => lower.includes(w))) return "English";
-      // اگر موضوع کاملاً با حروف انگلیسی نوشته شده (نه فارسی)
-      if (/^[a-zA-Z0-9\s\-]+$/.test(subject.trim())) return "English";
+      if (englishKeywords.some(w => lower.includes(w.toLowerCase()))) return "English";
+      // اگر موضوع کاملاً با حروف انگلیسی نوشته شده
+      if (/^[a-zA-Z0-9\s\-\.]+$/.test(subject.trim())) return "English";
       return "Persian";
     }
 
@@ -456,8 +451,7 @@
       const difficulty = document.getElementById("quiz-difficulty").value;
       const typeLabels = { multiple: "Multiple Choice (4 options)", descriptive: "Descriptive (written answer)", fill: "Fill in the blank", truefalse: "True / False", mixed: "Mixed types" };
       const diffLabels = { easy: "Easy", medium: "Medium", hard: "Hard" };
-      const langSelect = document.getElementById("quiz-lang").value;
-      const lang = langSelect === "auto" ? detectLanguage(subject) : langSelect;
+      const lang = detectLanguage(subject);
       const langInstruction = lang === "English"
         ? "Write ALL questions, options, and answers in ENGLISH."
         : "تمام سوالات، گزینه‌ها و جواب‌ها را به فارسی بنویس.";
@@ -480,50 +474,51 @@
         mixed: `A mix of multiple choice, true/false, fill-in-the-blank, and descriptive questions.`
       };
 
-      const prompt = `Create a professional quiz with these specifications:
-Subject: ${subject}
-${context ? `Additional context: ${context}` : ""}
-Question type: ${typeInstructions[quizType]}
-Number of questions: ${count}
-Difficulty: ${diffLabels[difficulty]}
-Language rule: ${langInstruction}
+      const isEnglish = lang === "English";
 
-Return ONLY a valid JSON object with this exact structure:
+      const prompt = isEnglish ? `
+You are creating an English language quiz. ALL text must be in ENGLISH ONLY. No Persian/Farsi allowed anywhere.
+
+Subject: ${subject}
+Type: ${typeInstructions[quizType]}
+Count: ${count} questions
+Difficulty: ${diffLabels[difficulty]}
+${context ? `Context: ${context}` : ""}
+
+CRITICAL: Every single word must be in ENGLISH. Questions, options, answers - ALL IN ENGLISH.
+
+Return ONLY this JSON (no markdown, no extra text):
 {
-  "lang": "${lang}",
+  "lang": "English",
   "questions": [
-    {
-      "id": 0,
-      "type": "multiple",
-      "question": "Question text here",
-      "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
-      "answer": "A) option1",
-      "explanation": "Brief explanation"
-    },
-    {
-      "id": 1,
-      "type": "truefalse",
-      "question": "Statement here",
-      "answer": "True",
-      "explanation": "Brief explanation"
-    },
-    {
-      "id": 2,
-      "type": "fill",
-      "question": "The capital of France is ___.",
-      "answer": "Paris",
-      "explanation": "Brief explanation"
-    },
-    {
-      "id": 3,
-      "type": "descriptive",
-      "question": "Explain the concept of...",
-      "answer": "Expected answer here",
-      "explanation": ""
-    }
+    {"id": 0, "type": "multiple", "question": "Which word is a verb?", "options": ["A) book", "B) wrote", "C) beautiful", "D) school"], "answer": "B) wrote", "explanation": "wrote is a past tense verb"},
+    {"id": 1, "type": "truefalse", "question": "The sun rises in the east.", "answer": "True", "explanation": ""},
+    {"id": 2, "type": "fill", "question": "The capital of England is ___.", "answer": "London", "explanation": ""},
+    {"id": 3, "type": "descriptive", "question": "Describe the water cycle.", "answer": "Water evaporates, forms clouds, and falls as rain.", "explanation": ""}
   ]
 }
-IMPORTANT: Return ONLY the JSON. No markdown, no extra text. IDs must start from 0.`;
+` : `
+یک آزمون حرفه‌ای فارسی طراحی کن.
+
+موضوع: ${subject}
+نوع: ${typeInstructions[quizType]}
+تعداد: ${count} سوال
+سطح: ${diffLabels[difficulty]}
+${context ? `توضیحات: ${context}` : ""}
+
+مهم: تمام سوالات، گزینه‌ها و جواب‌ها باید کاملاً فارسی باشند.
+
+فقط این JSON را برگردان (بدون markdown):
+{
+  "lang": "Persian",
+  "questions": [
+    {"id": 0, "type": "multiple", "question": "کدام گزینه فعل است؟", "options": ["الف) کتاب", "ب) نوشت", "پ) زیبا", "ت) مدرسه"], "answer": "ب) نوشت", "explanation": "نوشت یک فعل ماضی است"},
+    {"id": 1, "type": "truefalse", "question": "خورشید از شرق طلوع می‌کند.", "answer": "درست", "explanation": ""},
+    {"id": 2, "type": "fill", "question": "پایتخت ایران ___ است.", "answer": "تهران", "explanation": ""},
+    {"id": 3, "type": "descriptive", "question": "چرخه آب را توضیح دهید.", "answer": "آب تبخیر می‌شود، ابر تشکیل می‌دهد و به صورت باران می‌بارد.", "explanation": ""}
+  ]
+}
+`;
 
       try {
         const res = await fetch(`${WORKER_URL}/perplexity`, {
@@ -532,7 +527,10 @@ IMPORTANT: Return ONLY the JSON. No markdown, no extra text. IDs must start from
           body: JSON.stringify({
             model: "sonar",
             messages: [
-              { role: "system", content: `You are a professional quiz designer. Create high-quality quizzes. ${langInstruction} Return ONLY valid JSON, no markdown fences.` },
+              { role: "system", content: isEnglish
+                ? "You are a quiz designer. You MUST write ALL questions and answers in ENGLISH ONLY. Never use Persian or Farsi. Return only valid JSON."
+                : "تو یک طراح آزمون فارسی هستی. تمام سوالات و جوابها باید فارسی باشند. فقط JSON برمیگردانی."
+              },
               { role: "user", content: prompt }
             ]
           })
