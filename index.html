@@ -308,6 +308,15 @@
       </div>
 
       <div class="quiz-field">
+        <label>🌐 زبان آزمون</label>
+        <select id="quiz-lang">
+          <option value="auto">خودکار (بر اساس موضوع)</option>
+          <option value="Persian">فارسی</option>
+          <option value="English">English</option>
+        </select>
+      </div>
+
+      <div class="quiz-field">
         <label>🔢 تعداد سوالات</label>
         <select id="quiz-count">
           <option value="5">۵ سوال</option>
@@ -427,12 +436,15 @@
     document.getElementById("quiz-generate-btn").addEventListener("click", generateQuiz);
 
     function detectLanguage(subject) {
-      // تشخیص زبان بر اساس موضوع
-      const englishWords = ["english", "math", "science", "history", "geography", "biology", "chemistry", "physics", "literature", "grammar", "vocabulary"];
       const lower = subject.toLowerCase();
-      if (englishWords.some(w => lower.includes(w))) return "English";
-      // اگر موضوع با حروف انگلیسی نوشته شده
-      if (/^[a-zA-Z\s]+$/.test(subject)) return "English";
+      // کلماتی که نشان می‌دهند آزمون باید انگلیسی باشد
+      const englishSubjects = [
+        "english", "انگلیسی", "زبان انگلیسی", "grammar", "vocabulary", "reading",
+        "writing", "listening", "toefl", "ielts", "conversation"
+      ];
+      if (englishSubjects.some(w => lower.includes(w))) return "English";
+      // اگر موضوع کاملاً با حروف انگلیسی نوشته شده (نه فارسی)
+      if (/^[a-zA-Z0-9\s\-]+$/.test(subject.trim())) return "English";
       return "Persian";
     }
 
@@ -444,7 +456,8 @@
       const difficulty = document.getElementById("quiz-difficulty").value;
       const typeLabels = { multiple: "Multiple Choice (4 options)", descriptive: "Descriptive (written answer)", fill: "Fill in the blank", truefalse: "True / False", mixed: "Mixed types" };
       const diffLabels = { easy: "Easy", medium: "Medium", hard: "Hard" };
-      const lang = detectLanguage(subject);
+      const langSelect = document.getElementById("quiz-lang").value;
+      const lang = langSelect === "auto" ? detectLanguage(subject) : langSelect;
       const langInstruction = lang === "English"
         ? "Write ALL questions, options, and answers in ENGLISH."
         : "تمام سوالات، گزینه‌ها و جواب‌ها را به فارسی بنویس.";
