@@ -543,7 +543,6 @@ Return this exact JSON structure (IDs start from 0):
       }
     }
 
-    let currentQuestionIndex = 0;
 
     function renderQuiz(quiz, subject) {
       currentQuestionIndex = 0;
@@ -574,22 +573,26 @@ Return this exact JSON structure (IDs start from 0):
         });
         answerHtml += `</div>`;
       } else if (q.type === "truefalse") {
-        const selD = saved === "درست" ? "selected" : "";
-        const selN = saved === "نادرست" ? "selected" : "";
+        const isEng = currentQuiz.quizLang === "English";
+        const trueVal = isEng ? "True" : "درست";
+        const falseVal = isEng ? "False" : "نادرست";
+        const selD = saved === trueVal ? "selected" : "";
+        const selN = saved === falseVal ? "selected" : "";
         answerHtml = `<div class="quiz-tf-btns">
-          <button class="quiz-tf-btn ${selD}" id="tf-true-${index}" onclick="selectTF(${index}, 'درست')">✅ درست</button>
-          <button class="quiz-tf-btn ${selN}" id="tf-false-${index}" onclick="selectTF(${index}, 'نادرست')">❌ نادرست</button>
+          <button class="quiz-tf-btn ${selD}" id="tf-true-${index}" onclick="selectTF(${index}, '${trueVal}')">${isEng ? "✅ True" : "✅ درست"}</button>
+          <button class="quiz-tf-btn ${selN}" id="tf-false-${index}" onclick="selectTF(${index}, '${falseVal}')">${isEng ? "❌ False" : "❌ نادرست"}</button>
         </div>`;
       } else {
         const savedVal = saved || '';
-        answerHtml = `<input class="quiz-text-input" type="text" id="text-ans-${index}" placeholder="جواب خود را بنویسید..." value="${savedVal}" />`;
+        const isEngInp = currentQuiz.quizLang === "English";
+        answerHtml = `<input class="quiz-text-input" type="text" id="text-ans-${index}" placeholder="${isEngInp ? 'Write your answer...' : 'جواب خود را بنویسید...'}" value="${savedVal}" />`;
       }
 
       const progressPct = Math.round(((index + 1) / total) * 100);
       document.getElementById("quiz-content").innerHTML = `
         <div style="margin-bottom:20px">
           <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text3);margin-bottom:6px">
-            <span>سوال ${index + 1} از ${total}</span>
+            <span>${currentQuiz.quizLang === 'English' ? `Question ${index + 1} of ${total}` : `سوال ${index + 1} از ${total}`}</span>
             <span>${progressPct}%</span>
           </div>
           <div style="height:4px;background:var(--bg3);border-radius:2px">
@@ -601,10 +604,10 @@ Return this exact JSON structure (IDs start from 0):
           ${answerHtml}
         </div>
         <div style="display:flex;gap:10px;margin-top:20px">
-          ${!isFirst ? `<button class="quiz-cancel-btn" onclick="goQuestion(${index - 1})">← قبلی</button>` : '<div style="flex:1"></div>'}
+          ${!isFirst ? `<button class="quiz-cancel-btn" onclick="goQuestion(${index - 1})">${currentQuiz.quizLang === 'English' ? '← Back' : '← قبلی'}</button>` : '<div style="flex:1"></div>'}
           ${!isLast
-            ? `<button class="quiz-start-btn" onclick="saveAndGo(${index}, ${index + 1})">بعدی ←</button>`
-            : `<button class="quiz-start-btn" id="quiz-submit-btn" onclick="saveAndSubmit(${index})">✅ ثبت و تصحیح آزمون</button>`
+            ? `<button class="quiz-start-btn" onclick="saveAndGo(${index}, ${index + 1})">${currentQuiz.quizLang === 'English' ? 'Next →' : 'بعدی ←'}</button>`
+            : `<button class="quiz-start-btn" id="quiz-submit-btn" onclick="saveAndSubmit(${index})">${currentQuiz.quizLang === 'English' ? '✅ Submit Quiz' : '✅ ثبت و تصحیح آزمون'}</button>`
           }
         </div>`;
 
