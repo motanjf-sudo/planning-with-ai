@@ -129,7 +129,7 @@
 
 
     /* CALCULATOR */
-    .calc-panel { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 20px; width: 280px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+
     .calc-display { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 12px; text-align: left; direction: ltr; }
     .calc-expr { font-size: 12px; color: var(--text3); min-height: 16px; word-break: break-all; }
     .calc-result { font-size: 28px; font-weight: 700; color: var(--text); word-break: break-all; }
@@ -909,26 +909,31 @@ ${allQA}
     let calcJustEq = false;
 
     function buildCalcHtml() {
-      const btns = [
-        ["C","clr","cC()"],["⌫","op","cBack()"],["%" ,"op","cOp(&quot;%&quot;)"],["÷","op","cOp(&quot;/&quot;)"],
-        ["7","num","cN(&quot;7&quot;)"],["8","num","cN(&quot;8&quot;)"],["9","num","cN(&quot;9&quot;)"],["×","op","cOp(&quot;*&quot;)"],
-        ["4","num","cN(&quot;4&quot;)"],["5","num","cN(&quot;5&quot;)"],["6","num","cN(&quot;6&quot;)"],["−","op","cOp(&quot;-&quot;)"],
-        ["1","num","cN(&quot;1&quot;)"],["2","num","cN(&quot;2&quot;)"],["3","num","cN(&quot;3&quot;)"],["+","op","cOp(&quot;+&quot;)"]
+      const rows = [
+        [{l:"C",c:"clr",v:"C"},{l:"⌫",c:"op",v:"B"},{l:"%",c:"op",v:"%"},{l:"÷",c:"op",v:"/"}],
+        [{l:"7",c:"num",v:"7"},{l:"8",c:"num",v:"8"},{l:"9",c:"num",v:"9"},{l:"×",c:"op",v:"*"}],
+        [{l:"4",c:"num",v:"4"},{l:"5",c:"num",v:"5"},{l:"6",c:"num",v:"6"},{l:"−",c:"op",v:"-"}],
+        [{l:"1",c:"num",v:"1"},{l:"2",c:"num",v:"2"},{l:"3",c:"num",v:"3"},{l:"+",c:"op",v:"+"}]
       ];
-      let btnHtml = btns.map(b => `<button class="calc-btn ${b[1]}" onclick="${b[2]}">${b[0]}</button>`).join("");
-      btnHtml += `<button class="calc-btn num zero" onclick="cN(&quot;0&quot;)">0</button>`;
-      btnHtml += `<button class="calc-btn num" onclick="cDot()">.</button>`;
-      btnHtml += `<button class="calc-btn eq" onclick="cEq()">=</button>`;
-      return `<div style="margin-bottom:16px">
-        <button onclick="toggleCalc()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:var(--radius-sm);padding:8px 14px;font-family:Vazirmatn,sans-serif;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px">🧮 <span id="calc-lbl">نمایش ماشین حساب</span></button>
-        <div id="calc-panel" class="calc-panel" style="display:none;margin-top:10px">
-          <div class="calc-display">
-            <div class="calc-expr" id="calc-expr"></div>
-            <div class="calc-result" id="calc-res">0</div>
-          </div>
-          <div class="calc-grid">${btnHtml}</div>
-        </div>
-      </div>`;
+      let btnHtml = "";
+      rows.forEach(row => {
+        row.forEach(b => {
+          btnHtml += '<button class="calc-btn ' + b.c + '" data-val="' + b.v + '">' + b.l + '</button>';
+        });
+      });
+      btnHtml += '<button class="calc-btn num zero" data-val="0">0</button>';
+      btnHtml += '<button class="calc-btn num" data-val=".">.</button>';
+      btnHtml += '<button class="calc-btn eq" data-val="=">=</button>';
+      return '<div class="quiz-calc-btn-wrap">' +
+        '<div id="calc-panel" class="calc-panel">' +
+          '<div class="calc-display" style="padding:12px 14px;margin-bottom:12px">' +
+            '<div class="calc-expr" id="calc-expr" style="font-size:12px;color:var(--text3);min-height:16px"></div>' +
+            '<div class="calc-result" id="calc-res" style="font-size:28px;font-weight:700;text-align:left;direction:ltr">0</div>' +
+          '</div>' +
+          '<div class="calc-grid" style="padding:0 12px 12px">' + btnHtml + '</div>' +
+        '</div>' +
+        '<button class="quiz-calc-open-btn" onclick="toggleCalc()" title="ماشین حساب">🧮</button>' +
+      '</div>';
     }
 
     function cUpd() {
@@ -939,12 +944,23 @@ ${allQA}
     }
     window.toggleCalc = function() {
       const p = document.getElementById("calc-panel");
-      const l = document.getElementById("calc-lbl");
       if (!p) return;
-      const vis = p.style.display !== "none";
-      p.style.display = vis ? "none" : "block";
-      if (l) l.textContent = vis ? "نمایش ماشین حساب" : "بستن ماشین حساب";
+      p.classList.toggle("open");
     };
+
+    // Calculator button event delegation
+    document.addEventListener("click", function(e) {
+      const btn = e.target.closest(".calc-btn");
+      if (!btn) return;
+      const v = btn.dataset.val;
+      if (!v) return;
+      if (v === "C") { cC(); }
+      else if (v === "B") { cBack(); }
+      else if (v === "=") { cEq(); }
+      else if (v === ".") { cDot(); }
+      else if (["+","-","*","/","%"].includes(v)) { cOp(v); }
+      else { cN(v); }
+    });
     window.cN = function(n) {
       if (calcJustEq) { calcExpr = ""; calcVal = "0"; calcJustEq = false; }
       n = n.replace(/&quot;/g, '"').replace(/&#39;/g, "'");
@@ -1299,10 +1315,7 @@ ${allQA}
     let calcJustCalc = false;
     let calcShowCalc = false;
 
-    window.toggleCalc = function() {
-      const panel = document.getElementById("calc-panel");
-      calcShowCalc = !calcShowCalc;
-    };
+
 
     window.calcAction = function(btn) {
       const ops = ["+", "-", "×", "÷"];
