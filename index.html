@@ -663,7 +663,7 @@ ${context ? `
 
         const claudeRes = await fetch(`${WORKER_URL}/claude`, {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ model: "claude-sonnet-4-5", max_tokens: 4000, system: claudeSys, messages: claudeMessages })
+          body: JSON.stringify({ model: "claude-sonnet-4-5", max_tokens: 8000, system: claudeSys, messages: claudeMessages })
         });
         const claudeData = await claudeRes.json();
         const raw = (claudeData.content?.[0]?.text || "").replace(/```json|```/gi, "").trim();
