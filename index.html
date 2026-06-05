@@ -103,6 +103,48 @@
     .msg-source { font-size: 11px; color: var(--perplexity); background: rgba(32,156,238,0.1); padding: 3px 10px; border-radius: 20px; text-decoration: none; border: 1px solid rgba(32,156,238,0.2); }
     .search-badge { font-size: 11px; color: var(--perplexity); background: rgba(32,156,238,0.1); padding: 2px 8px; border-radius: 20px; border: 1px solid rgba(32,156,238,0.2); margin-bottom: 6px; display: inline-block; }
 
+    /* CALCULATOR */
+    .quiz-calc-btn-wrap { position: fixed; bottom: 24px; left: 24px; z-index: 400; }
+    .quiz-calc-open-btn { width: 48px; height: 48px; border-radius: 50%; background: var(--perplexity); border: none; color: white; font-size: 20px; cursor: pointer; box-shadow: 0 4px 20px rgba(32,156,238,0.4); transition: transform 0.2s; display: flex; align-items: center; justify-content: center; }
+    .quiz-calc-open-btn:hover { transform: scale(1.1); }
+    .calc-panel { position: fixed; bottom: 84px; left: 24px; width: 280px; background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 16px 48px rgba(0,0,0,0.5); z-index: 400; overflow: hidden; display: none; }
+    .calc-panel.open { display: block; animation: calcPop 0.2s ease; }
+    @keyframes calcPop { from { opacity:0; transform: scale(0.9) translateY(10px); } to { opacity:1; transform: scale(1) translateY(0); } }
+    .calc-display { background: #0a0b0f; padding: 16px 20px 12px; }
+    .calc-expr { font-size: 12px; color: var(--text3); min-height: 18px; text-align: left; direction: ltr; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .calc-result { font-size: 32px; font-weight: 300; color: var(--text); text-align: left; direction: ltr; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 4px; }
+    .calc-buttons { padding: 12px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .calc-btn { height: 52px; border: none; border-radius: 12px; font-family: 'Vazirmatn', sans-serif; font-size: 16px; font-weight: 500; cursor: pointer; transition: all 0.1s; display: flex; align-items: center; justify-content: center; }
+    .calc-btn:active { transform: scale(0.93); }
+    .calc-btn.num { background: var(--bg3); color: var(--text); }
+    .calc-btn.num:hover { background: #2a2d38; }
+    .calc-btn.op { background: rgba(32,156,238,0.15); color: var(--perplexity); }
+    .calc-btn.op:hover { background: rgba(32,156,238,0.25); }
+    .calc-btn.eq { background: var(--perplexity); color: white; }
+    .calc-btn.eq:hover { background: #1a8cd8; }
+    .calc-btn.clr { background: rgba(248,113,113,0.15); color: #f87171; }
+    .calc-btn.clr:hover { background: rgba(248,113,113,0.25); }
+    .calc-btn.fn { background: var(--bg3); color: var(--text2); font-size: 13px; }
+    .calc-btn.fn:hover { background: #2a2d38; }
+
+
+    /* CALCULATOR */
+    .calc-panel { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 20px; width: 280px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+    .calc-display { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 12px; text-align: left; direction: ltr; }
+    .calc-expr { font-size: 12px; color: var(--text3); min-height: 16px; word-break: break-all; }
+    .calc-result { font-size: 28px; font-weight: 700; color: var(--text); word-break: break-all; }
+    .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .calc-btn { padding: 12px 6px; border: none; border-radius: var(--radius-sm); font-family: Vazirmatn,sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .calc-btn:active { transform: scale(0.93); }
+    .calc-btn.num { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+    .calc-btn.num:hover { background: rgba(255,255,255,0.05); }
+    .calc-btn.op { background: rgba(124,110,247,0.15); color: var(--accent2); border: 1px solid rgba(124,110,247,0.2); }
+    .calc-btn.op:hover { background: rgba(124,110,247,0.25); }
+    .calc-btn.eq { background: var(--accent); color: white; border: none; grid-column: span 2; }
+    .calc-btn.eq:hover { background: var(--accent2); }
+    .calc-btn.clr { background: rgba(248,113,113,0.15); color: #f87171; border: 1px solid rgba(248,113,113,0.2); }
+    .calc-btn.clr:hover { background: rgba(248,113,113,0.25); }
+    .calc-btn.zero { grid-column: span 2; }
     /* TYPING */
     .typing-indicator { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
     .typing-indicator span { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: bounce 1.2s infinite; }
@@ -330,6 +372,28 @@
         </select>
       </div>
 
+      <div class="quiz-field" style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px">
+        <div>
+          <div style="font-size:14px;font-weight:600">🧮 ماشین حساب</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px">نمایش ماشین حساب داخل آزمون</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="quiz-calc-toggle" />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="quiz-field">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <label style="margin-bottom:0">🧮 ماشین حساب در آزمون</label>
+          <label class="toggle" style="margin-top:0">
+            <input type="checkbox" id="quiz-calc-toggle" />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div style="font-size:12px;color:var(--text3);margin-top:6px">اگه روشن باشه، ماشین حساب توی آزمون نشون داده میشه</div>
+      </div>
+
       <div class="quiz-modal-footer">
         <button class="quiz-cancel-btn" id="quiz-cancel-btn">انصراف</button>
         <button class="quiz-start-btn" id="quiz-generate-btn">🚀 ساخت آزمون</button>
@@ -432,6 +496,7 @@
 
     // Quiz file upload
     let quizFile = null;
+    let showCalculator = false;
     let quizFileBase64 = null;
     document.getElementById("quiz-file-btn").addEventListener("click", () => {
       document.getElementById("quiz-file-input").click();
@@ -455,6 +520,7 @@
     // ===== QUIZ GENERATE =====
     async function generateQuiz() {
       quizSubject = document.getElementById("quiz-subject").value.trim();
+      showCalculator = document.getElementById("quiz-calc-toggle").checked;
       if (!quizSubject) { alert("لطفاً موضوع آزمون رو بنویس!"); return; }
       const context = document.getElementById("quiz-context").value.trim();
       const count = parseInt(document.getElementById("quiz-count").value);
@@ -618,6 +684,7 @@ ${context ? `
         currentQuiz.sourceContent = sourceContent;
         currentQuiz.questions.forEach((q, i) => { q.id = i; });
         userAnswers = {};
+        quizCalcEnabled = document.getElementById("quiz-calc-toggle").checked;
         currentQuestionIndex = 0;
         // reset file
         quizFile = null; quizFileBase64 = null;
@@ -636,7 +703,11 @@ ${context ? `
     }
 
     // ===== SHOW QUESTION =====
+    let quizCalcEnabled = false;
+
     function showQuestion(index) {
+      // show/hide calc based on setting
+      updateCalcVisibility(quizCalcEnabled);
       const q = currentQuiz.questions[index];
       const total = currentQuiz.questions.length;
       const isEng = currentQuiz.quizLang === "English";
@@ -664,7 +735,8 @@ ${context ? `
       }
 
       const pct = Math.round(((index+1)/total)*100);
-      document.getElementById("quiz-content").innerHTML = `
+      const calcHtml = showCalculator ? buildCalcHtml() : '';
+      document.getElementById("quiz-content").innerHTML = calcHtml + `
         <div style="margin-bottom:20px">
           <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text3);margin-bottom:6px">
             <span>${isEng ? `Question ${index+1} of ${total}` : `سوال ${index+1} از ${total}`}</span>
@@ -844,6 +916,98 @@ ${allQA}
       }
     };
 
+
+    // ===== CALCULATOR =====
+    let calcExpr = "";
+    let calcVal = "0";
+    let calcJustEq = false;
+
+    function buildCalcHtml() {
+      const btns = [
+        ["C","clr","cC()"],["⌫","op","cBack()"],["%" ,"op","cOp(&quot;%&quot;)"],["÷","op","cOp(&quot;/&quot;)"],
+        ["7","num","cN(&quot;7&quot;)"],["8","num","cN(&quot;8&quot;)"],["9","num","cN(&quot;9&quot;)"],["×","op","cOp(&quot;*&quot;)"],
+        ["4","num","cN(&quot;4&quot;)"],["5","num","cN(&quot;5&quot;)"],["6","num","cN(&quot;6&quot;)"],["−","op","cOp(&quot;-&quot;)"],
+        ["1","num","cN(&quot;1&quot;)"],["2","num","cN(&quot;2&quot;)"],["3","num","cN(&quot;3&quot;)"],["+","op","cOp(&quot;+&quot;)"]
+      ];
+      let btnHtml = btns.map(b => `<button class="calc-btn ${b[1]}" onclick="${b[2]}">${b[0]}</button>`).join("");
+      btnHtml += `<button class="calc-btn num zero" onclick="cN(&quot;0&quot;)">0</button>`;
+      btnHtml += `<button class="calc-btn num" onclick="cDot()">.</button>`;
+      btnHtml += `<button class="calc-btn eq" onclick="cEq()">=</button>`;
+      return `<div style="margin-bottom:16px">
+        <button onclick="toggleCalc()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:var(--radius-sm);padding:8px 14px;font-family:Vazirmatn,sans-serif;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px">🧮 <span id="calc-lbl">نمایش ماشین حساب</span></button>
+        <div id="calc-panel" class="calc-panel" style="display:none;margin-top:10px">
+          <div class="calc-display">
+            <div class="calc-expr" id="calc-expr"></div>
+            <div class="calc-result" id="calc-res">0</div>
+          </div>
+          <div class="calc-grid">${btnHtml}</div>
+        </div>
+      </div>`;
+    }
+
+    function cUpd() {
+      const r = document.getElementById("calc-res");
+      const e = document.getElementById("calc-expr");
+      if (r) r.textContent = calcVal;
+      if (e) e.textContent = calcExpr.replace(/\*/g,"×").replace(/\//g,"÷");
+    }
+    window.toggleCalc = function() {
+      const p = document.getElementById("calc-panel");
+      const l = document.getElementById("calc-lbl");
+      if (!p) return;
+      const vis = p.style.display !== "none";
+      p.style.display = vis ? "none" : "block";
+      if (l) l.textContent = vis ? "نمایش ماشین حساب" : "بستن ماشین حساب";
+    };
+    window.cN = function(n) {
+      if (calcJustEq) { calcExpr = ""; calcVal = "0"; calcJustEq = false; }
+      n = n.replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+      if (calcVal === "0" || calcVal === "خطا") calcVal = n;
+      else if (calcVal.length < 15) calcVal += n;
+      cUpd();
+    };
+    window.cDot = function() {
+      if (calcJustEq) { calcExpr = ""; calcVal = "0"; calcJustEq = false; }
+      if (!calcVal.includes(".")) calcVal += ".";
+      cUpd();
+    };
+    window.cOp = function(op) {
+      if (calcVal === "خطا") return;
+      calcJustEq = false;
+      // decode HTML entities if needed
+      op = op.replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+      if (op === "%") {
+        try { calcVal = String(parseFloat(calcVal) / 100); } catch(e) { calcVal = "خطا"; }
+        cUpd(); return;
+      }
+      calcExpr += calcVal + op;
+      calcVal = "0";
+      cUpd();
+    };
+    window.cEq = function() {
+      if (calcVal === "خطا") return;
+      try {
+        const full = calcExpr + calcVal;
+        if (!/^[0-9+\-*/.() ]+$/.test(full)) throw new Error("invalid");
+        let res = Function('"use strict";return(' + full + ')')();
+        if (!isFinite(res)) throw new Error("inf");
+        res = Math.round(res * 1e10) / 1e10;
+        const e = document.getElementById("calc-expr");
+        if (e) e.textContent = (calcExpr + calcVal).replace(/\*/g,"×").replace(/\//g,"÷") + " =";
+        calcVal = String(res);
+        calcExpr = "";
+        calcJustEq = true;
+      } catch(err) { calcVal = "خطا"; calcExpr = ""; }
+      const r = document.getElementById("calc-res");
+      if (r) r.textContent = calcVal;
+    };
+    window.cC = function() { calcExpr = ""; calcVal = "0"; calcJustEq = false; cUpd(); };
+    window.cBack = function() {
+      if (calcVal === "خطا") { calcVal = "0"; cUpd(); return; }
+      calcVal = calcVal.length <= 1 ? "0" : calcVal.slice(0,-1);
+      cUpd();
+    };
+
     // ===== RENDER RESULT =====
     function renderResult(result) {
       const isEng = currentQuiz.quizLang === "English";
@@ -903,6 +1067,7 @@ ${allQA}
 
         document.getElementById("quiz-close-btn").addEventListener("click", () => {
       document.getElementById("quiz-screen").classList.remove("active");
+      updateCalcVisibility(false);
     });
 
     // WELCOME
@@ -1142,6 +1307,70 @@ ${allQA}
     });
     document.getElementById('img-modal-close').addEventListener('click', () => document.getElementById('img-modal').classList.remove('active'));
     document.getElementById('img-modal').addEventListener('click', e => { if (e.target===document.getElementById('img-modal')) document.getElementById('img-modal').classList.remove('active'); });
+
+    // ===== CALCULATOR =====
+    let calcDisplay = "0";
+    let calcPrevResult = null;
+    let calcJustCalc = false;
+    let calcShowCalc = false;
+
+    window.toggleCalc = function() {
+      const panel = document.getElementById("calc-panel");
+      calcShowCalc = !calcShowCalc;
+      panel.classList.toggle("open", calcShowCalc);
+    };
+
+    window.calcAction = function(btn) {
+      const ops = ["+", "-", "×", "÷"];
+      const isOp = ops.includes(btn);
+
+      if (btn === "clear") {
+        calcDisplay = "0"; calcExpr = ""; calcPrevResult = null; calcJustCalc = false;
+      } else if (btn === "sign") {
+        if (calcDisplay !== "0") calcDisplay = calcDisplay.startsWith("-") ? calcDisplay.slice(1) : "-" + calcDisplay;
+      } else if (btn === "percent") {
+        const n = parseFloat(calcDisplay);
+        if (!isNaN(n)) calcDisplay = String(n / 100);
+      } else if (btn === "=") {
+        if (calcExpr) {
+          try {
+            const expr = calcExpr + calcDisplay;
+            const jsExpr = expr.replace(/×/g, "*").replace(/÷/g, "/").replace(/−/g, "-");
+            const res = Function('"use strict"; return (' + jsExpr + ')')();
+            if (!isFinite(res)) { calcDisplay = "خطا"; calcExpr = ""; }
+            else {
+              // round floating point errors
+              const rounded = Math.round(res * 1e10) / 1e10;
+              calcExpr = expr + " =";
+              calcDisplay = String(rounded);
+              calcPrevResult = calcDisplay;
+              calcJustCalc = true;
+            }
+          } catch(e) { calcDisplay = "خطا"; calcExpr = ""; }
+        }
+      } else if (isOp) {
+        if (calcDisplay === "خطا") { calcDisplay = "0"; calcExpr = ""; return; }
+        calcExpr = (calcJustCalc ? calcDisplay : (calcExpr + calcDisplay)) + " " + btn + " ";
+        calcJustCalc = false;
+        calcDisplay = "0";
+      } else if (btn === ".") {
+        if (calcJustCalc) { calcDisplay = "0."; calcExpr = ""; calcJustCalc = false; }
+        else if (!calcDisplay.includes(".")) calcDisplay += ".";
+      } else {
+        // digit
+        if (calcJustCalc) { calcDisplay = btn; calcExpr = ""; calcJustCalc = false; }
+        else calcDisplay = calcDisplay === "0" ? btn : calcDisplay + btn;
+      }
+
+      document.getElementById("calc-result").textContent = calcDisplay;
+      document.getElementById("calc-expr").textContent = calcExpr;
+    };
+
+    // show/hide calculator based on quiz settings
+    function updateCalcVisibility(show) {
+      document.getElementById("calc-wrap").classList.toggle("hidden", !show);
+      if (!show) document.getElementById("calc-panel").classList.remove("open");
+    }
 
     checkSavedUser();
   </script>
