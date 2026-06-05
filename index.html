@@ -673,8 +673,7 @@ ${context ? `
         currentQuiz.sourceContent = sourceContent;
         currentQuiz.questions.forEach((q, i) => { q.id = i; });
         userAnswers = {};
-        quizCalcEnabled = document.getElementById("quiz-calc-toggle").checked;
-        currentQuestionIndex = 0;
+          currentQuestionIndex = 0;
         // reset file
         quizFile = null; quizFileBase64 = null;
         document.getElementById("quiz-file-name").textContent = "";
@@ -692,11 +691,9 @@ ${context ? `
     }
 
     // ===== SHOW QUESTION =====
-    let quizCalcEnabled = false;
 
     function showQuestion(index) {
       // show/hide calc based on setting
-      updateCalcVisibility(quizCalcEnabled);
       const q = currentQuiz.questions[index];
       const total = currentQuiz.questions.length;
       const isEng = currentQuiz.quizLang === "English";
@@ -1056,7 +1053,6 @@ ${allQA}
 
         document.getElementById("quiz-close-btn").addEventListener("click", () => {
       document.getElementById("quiz-screen").classList.remove("active");
-      updateCalcVisibility(false);
     });
 
     // WELCOME
@@ -1306,7 +1302,6 @@ ${allQA}
     window.toggleCalc = function() {
       const panel = document.getElementById("calc-panel");
       calcShowCalc = !calcShowCalc;
-      panel.classList.toggle("open", calcShowCalc);
     };
 
     window.calcAction = function(btn) {
@@ -1357,8 +1352,10 @@ ${allQA}
 
     // show/hide calculator based on quiz settings
     function updateCalcVisibility(show) {
-      document.getElementById("calc-wrap").classList.toggle("hidden", !show);
-      if (!show) document.getElementById("calc-panel").classList.remove("open");
+      const wrap = document.getElementById("calc-wrap");
+      const panel = document.getElementById("calc-panel");
+      if (wrap) wrap.classList.toggle("hidden", !show);
+      if (panel && !show) panel.classList.remove("open");
     }
 
     checkSavedUser();
