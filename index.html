@@ -529,7 +529,8 @@ RULES:
 5. True/False: answer must be exactly "True" or "False"
 6. Fill-in-blank: use ___ for the blank, answer is the exact word/phrase
 7. Descriptive: clear question with a model answer
-8. Return ONLY valid JSON, no markdown`
+8. IMPORTANT - Math questions: if a question involves counting people, objects, or any countable items, choose numbers carefully so the final answer is always a whole integer. Calculate the answer first before writing the question to make sure it won't result in a decimal.
+9. Return ONLY valid JSON, no markdown`
           : `تو یک طراح آزمون متخصص هستی. سوالات دقیق و باکیفیت بر اساس مطالب تحقیق شده طراحی کن.
 
 قوانین:
@@ -540,7 +541,8 @@ RULES:
 ۵. درست/نادرست: جواب باید دقیقاً "درست" یا "نادرست" باشد
 ۶. جاخالی: از ___ برای جای خالی استفاده کن
 ۷. تشریحی: سوال واضح با جواب نمونه
-۸. فقط JSON معتبر برگردان`;
+۸. مهم - سوالات ریاضی: اگر سوال درباره تعداد نفر، شیء، یا هر چیز قابل شمارش است، اعداد را طوری انتخاب کن که جواب نهایی حتماً عدد صحیح باشد. قبل از نوشتن سوال، محاسبه کن و مطمئن شو جواب اعشاری نمی‌شود.
+۹. فقط JSON معتبر برگردان`;
 
         // Build Claude messages
         const claudeMessages = [];
