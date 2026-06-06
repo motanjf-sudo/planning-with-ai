@@ -663,14 +663,14 @@ ${context ? `
 
         const claudeRes = await fetch(`${WORKER_URL}/claude`, {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ model: "claude-sonnet-4-5", max_tokens: 8000, system: claudeSys, messages: claudeMessages })
+          body: JSON.stringify({ model: "claude-sonnet-4-5", max_tokens: 4096, system: claudeSys, messages: claudeMessages })
         });
         const claudeData = await claudeRes.json();
         const raw = (claudeData.content?.[0]?.text || "").replace(/```json|```/gi, "").trim();
         const si = raw.indexOf("{"), ei = raw.lastIndexOf("}");
         if (si === -1) throw new Error("No JSON from Claude");
         currentQuiz = JSON.parse(raw.substring(si, ei+1));
-        currentQuiz.sourceContent = sourceContent;
+        currentQuiz.sourceContent = sourceContent.substring(0, 3000);
         currentQuiz.questions.forEach((q, i) => { q.id = i; });
         userAnswers = {};
           currentQuestionIndex = 0;
@@ -825,7 +825,7 @@ Be consistent and fair. Return ONLY valid JSON.`
         ? `Grade this quiz about "${quizSubject}".
 
 SOURCE MATERIAL USED:
-${currentQuiz.sourceContent ? currentQuiz.sourceContent.substring(0, 2000) : "General knowledge"}
+${currentQuiz.sourceContent ? currentQuiz.sourceContent.substring(0, 1000) : "General knowledge"}
 
 STUDENT ANSWERS (${total} questions):
 ${allQA}
@@ -846,7 +846,7 @@ Return this exact JSON:
         : `آزمون "${quizSubject}" را تصحیح کن.
 
 منبع مورد استفاده:
-${currentQuiz.sourceContent ? currentQuiz.sourceContent.substring(0, 2000) : "دانش عمومی"}
+${currentQuiz.sourceContent ? currentQuiz.sourceContent.substring(0, 1000) : "دانش عمومی"}
 
 پاسخ‌های دانش‌آموز (${total} سوال):
 ${allQA}
