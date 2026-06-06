@@ -573,30 +573,28 @@
 
       try {
         const claudeSys = quizLang === "English"
-          ? `You are an expert quiz designer. Create precise, accurate quiz questions based on the provided research material.
+          ? `You are an expert quiz designer. Create precise quiz questions.
 
 RULES:
 1. Write ALL content in ENGLISH ONLY
-2. Questions must be directly based on the provided material
-3. Each question tests a different concept
-4. Multiple choice: exactly 4 options (A, B, C, D), only ONE correct answer
-5. True/False: answer must be exactly "True" or "False"
-6. Fill-in-blank: use ___ for the blank, answer is the exact word/phrase
-7. Descriptive: clear question with a model answer
-8. IMPORTANT - Math questions: if a question involves counting people, objects, or any countable items, choose numbers carefully so the final answer is always a whole integer. Calculate the answer first before writing the question to make sure it won't result in a decimal.
-9. Return ONLY valid JSON, no markdown`
-          : `تو یک طراح آزمون متخصص هستی. سوالات دقیق و باکیفیت بر اساس مطالب تحقیق شده طراحی کن.
+2. Each question tests a different concept
+3. Multiple choice: exactly 4 options (A, B, C, D), only ONE correct answer
+4. True/False: answer must be exactly True or False (no quotes needed)
+5. Fill-in-blank: use ___ for the blank
+6. Math: ensure countable items have whole number answers
+7. CRITICAL: Never use double quote characters (") inside question or answer text. Use single quotes or rephrase instead.
+8. Return ONLY a JSON array, no wrapper object, no markdown`
+          : `تو یک طراح آزمون متخصص هستی. سوالات دقیق و باکیفیت طراحی کن.
 
-قوانین:
-۱. همه محتوا را فارسی بنویس
-۲. سوالات باید مستقیماً بر اساس مطالب ارائه شده باشند
-۳. هر سوال یک مفهوم متفاوت را آزمایش کند
-۴. تستی: دقیقاً ۴ گزینه (الف، ب، پ، ت)، فقط یک گزینه درست
-۵. درست/نادرست: جواب باید دقیقاً "درست" یا "نادرست" باشد
-۶. جاخالی: از ___ برای جای خالی استفاده کن
-۷. تشریحی: سوال واضح با جواب نمونه
-۸. مهم - سوالات ریاضی: اگر سوال درباره تعداد نفر، شیء، یا هر چیز قابل شمارش است، اعداد را طوری انتخاب کن که جواب نهایی حتماً عدد صحیح باشد. قبل از نوشتن سوال، محاسبه کن و مطمئن شو جواب اعشاری نمی‌شود.
-۹. فقط JSON معتبر برگردان`;
+قوانین مهم:
+1. همه محتوا فارسی باشد
+2. هر سوال یک مفهوم متفاوت را آزمایش کند
+3. تستی: دقیقاً 4 گزینه (الف، ب، پ، ت)، فقط یک گزینه درست
+4. درست/نادرست: جواب فقط درست یا نادرست باشد
+5. جاخالی: از ___ برای جای خالی استفاده کن
+6. سوالات ریاضی: اعداد را طوری انتخاب کن که جواب عدد صحیح باشد
+7. CRITICAL: در متن سوالات و گزینه‌ها هرگز از کاراکتر " (double quote) استفاده نکن. به جای آن از « و » استفاده کن
+8. فقط JSON آرایه برگردان بدون توضیح اضافه`;
 
         // Build Claude messages
         const claudeMessages = [];
@@ -721,7 +719,18 @@ ${context ? `توضیحات: ${context}` : ""}
           let jsonStr = rawText.substring(arrStart, arrEnd + 1);
           jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
 
-          const batchQuestions = JSON.parse(jsonStr);
+          let batchQuestions;
+          try {
+            batchQuestions = JSON.parse(jsonStr);
+          } catch(e1) {
+            try {
+              const fixed = jsonStr.replace(/,\s*([}\]])/g, '$1');
+              batchQuestions = JSON.parse(fixed);
+            } catch(e2) {
+              throw new Error("Parse failed: " + e1.message);
+            }
+          }
+          if (!Array.isArray(batchQuestions)) throw new Error("Not an array");
           allQuestions = allQuestions.concat(batchQuestions);
 
           // Update progress
