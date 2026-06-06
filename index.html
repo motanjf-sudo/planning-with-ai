@@ -660,25 +660,80 @@ ${context ? `
         userContent.push({ type: "text", text: prompt });
         claudeMessages.push({ role: "user", content: userContent.length === 1 ? userContent[0].text : userContent });
 
-        const claudeRes = await fetch(`${WORKER_URL}/claude`, {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ model: "claude-sonnet-4-5", max_tokens: 4096, system: claudeSys, messages: claudeMessages })
-        });
-        const claudeData = await claudeRes.json();
-        const rawText = (claudeData.content?.[0]?.text || "").replace(/```json|```/gi, "").trim();
-        const si = rawText.indexOf("{"), ei = rawText.lastIndexOf("}");
-        if (si === -1) throw new Error("No JSON from Claude");
-        let jsonStr = rawText.substring(si, ei+1);
-        // Fix common JSON issues: remove trailing commas, fix newlines in strings
-        jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
-        try {
-          currentQuiz = JSON.parse(jsonStr);
-        } catch(parseErr) {
-          // Try to extract just the questions array
-          console.error("JSON parse error:", parseErr.message);
-          console.error("Raw:", jsonStr.substring(0, 200));
-          throw new Error("JSON parse failed: " + parseErr.message);
+        // Generate questions in batches of 5 to avoid token limits
+        const batchSize = 5;
+        const batches = Math.ceil(count / batchSize);
+        let allQuestions = [];
+
+        for (let batch = 0; batch < batches; batch++) {
+          const batchCount = Math.min(batchSize, count - batch * batchSize);
+          const startNum = batch * batchSize + 1;
+
+          const batchPrompt = quizLang === "English"
+            ? `Create exactly ${batchCount} quiz questions (questions ${startNum} to ${startNum + batchCount - 1}) about "${quizSubject}".
+
+RESEARCH MATERIAL:
+${sourceContent ? sourceContent.substring(0, 800) : "Use your general knowledge."}
+${context ? `CONTEXT: ${context}` : ""}
+
+Type: ${typeMap[quizType]}
+Difficulty: ${diffMap[difficulty]}
+
+Return ONLY this JSON array (no wrapper object):
+[
+  {"id": ${batch * batchSize}, "type": "multiple", "question": "...", "options": ["A) ...", "B) ...", "C) ...", "D) ..."], "answer": "A) ...", "explanation": "..."}
+]`
+            : `دقیقاً ${batchCount} سوال (سوالات ${startNum} تا ${startNum + batchCount - 1}) درباره "${quizSubject}" طراحی کن.
+
+منبع:
+${sourceContent ? sourceContent.substring(0, 800) : "از دانش خود استفاده کن."}
+${context ? `توضیحات: ${context}` : ""}
+
+نوع: ${typeMap[quizType]}
+سطح: ${diffMap[difficulty]}
+
+فقط این آرایه JSON را برگردان (بدون wrapper):
+[
+  {"id": ${batch * batchSize}, "type": "multiple", "question": "...", "options": ["الف) ...", "ب) ...", "پ) ...", "ت) ..."], "answer": "الف) ...", "explanation": "..."}
+]`;
+
+          const batchMessages = [{ role: "user", content: batchPrompt }];
+          if (quizFileBase64 && quizFile && batch === 0) {
+            if (quizFile.type.startsWith("image/")) {
+              batchMessages[0].content = [
+                { type: "image", source: { type: "base64", media_type: quizFile.type, data: quizFileBase64 } },
+                { type: "text", text: batchPrompt }
+              ];
+            }
+          }
+
+          const claudeRes = await fetch(`${WORKER_URL}/claude`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ model: "claude-sonnet-4-5", max_tokens: 2048, system: claudeSys, messages: batchMessages })
+          });
+          const claudeData = await claudeRes.json();
+          const rawText = (claudeData.content?.[0]?.text || "").replace(/```json|```/gi, "").trim();
+
+          // Extract JSON array
+          const arrStart = rawText.indexOf("[");
+          const arrEnd = rawText.lastIndexOf("]");
+          if (arrStart === -1) throw new Error("No JSON array from Claude in batch " + batch);
+          let jsonStr = rawText.substring(arrStart, arrEnd + 1);
+          jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
+
+          const batchQuestions = JSON.parse(jsonStr);
+          allQuestions = allQuestions.concat(batchQuestions);
+
+          // Update progress
+          document.getElementById("quiz-content").innerHTML = `
+            <div class="quiz-loading">
+              <div class="quiz-loading-spinner"></div>
+              <p style="font-size:15px;font-weight:600;margin-bottom:8px">${quizLang === "English" ? "Creating questions..." : "در حال ساخت سوالات..."}</p>
+              <small style="color:var(--text3)">${allQuestions.length} ${quizLang === "English" ? "of" : "از"} ${count} ${quizLang === "English" ? "done" : "آماده شد"}</small>
+            </div>`;
         }
+
+        currentQuiz = { quizLang, questions: allQuestions };
         currentQuiz.sourceContent = sourceContent.substring(0, 3000);
         currentQuiz.questions.forEach((q, i) => { q.id = i; });
         userAnswers = {};
