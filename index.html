@@ -359,7 +359,6 @@
           <option value="5">۵ سوال</option>
           <option value="10" selected>۱۰ سوال</option>
           <option value="15">۱۵ سوال</option>
-          <option value="20">۲۰ سوال</option>
         </select>
       </div>
 
@@ -666,10 +665,20 @@ ${context ? `
           body: JSON.stringify({ model: "claude-sonnet-4-5", max_tokens: 4096, system: claudeSys, messages: claudeMessages })
         });
         const claudeData = await claudeRes.json();
-        const raw = (claudeData.content?.[0]?.text || "").replace(/```json|```/gi, "").trim();
-        const si = raw.indexOf("{"), ei = raw.lastIndexOf("}");
+        const rawText = (claudeData.content?.[0]?.text || "").replace(/```json|```/gi, "").trim();
+        const si = rawText.indexOf("{"), ei = rawText.lastIndexOf("}");
         if (si === -1) throw new Error("No JSON from Claude");
-        currentQuiz = JSON.parse(raw.substring(si, ei+1));
+        let jsonStr = rawText.substring(si, ei+1);
+        // Fix common JSON issues: remove trailing commas, fix newlines in strings
+        jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
+        try {
+          currentQuiz = JSON.parse(jsonStr);
+        } catch(parseErr) {
+          // Try to extract just the questions array
+          console.error("JSON parse error:", parseErr.message);
+          console.error("Raw:", jsonStr.substring(0, 200));
+          throw new Error("JSON parse failed: " + parseErr.message);
+        }
         currentQuiz.sourceContent = sourceContent.substring(0, 3000);
         currentQuiz.questions.forEach((q, i) => { q.id = i; });
         userAnswers = {};
@@ -680,7 +689,7 @@ ${context ? `
         document.getElementById("quiz-file-input").value = "";
         showQuestion(0);
       } catch(err) {
-        console.error("Claude quiz creation failed:", err);
+        console.error("Claude quiz creation failed:", err.message);
         document.getElementById("quiz-content").innerHTML = `
           <div style="text-align:center;padding:60px;color:var(--text2)">
             <div style="font-size:40px;margin-bottom:16px">😕</div>
