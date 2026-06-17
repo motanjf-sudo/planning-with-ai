@@ -843,9 +843,15 @@
     }
     function updateStreamingBubble(div, text) {
       const t = div.querySelector(".msg-text");
-      t.innerHTML = renderMarkdown(text) + '<span class="stream-caret"></span>';
+      // Plain text during stream — no markdown parsing per chunk = no lag
+      t.innerHTML = escHtml(text).replace(/\n/g, '<br>') + '<span class="stream-caret"></span>';
       const mc = $("messages-container");
       if (mc.scrollHeight - mc.scrollTop - mc.clientHeight < 200) mc.scrollTop = mc.scrollHeight;
+    }
+    function finalizeStreamingBubble(div, text) {
+      // Called once after stream ends: render full markdown
+      const t = div.querySelector(".msg-text");
+      if (t) t.innerHTML = renderMarkdown(text);
     }
     function removeStreamingBubble(div) { if (div?.parentNode) div.parentNode.removeChild(div); }
 
@@ -868,6 +874,7 @@
           if (json.type === "content_block_delta" && json.delta?.type === "text_delta") return json.delta.text;
           return "";
         });
+        finalizeStreamingBubble(bubble, full);
         removeStreamingBubble(bubble);
         if (full.trim()) await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
       } catch(e) { console.error("Claude:", e); removeStreamingBubble(bubble); }
@@ -890,6 +897,7 @@
         const chatText = await readSSEProgressive(res, bubble, json =>
           json.candidates?.[0]?.content?.parts?.map(p=>p.text||"").join("") || ""
         );
+        finalizeStreamingBubble(bubble, chatText);
         removeStreamingBubble(bubble);
 
         if (isImageRequest(userMessage)) {
@@ -937,6 +945,7 @@
           if (json.citations) citations = json.citations;
           return json.choices?.[0]?.delta?.content || "";
         });
+        finalizeStreamingBubble(bubble, text);
         removeStreamingBubble(bubble);
         const sources = doSearch ? citations : [];
         if (text.trim()) await addDoc(messagesRef, {sender:"Perplexity", text, sources, isSearch:doSearch, timestamp:serverTimestamp()});
