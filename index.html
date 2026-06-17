@@ -127,6 +127,7 @@
     .msg-text a { color: var(--accent2); }
     .msg-text h1, .msg-text h2, .msg-text h3 { font-size: 15px; font-weight: 700; margin: 10px 0 6px; }
     .stream-caret { display: inline-block; width: 7px; height: 15px; background: var(--accent2); margin-right: 2px; border-radius: 1px; animation: blink 1s step-end infinite; vertical-align: text-bottom; }
+    .msg-status { font-size: 13px; color: var(--text2); font-style: italic; margin-bottom: 6px; opacity: 0.85; }
     @keyframes blink { 50% { opacity: 0; } }
     .msg-img { max-width: 320px; width: 100%; max-height: 320px; border-radius: var(--radius-sm); margin-top: 10px; display: block; border: 1px solid var(--gemini-border); cursor: pointer; transition: opacity 0.2s; }
     .msg-img:hover { opacity: 0.85; }
@@ -800,14 +801,18 @@
     /* ============ STREAMING UI HELPER ============
        Shows a live message bubble that the sender sees being typed.
        When done, the full text is written once to Firestore for everyone. */
-    function createStreamingBubble(who) {
+    function createStreamingBubble(who, statusText) {
       const isG = who === "Gemini", isP = who === "Perplexity";
       const div = document.createElement("div");
       div.className = "msg-group streaming-msg " + (isG ? "is-gemini" : isP ? "is-perplexity" : "is-claude");
+      const statusHtml = statusText
+        ? `<div class="msg-status">${escHtml(statusText)}</div>`
+        : "";
       div.innerHTML = `
         <div class="msg-avatar ${isG?"gemini":isP?"perplexity":"claude"}">${isG?"G":isP?"P":"AI"}</div>
         <div class="msg-content">
           <div class="msg-header"><span class="msg-name ${isG?"gemini-name":isP?"perplexity-name":"claude-name"}">${who}</span></div>
+          ${statusHtml}
           <div class="msg-text"><span class="typing-indicator ${isG?"gemini-typing":isP?"perplexity-typing":""}"><span></span><span></span><span></span></span></div>
         </div>`;
       $("messages-container").appendChild(div);
@@ -818,6 +823,9 @@
       // no-op during stream — just keep the typing indicator visible
     }
     function finalizeStreamingBubble(div, text) {
+      // Remove status line, then show final markdown text
+      const s = div.querySelector(".msg-status");
+      if (s) s.remove();
       const t = div.querySelector(".msg-text");
       if (t) t.innerHTML = renderMarkdown(text);
     }
@@ -825,7 +833,7 @@
 
     /* ============ CLAUDE ============ */
     async function askClaude(userMessage, fileData=null) {
-      const bubble = createStreamingBubble("Claude");
+      const bubble = createStreamingBubble("Claude", "💭 دارم فکر می‌کنم...");
       try {
         const userContent = [];
         if (fileData?.mimeType?.startsWith("image/")) userContent.push({ type:"image", source:{type:"base64", media_type:fileData.mimeType, data:fileData.base64} });
@@ -848,7 +856,7 @@
 
     /* ============ GEMINI IMAGE ============ */
     async function askGeminiImage(prompt) {
-      const bubble = createStreamingBubble("Gemini");
+      const bubble = createStreamingBubble("Gemini", "🎨 دارم تصویر می‌سازم...");
       try {
         const imgRes = await fetch(`${WORKER_URL}/gemini-image`, {
           method:"POST", headers:{"Content-Type":"application/json"},
@@ -871,7 +879,7 @@
 
     /* ============ PERPLEXITY ============ */
     async function askPerplexity(prompt) {
-      const bubble = createStreamingBubble("Perplexity");
+      const bubble = createStreamingBubble("Perplexity", "🔍 دارم سرچ می‌کنم...");
       try {
         // Perplexity sonar does not support streaming reliably — use non-stream
         const res = await fetch(`${WORKER_URL}/perplexity`, {
