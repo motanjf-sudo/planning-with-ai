@@ -75,12 +75,12 @@
     .toggle.perplexity input:checked + .slider::before { background: var(--perplexity); }
 
     /* mobile AI toggle button + sheet */
-    .ai-menu-btn { display: none; background: var(--bg3); border: 1px solid var(--border); color: var(--text2); border-radius: var(--radius-sm); padding: 7px 12px; font-size: 13px; cursor: pointer; align-items: center; gap: 6px; flex-shrink: 0; }
-    .ai-dots { display: inline-flex; gap: 3px; }
-    .ai-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text3); }
-    .ai-dot.on.c { background: var(--accent); }
-    .ai-dot.on.g { background: var(--gemini); }
-    .ai-dot.on.p { background: var(--perplexity); }
+    
+    
+    
+    
+    
+    
 
     /* SIDEBAR OVERLAY (mobile) */
     .scrim { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 40; }
@@ -262,17 +262,6 @@
       .sidebar-close { display: block; }
       .menu-btn { display: block; }
       .ai-toggles { display: none; }       /* hide inline toggles on phone */
-      .ai-menu-btn { display: flex; }       /* show compact AI button instead */
-      .channel-name { font-size: 14px; }
-      .messages-container { padding: 12px 12px 6px; }
-      .msg-group { gap: 8px; padding: 8px; }
-      .msg-avatar { width: 32px; height: 32px; }
-      .chat-watermark { font-size: 26px; }
-      .calc-panel { width: 240px; }
-    }
-    @media (max-width: 380px) {
-      .ai-menu-btn .ai-label { display: none; }
-    }
   </style>
 </head>
 <body>
@@ -318,31 +307,7 @@
           <span class="member-count" id="member-count"></span>
         </div>
 
-        <!-- desktop toggles -->
-        <div class="ai-toggles">
-          <div class="toggle-wrap">
-            <span class="toggle-label">Claude</span>
-            <label class="toggle"><input type="checkbox" id="claude-toggle" checked /><span class="slider"></span></label>
-          </div>
-          <div class="toggle-wrap">
-            <span class="toggle-label">Gemini</span>
-            <label class="toggle gemini"><input type="checkbox" id="gemini-toggle" checked /><span class="slider"></span></label>
-          </div>
-          <div class="toggle-wrap">
-            <span class="toggle-label">Perplexity</span>
-            <label class="toggle perplexity"><input type="checkbox" id="perplexity-toggle" checked /><span class="slider"></span></label>
-          </div>
-        </div>
 
-        <!-- mobile compact AI button -->
-        <button class="ai-menu-btn" id="ai-menu-btn">
-          <span class="ai-label">هوش‌ها</span>
-          <span class="ai-dots">
-            <span class="ai-dot on c" id="dot-c"></span>
-            <span class="ai-dot on g" id="dot-g"></span>
-            <span class="ai-dot on p" id="dot-p"></span>
-          </span>
-        </button>
       </div>
 
       <div class="messages-container" id="messages-container">
@@ -371,30 +336,6 @@
     </div>
   </div>
 
-  <!-- MOBILE AI SHEET -->
-  <div class="quiz-modal-overlay" id="ai-sheet">
-    <div class="quiz-modal" style="max-width:360px">
-      <h2 style="font-size:18px">🤖 هوش‌های مصنوعی</h2>
-      <p class="subtitle">انتخاب کن کدوم‌ها به پیام‌ها جواب بدن</p>
-      <div style="display:flex;flex-direction:column;gap:12px">
-        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px">
-          <span style="font-weight:600;color:var(--accent2)">Claude</span>
-          <label class="toggle"><input type="checkbox" id="claude-toggle-m" checked /><span class="slider"></span></label>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px">
-          <span style="font-weight:600;color:var(--gemini)">Gemini</span>
-          <label class="toggle gemini"><input type="checkbox" id="gemini-toggle-m" checked /><span class="slider"></span></label>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px">
-          <span style="font-weight:600;color:var(--perplexity)">Perplexity</span>
-          <label class="toggle perplexity"><input type="checkbox" id="perplexity-toggle-m" checked /><span class="slider"></span></label>
-        </div>
-      </div>
-      <div class="quiz-modal-footer">
-        <button class="quiz-start-btn" id="ai-sheet-done">تمام</button>
-      </div>
-    </div>
-  </div>
 
   <!-- QUIZ SETUP MODAL -->
   <div class="quiz-modal-overlay" id="quiz-setup-modal">
@@ -534,7 +475,6 @@
 
     let currentUser = null;
     let allMessages = [];
-    let claudeEnabled = true, geminiEnabled = true, perplexityEnabled = true;
     let pendingFile = null;
     const imageCache = new Map();      // imageId -> dataURL (runtime cache)
     let quizType = "multiple";
@@ -623,27 +563,6 @@
     $("menu-btn").addEventListener("click", openSidebar);
     $("sidebar-close").addEventListener("click", closeSidebar);
     scrim.addEventListener("click", closeSidebar);
-
-    /* ============ AI TOGGLES (desktop + mobile synced) ============ */
-    function setAI(which, val) {
-      if (which === "claude") claudeEnabled = val;
-      if (which === "gemini") geminiEnabled = val;
-      if (which === "perplexity") perplexityEnabled = val;
-      // keep both sets of checkboxes in sync
-      $(which + "-toggle").checked = val;
-      $(which + "-toggle-m").checked = val;
-      // update mobile dots
-      $("dot-c").classList.toggle("on", claudeEnabled);
-      $("dot-g").classList.toggle("on", geminiEnabled);
-      $("dot-p").classList.toggle("on", perplexityEnabled);
-    }
-    ["claude","gemini","perplexity"].forEach(w => {
-      $(w + "-toggle").addEventListener("change", e => setAI(w, e.target.checked));
-      $(w + "-toggle-m").addEventListener("change", e => setAI(w, e.target.checked));
-    });
-    $("ai-menu-btn").addEventListener("click", () => $("ai-sheet").classList.add("active"));
-    $("ai-sheet-done").addEventListener("click", () => $("ai-sheet").classList.remove("active"));
-    $("ai-sheet").addEventListener("click", e => { if (e.target === $("ai-sheet")) $("ai-sheet").classList.remove("active"); });
 
     /* ============ PLUS MENU ============ */
     const plusBtn = $("plus-btn"), plusMenu = $("plus-menu");
@@ -796,13 +715,10 @@
         $("file-input").value = "";
       }
 
+      const userMsg = text || `فایل: ${fileName}`;
       try {
         await addDoc(messagesRef, { sender: currentUser, text: text || "", ...(fileName && {fileName, fileType}), timestamp: serverTimestamp() });
-        const promises = [];
-        if (claudeEnabled) promises.push(askClaude(text || `فایل: ${fileName}`, fileData));
-        if (geminiEnabled) promises.push(askGemini(text || `فایل: ${fileName}`, fileData));
-        if (perplexityEnabled) promises.push(askPerplexity(text || `فایل: ${fileName}`));
-        await Promise.all(promises);
+        await orchestrate(userMsg, fileData);
       } catch(e) { console.error(e); }
       finally { $("send-btn").disabled = false; msgInput.focus(); }
     }
@@ -816,13 +732,70 @@
       });
     }
 
-    function isImageRequest(t) { return ["تصویر","عکس","بساز","بکش","نقاشی","image","photo","picture","draw"].some(k => t.toLowerCase().includes(k)); }
-    function isSearchRequest(t) { return ["سرچ کن","جستجو کن","پیدا کن","بگرد","اینترنت","اخبار","جدیدترین","آخرین","امروز","search","find","look up","تحقیق کن","چک کن"].some(k => t.toLowerCase().includes(k.toLowerCase())); }
+    /* ============ CLAUDE LEADER (ORCHESTRATOR) ============
+       Claude Leader reads the user message and returns a JSON plan.
+       It never appears in the chat — it only decides who does what.
+       Then the steps are executed one by one, in order. */
 
-    const SYS_CLAUDE = `تو Claude هستی در گروه "Planning With AI". Gemini و Perplexity هم هستن. با بقیه دوستانه رفتار کن. به فارسی جواب بده. کوتاه و مفید.`;
-    const SYS_GEMINI = `تو Gemini هستی در گروه "Planning With AI". Claude و Perplexity هم هستن. می‌تونی تصویر بسازی. به فارسی جواب بده. کوتاه و مفید. اسمت را Gemini بنویس.`;
-    const SYS_PERP = `تو Perplexity هستی در گروه "Planning With AI". Claude و Gemini هم هستن. به فارسی جواب بده. کوتاه و مفید.`;
-    const SYS_PERP_SEARCH = `تو Perplexity هستی — متخصص سرچ. اطلاعات به‌روز بده. به فارسی جواب بده.`;
+    const SYS_LEADER = `تو یک هوش مصنوعی مدیر و رهبر هستی. وظیفه‌ات اینه که پیام کاربر رو بخونی و تصمیم بگیری کدوم AI ها باید چیکار کنن.
+
+سه AI داری:
+- claude: برای سوالات عمومی، تحلیل، توضیح، کد، ترجمه، و هر چیزی که نیاز به تفکر داره
+- perplexity: برای سرچ اینترنت، اخبار، اطلاعات به‌روز، قیمت‌ها، رویدادهای اخیر
+- gemini-image: برای ساخت تصویر، نقاشی، طراحی
+
+قوانین:
+1. اگه سوال ساده‌ست (سلام، سوال عمومی، کمک درسی) → فقط claude
+2. اگه نیاز به اطلاعات به‌روز یا سرچ داره → perplexity اول، بعد claude
+3. اگه نیاز به تصویر داره → claude اول (توضیح)، بعد gemini-image
+4. اگه هم سرچ هم تصویر می‌خواد → perplexity، بعد claude، بعد gemini-image
+5. prompt هر AI باید دقیق و کامل باشه
+
+فقط JSON برگردان، بدون توضیح اضافه:
+{"steps": [{"ai": "claude", "prompt": "..."}, {"ai": "perplexity", "prompt": "..."}, {"ai": "gemini-image", "prompt": "..."}]}`;
+
+    async function orchestrate(userMsg, fileData=null) {
+      // Ask Claude Leader for a plan
+      let plan;
+      try {
+        const leaderRes = await fetch(`${WORKER_URL}/claude`, {
+          method: "POST", headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({
+            model: "claude-sonnet-4-5",
+            max_tokens: 400,
+            system: SYS_LEADER,
+            messages: [{ role: "user", content: `پیام کاربر: "${userMsg}"` }]
+          })
+        });
+        const leaderData = await leaderRes.json();
+        const raw = (leaderData.content?.[0]?.text || "").replace(/```json|```/gi,"").trim();
+        const s = raw.indexOf("{"), e = raw.lastIndexOf("}");
+        plan = JSON.parse(raw.substring(s, e+1));
+      } catch(err) {
+        console.error("Leader failed, falling back to Claude only:", err);
+        plan = { steps: [{ ai: "claude", prompt: userMsg }] };
+      }
+
+      // Execute steps one by one (in order)
+      let perplexityResult = "";
+      for (const step of (plan.steps || [])) {
+        if (step.ai === "perplexity") {
+          perplexityResult = await askPerplexity(step.prompt);
+        } else if (step.ai === "claude") {
+          // If perplexity ran before, inject its result into Claude's context
+          const claudePrompt = perplexityResult
+            ? `${step.prompt}\n\nاطلاعات از Perplexity:\n${perplexityResult}`
+            : step.prompt;
+          await askClaude(claudePrompt, fileData);
+        } else if (step.ai === "gemini-image") {
+          await askGeminiImage(step.prompt);
+        }
+      }
+    }
+
+    const SYS_CLAUDE = `تو Claude هستی در گروه "Planning With AI". به فارسی جواب بده. مفید، دقیق و روشن باش.`;
+
+    const SYS_PERP_SEARCH = `تو Perplexity هستی — متخصص سرچ. اطلاعات به‌روز و دقیق بده. به فارسی جواب بده.`;
 
     /* ============ STREAMING UI HELPER ============
        Shows a live message bubble that the sender sees being typed.
@@ -850,21 +823,19 @@
     }
     function removeStreamingBubble(div) { if (div?.parentNode) div.parentNode.removeChild(div); }
 
-    /* ============ CLAUDE (streaming) ============ */
+    /* ============ CLAUDE ============ */
     async function askClaude(userMessage, fileData=null) {
       const bubble = createStreamingBubble("Claude");
       try {
         const userContent = [];
-        if (fileData?.mimeType.startsWith("image/")) userContent.push({ type:"image", source:{type:"base64", media_type:fileData.mimeType, data:fileData.base64} });
+        if (fileData?.mimeType?.startsWith("image/")) userContent.push({ type:"image", source:{type:"base64", media_type:fileData.mimeType, data:fileData.base64} });
         userContent.push({ type:"text", text:`${currentUser}: ${userMessage}` });
         const history = allMessages.slice(-20).map(m => ({ role: m.sender==="Claude"?"assistant":"user", content: m.sender!=="Claude"?`${m.sender}: ${m.text}`:m.text }));
         if (!history.length || history[history.length-1].role !== "user") history.push({ role:"user", content: userContent.length===1 ? userContent[0].text : userContent });
-
         const res = await fetch(`${WORKER_URL}/claude`, {
           method:"POST", headers:{"Content-Type":"application/json"},
           body: JSON.stringify({ model:"claude-sonnet-4-5", max_tokens:1024, system:SYS_CLAUDE, messages:history, stream:true })
         });
-
         const full = await readSSEProgressive(res, bubble, json => {
           if (json.type === "content_block_delta" && json.delta?.type === "text_delta") return json.delta.text;
           return "";
@@ -875,66 +846,44 @@
       } catch(e) { console.error("Claude:", e); removeStreamingBubble(bubble); }
     }
 
-    /* ============ GEMINI (streaming chat + image) ============ */
-    async function askGemini(userMessage, fileData=null) {
+    /* ============ GEMINI IMAGE ============ */
+    async function askGeminiImage(prompt) {
       const bubble = createStreamingBubble("Gemini");
       try {
-        const userParts = [];
-        if (fileData) userParts.push({ inlineData:{mimeType:fileData.mimeType, data:fileData.base64} });
-        userParts.push({ text:`${currentUser}: ${userMessage}` });
-        const history = allMessages.slice(-20).filter(m=>m.sender!=="Claude"&&m.sender!=="Perplexity").map(m => ({ role:m.sender==="Gemini"?"model":"user", parts:[{text:m.sender!=="Gemini"?`${m.sender}: ${m.text}`:m.text}] }));
-        if (!history.length || history[history.length-1].role!=="user") history.push({role:"user", parts:userParts});
-
-        const res = await fetch(`${WORKER_URL}/gemini`, {
+        const imgRes = await fetch(`${WORKER_URL}/gemini-image`, {
           method:"POST", headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({system_instruction:{parts:[{text:SYS_GEMINI}]}, contents:history, stream:true})
+          body: JSON.stringify({contents:[{parts:[{text:prompt}]}], generationConfig:{responseModalities:["TEXT","IMAGE"]}})
         });
-        const chatText = await readSSEProgressive(res, bubble, json =>
-          json.candidates?.[0]?.content?.parts?.map(p=>p.text||"").join("") || ""
-        );
-        finalizeStreamingBubble(bubble, chatText);
+        const imgData = await imgRes.json();
         removeStreamingBubble(bubble);
-
-        if (isImageRequest(userMessage)) {
-          await addDoc(messagesRef, {sender:"Gemini", text:chatText||"دارم تصویر می‌سازم... 🎨", timestamp:serverTimestamp()});
-          const imgTyping = createStreamingBubble("Gemini");
-          try {
-            const imgRes = await fetch(`${WORKER_URL}/gemini-image`, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({contents:[{parts:[{text:userMessage}]}], generationConfig:{responseModalities:["TEXT","IMAGE"]}}) });
-            const imgData = await imgRes.json();
-            removeStreamingBubble(imgTyping);
-            const parts = imgData.candidates?.[0]?.content?.parts || [];
-            let imageUrl = null;
-            for (const p of parts) { if (p.inlineData) { imageUrl = `data:${p.inlineData.mimeType};base64,${p.inlineData.data}`; break; } }
-            if (imageUrl) {
-              const imageId = "img_"+Date.now();
-              imageCache.set(imageId, imageUrl);
-              // persist the image so it survives refresh (stored in Firestore)
-              await addDoc(messagesRef, {sender:"Gemini", text:"تصویر آماده شد! 🎨", imageId, imageData: imageUrl, timestamp:serverTimestamp()});
-            } else {
-              await addDoc(messagesRef, {sender:"Gemini", text:"متأسفم، نتونستم تصویر بسازم.", timestamp:serverTimestamp()});
-            }
-          } catch(e) { console.error("Gemini image:", e); removeStreamingBubble(imgTyping); }
-        } else if (chatText.trim()) {
-          await addDoc(messagesRef, {sender:"Gemini", text:chatText, timestamp:serverTimestamp()});
+        const parts = imgData.candidates?.[0]?.content?.parts || [];
+        let imageUrl = null;
+        for (const p of parts) { if (p.inlineData) { imageUrl = `data:${p.inlineData.mimeType};base64,${p.inlineData.data}`; break; } }
+        if (imageUrl) {
+          const imageId = "img_"+Date.now();
+          imageCache.set(imageId, imageUrl);
+          await addDoc(messagesRef, {sender:"Gemini", text:"تصویر آماده شد! 🎨", imageId, imageData: imageUrl, timestamp:serverTimestamp()});
+        } else {
+          await addDoc(messagesRef, {sender:"Gemini", text:"متأسفم، نتونستم تصویر بسازم.", timestamp:serverTimestamp()});
         }
-      } catch(e) { console.error("Gemini:", e); removeStreamingBubble(bubble); }
+      } catch(e) { console.error("Gemini image:", e); removeStreamingBubble(bubble); }
     }
 
-    /* ============ PERPLEXITY (streaming) ============ */
-    async function askPerplexity(userMessage) {
+    /* ============ PERPLEXITY ============ */
+    async function askPerplexity(prompt) {
       const bubble = createStreamingBubble("Perplexity");
-      const doSearch = isSearchRequest(userMessage);
       try {
-        const rawH = allMessages.slice(-10).filter(m=>m.sender!=="Claude"&&m.sender!=="Gemini").map(m => ({ role:m.sender==="Perplexity"?"assistant":"user", content:m.sender!=="Perplexity"?`${m.sender}: ${m.text}`:m.text }));
-        const history = [];
-        for (const m of rawH) { if (history.length>0 && history[history.length-1].role===m.role) continue; history.push(m); }
-        if (!history.length || history[history.length-1].role!=="user") history.push({role:"user", content:`${currentUser}: ${userMessage}`});
-
         const res = await fetch(`${WORKER_URL}/perplexity`, {
           method:"POST", headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({model:"sonar", messages:[{role:"system", content:doSearch?SYS_PERP_SEARCH:SYS_PERP}, ...history], stream:true})
+          body: JSON.stringify({
+            model:"sonar",
+            messages:[
+              {role:"system", content:SYS_PERP_SEARCH},
+              {role:"user", content:`${currentUser}: ${prompt}`}
+            ],
+            stream:true
+          })
         });
-
         let citations = [];
         const text = await readSSEProgressive(res, bubble, json => {
           if (json.citations) citations = json.citations;
@@ -942,9 +891,9 @@
         });
         finalizeStreamingBubble(bubble, text);
         removeStreamingBubble(bubble);
-        const sources = doSearch ? citations : [];
-        if (text.trim()) await addDoc(messagesRef, {sender:"Perplexity", text, sources, isSearch:doSearch, timestamp:serverTimestamp()});
-      } catch(e) { console.error("Perplexity:", e); removeStreamingBubble(bubble); }
+        if (text.trim()) await addDoc(messagesRef, {sender:"Perplexity", text, sources:citations, isSearch:true, timestamp:serverTimestamp()});
+        return text; // return so orchestrator can pass it to Claude
+      } catch(e) { console.error("Perplexity:", e); removeStreamingBubble(bubble); return ""; }
     }
 
     /* SSE reader that updates the bubble live as text arrives.
