@@ -873,6 +873,7 @@
     async function askPerplexity(prompt) {
       const bubble = createStreamingBubble("Perplexity");
       try {
+        // Perplexity sonar does not support streaming reliably — use non-stream
         const res = await fetch(`${WORKER_URL}/perplexity`, {
           method:"POST", headers:{"Content-Type":"application/json"},
           body: JSON.stringify({
@@ -880,19 +881,16 @@
             messages:[
               {role:"system", content:SYS_PERP_SEARCH},
               {role:"user", content:`${currentUser}: ${prompt}`}
-            ],
-            stream:true
+            ]
           })
         });
-        let citations = [];
-        const text = await readSSEProgressive(res, bubble, json => {
-          if (json.citations) citations = json.citations;
-          return json.choices?.[0]?.delta?.content || "";
-        });
+        const data = await res.json();
+        const text = data.choices?.[0]?.message?.content || "";
+        const citations = data.citations || [];
         finalizeStreamingBubble(bubble, text);
         removeStreamingBubble(bubble);
         if (text.trim()) await addDoc(messagesRef, {sender:"Perplexity", text, sources:citations, isSearch:true, timestamp:serverTimestamp()});
-        return text; // return so orchestrator can pass it to Claude
+        return text;
       } catch(e) { console.error("Perplexity:", e); removeStreamingBubble(bubble); return ""; }
     }
 
