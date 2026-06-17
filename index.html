@@ -842,14 +842,9 @@
       return div;
     }
     function updateStreamingBubble(div, text) {
-      const t = div.querySelector(".msg-text");
-      // Plain text during stream — no markdown parsing per chunk = no lag
-      t.innerHTML = escHtml(text).replace(/\n/g, '<br>') + '<span class="stream-caret"></span>';
-      const mc = $("messages-container");
-      if (mc.scrollHeight - mc.scrollTop - mc.clientHeight < 200) mc.scrollTop = mc.scrollHeight;
+      // no-op during stream — just keep the typing indicator visible
     }
     function finalizeStreamingBubble(div, text) {
-      // Called once after stream ends: render full markdown
       const t = div.querySelector(".msg-text");
       if (t) t.innerHTML = renderMarkdown(text);
     }
