@@ -738,58 +738,87 @@
        It never appears in the chat — it only decides who does what.
        Then the steps are executed one by one, in order. */
 
-    const SYS_LEADER = `تو یک هوش مصنوعی مدیر و رهبر هستی. وظیفه‌ات اینه که پیام کاربر رو بخونی و تصمیم بگیری کدوم AI ها باید چیکار کنن.
+    const SYS_LEADER = `You are an AI orchestrator. Given a user message, return a JSON plan.
 
-سه AI داری:
-- claude: برای سوالات عمومی، تحلیل، توضیح، کد، ترجمه، و هر چیزی که نیاز به تفکر داره
-- perplexity: برای سرچ اینترنت، اخبار، اطلاعات به‌روز، قیمت‌ها، رویدادهای اخیر
-- gemini-image: برای ساخت تصویر، نقاشی، طراحی
+AVAILABLE AIs:
+- "claude": general questions, analysis, explanation, code, translation, math, anything requiring thinking
+- "perplexity": internet search, news, current prices, recent events, live data
+- "gemini-image": image generation, drawing, illustration
 
-قوانین:
-1. اگه سوال ساده‌ست (سلام، سوال عمومی، کمک درسی) → فقط claude
-2. اگه نیاز به اطلاعات به‌روز یا سرچ داره → perplexity اول، بعد claude
-3. اگه نیاز به تصویر داره → claude اول (توضیح)، بعد gemini-image
-4. اگه هم سرچ هم تصویر می‌خواد → perplexity، بعد claude، بعد gemini-image
-5. prompt هر AI باید دقیق و کامل باشه
+STRICT RULES:
+1. Simple question/greeting/general knowledge → only claude
+2. Needs current info or search → perplexity FIRST, then claude
+3. Needs an image → claude FIRST (explanation), then gemini-image
+4. Needs search AND image → perplexity, then claude, then gemini-image
+5. Every "prompt" field MUST be a complete, non-empty string in Persian
+6. NEVER return empty prompt strings
+7. Return ONLY raw JSON — no markdown, no backticks, no explanation
 
-فقط JSON برگردان، بدون توضیح اضافه:
-{"steps": [{"ai": "claude", "prompt": "..."}, {"ai": "perplexity", "prompt": "..."}, {"ai": "gemini-image", "prompt": "..."}]}`;
+OUTPUT FORMAT (return exactly this structure):
+{"steps":[{"ai":"claude","prompt":"متن کامل درخواست به فارسی"}]}
+
+EXAMPLES:
+User: "سلام" → {"steps":[{"ai":"claude","prompt":"سلام! چطور می‌تونم کمکت کنم؟"}]}
+User: "قیمت دلار امروز" → {"steps":[{"ai":"perplexity","prompt":"قیمت دلار امروز در ایران چقدر است؟"},{"ai":"claude","prompt":"بر اساس اطلاعات جستجو شده، قیمت دلار را تحلیل کن"}]}
+User: "یه تصویر از دریا بساز" → {"steps":[{"ai":"claude","prompt":"درباره تصویری که Gemini می‌سازد توضیح بده"},{"ai":"gemini-image","prompt":"A beautiful ocean scene, calm waves, sunset, photorealistic"}]}`;
 
     async function orchestrate(userMsg, fileData=null) {
-      // Ask Claude Leader for a plan
-      let plan;
-      try {
-        const leaderRes = await fetch(`${WORKER_URL}/claude`, {
-          method: "POST", headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({
-            model: "claude-sonnet-4-5",
-            max_tokens: 400,
-            system: SYS_LEADER,
-            messages: [{ role: "user", content: `پیام کاربر: "${userMsg}"` }]
-          })
-        });
-        const leaderData = await leaderRes.json();
-        const raw = (leaderData.content?.[0]?.text || "").replace(/```json|```/gi,"").trim();
-        const s = raw.indexOf("{"), e = raw.lastIndexOf("}");
-        plan = JSON.parse(raw.substring(s, e+1));
-      } catch(err) {
-        console.error("Leader failed, falling back to Claude only:", err);
-        plan = { steps: [{ ai: "claude", prompt: userMsg }] };
+      // Ask Claude Leader for a plan (with retry)
+      let plan = null;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const leaderRes = await fetch(`${WORKER_URL}/claude`, {
+            method: "POST", headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+              model: "claude-sonnet-4-5",
+              max_tokens: 500,
+              system: SYS_LEADER,
+              messages: [{ role: "user", content: `User message: "${userMsg}"` }]
+            })
+          });
+          const leaderData = await leaderRes.json();
+          const raw = (leaderData.content?.[0]?.text || "").replace(/```json|```/gi,"").trim();
+          const s = raw.indexOf("{"), e = raw.lastIndexOf("}");
+          if (s === -1) throw new Error("no JSON");
+          const parsed = JSON.parse(raw.substring(s, e+1));
+
+          // Validate: must have steps array with valid entries
+          if (!Array.isArray(parsed.steps) || parsed.steps.length === 0) throw new Error("empty steps");
+          const validAIs = ["claude", "perplexity", "gemini-image"];
+          const valid = parsed.steps.every(st =>
+            st && validAIs.includes(st.ai) && typeof st.prompt === "string" && st.prompt.trim().length > 0
+          );
+          if (!valid) throw new Error("invalid steps");
+
+          plan = parsed;
+          break; // success
+        } catch(err) {
+          console.warn(`Leader attempt ${attempt+1} failed:`, err.message);
+          if (attempt === 1) {
+            // Both attempts failed — fall back to Claude only
+            plan = { steps: [{ ai: "claude", prompt: userMsg }] };
+          }
+        }
       }
 
-      // Execute steps one by one (in order)
+      // Execute steps one by one (in order), never skip
       let perplexityResult = "";
       for (const step of (plan.steps || [])) {
-        if (step.ai === "perplexity") {
-          perplexityResult = await askPerplexity(step.prompt);
-        } else if (step.ai === "claude") {
-          // If perplexity ran before, inject its result into Claude's context
-          const claudePrompt = perplexityResult
-            ? `${step.prompt}\n\nاطلاعات از Perplexity:\n${perplexityResult}`
-            : step.prompt;
-          await askClaude(claudePrompt, fileData);
-        } else if (step.ai === "gemini-image") {
-          await askGeminiImage(step.prompt);
+        const prompt = (step.prompt || userMsg).trim() || userMsg;
+        try {
+          if (step.ai === "perplexity") {
+            perplexityResult = await askPerplexity(prompt);
+          } else if (step.ai === "claude") {
+            const claudePrompt = perplexityResult
+              ? `${prompt}\n\nاطلاعات از Perplexity:\n${perplexityResult}`
+              : prompt;
+            await askClaude(claudePrompt, fileData);
+          } else if (step.ai === "gemini-image") {
+            await askGeminiImage(prompt);
+          }
+        } catch(stepErr) {
+          console.error(`Step ${step.ai} failed:`, stepErr);
+          // Continue to next step even if this one fails
         }
       }
     }
