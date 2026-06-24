@@ -738,6 +738,46 @@
        It never appears in the chat — it only decides who does what.
        Then the steps are executed one by one, in order. */
 
+    /* ── HISTORY BUILDER ────────────────────────────────────────────── */
+    // Builds a clean alternating user/assistant history for Claude.
+    // Only includes messages from the current user and Claude responses,
+    // so other group members' messages don't corrupt the conversation.
+    function buildClaudeHistory(newUserMsg, fileData=null) {
+      const history = [];
+
+      // Get last 30 messages and filter to only this user + Claude
+      const relevant = allMessages.slice(-30).filter(m =>
+        m.sender === currentUser || m.sender === "Claude"
+      );
+
+      for (const m of relevant) {
+        const role = m.sender === "Claude" ? "assistant" : "user";
+        // Skip consecutive same-role (shouldn't happen but safety check)
+        if (history.length && history[history.length-1].role === role) continue;
+        history.push({ role, content: m.text || "" });
+      }
+
+      // Build final user message (with optional image)
+      const userContent = [];
+      if (fileData?.mimeType?.startsWith("image/"))
+        userContent.push({ type:"image", source:{type:"base64", media_type:fileData.mimeType, data:fileData.base64} });
+      userContent.push({ type:"text", text: newUserMsg });
+
+      const finalMsg = {
+        role: "user",
+        content: userContent.length === 1 ? userContent[0].text : userContent
+      };
+
+      // If last in history is already user, replace it (avoid consecutive user msgs)
+      if (history.length && history[history.length-1].role === "user") {
+        history[history.length-1] = finalMsg;
+      } else {
+        history.push(finalMsg);
+      }
+
+      return history;
+    }
+
     /* ── SYSTEM PROMPTS ─────────────────────────────────────────────── */
 
     const SYS_HAIKU = `You are Haiku, the fast brain of Planning With AI.
@@ -847,7 +887,7 @@ OUTPUT FORMAT:
             model: "claude-haiku-4-5",
             max_tokens: 600,
             system: `تو Claude هستی. اطلاعات سرچ شده رو به فارسی خلاصه و تحلیل کن. مختصر و مفید باش.`,
-            messages:[{ role:"user", content:`سوال: ${originalQ}\n\nنتیجه سرچ:\n${searchResult}` }],
+            messages:[{ role:"user", content:`سوال کاربر: ${originalQ}\n\nاطلاعات سرچ شده:\n${searchResult}\n\nخلاصه کن و جواب بده.` }],
             stream: true
           })
         });
@@ -898,11 +938,7 @@ OUTPUT FORMAT:
     async function askSonnet(userMessage, fileData=null) {
       const bubble = createStreamingBubble("Claude", "🧠 دارم عمیق فکر می‌کنم...");
       try {
-        const userContent = [];
-        if (fileData?.mimeType?.startsWith("image/")) userContent.push({ type:"image", source:{type:"base64", media_type:fileData.mimeType, data:fileData.base64} });
-        userContent.push({ type:"text", text:`${currentUser}: ${userMessage}` });
-        const history = allMessages.slice(-20).map(m => ({ role: m.sender==="Claude"?"assistant":"user", content: m.sender!=="Claude"?`${m.sender}: ${m.text}`:m.text }));
-        if (!history.length || history[history.length-1].role !== "user") history.push({ role:"user", content: userContent.length===1 ? userContent[0].text : userContent });
+        const history = buildClaudeHistory(userMessage, fileData);
         const res = await fetch(`${WORKER_URL}/claude`, {
           method:"POST", headers:{"Content-Type":"application/json"},
           body: JSON.stringify({ model:"claude-sonnet-4-5", max_tokens:1500, system:SYS_SONNET, messages:history, stream:true })
