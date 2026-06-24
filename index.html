@@ -738,94 +738,128 @@
        It never appears in the chat — it only decides who does what.
        Then the steps are executed one by one, in order. */
 
-    const SYS_LEADER = `You are an AI orchestrator. Given a user message, return a JSON plan.
+    /* ── SYSTEM PROMPTS ─────────────────────────────────────────────── */
 
-AVAILABLE AIs:
-- "claude": general questions, analysis, explanation, code, translation, math, anything requiring thinking
-- "perplexity": internet search, news, current prices, recent events, live data
-- "gemini-image": image generation, drawing, illustration
+    const SYS_HAIKU = `You are Haiku, the fast brain of Planning With AI.
+Your job: read the user message and decide what to do, then act.
 
-STRICT RULES:
-1. Simple question/greeting/general knowledge → only claude
-2. Needs current info or search → perplexity FIRST, then claude
-3. Needs an image → claude FIRST (explanation), then gemini-image
-4. Needs search AND image → perplexity, then claude, then gemini-image
-5. Every "prompt" field MUST be a complete, non-empty string in Persian
-6. NEVER return empty prompt strings
-7. Return ONLY raw JSON — no markdown, no backticks, no explanation
+DECISION RULES (pick exactly one action):
+1. You KNOW the answer and it is simple/factual/conversational → action: "answer"
+   Reply directly in Persian. Be concise and helpful.
+2. You are NOT sure, or the question needs deep analysis/complex reasoning → action: "sonnet"
+   Just return the JSON, do not answer.
+3. Question needs current internet data (news, prices, live info) → action: "search"
+   Return a Persian search query.
+4. Question needs an image → action: "image"
+   Return an English image generation prompt (detailed, vivid).
+5. Question needs BOTH search AND image → action: "search+image"
+   Return both a Persian search query and an English image prompt.
 
-OUTPUT FORMAT (return exactly this structure):
-{"steps":[{"ai":"claude","prompt":"متن کامل درخواست به فارسی"}]}
+CRITICAL RULES:
+- NEVER make up facts you are unsure about. If unsure → sonnet.
+- NEVER say "I don't know" for simple greetings or easy questions — just answer.
+- Return ONLY raw JSON, no markdown, no explanation.
 
-EXAMPLES:
-User: "سلام" → {"steps":[{"ai":"claude","prompt":"سلام! چطور می‌تونم کمکت کنم؟"}]}
-User: "قیمت دلار امروز" → {"steps":[{"ai":"perplexity","prompt":"قیمت دلار امروز در ایران چقدر است؟"},{"ai":"claude","prompt":"بر اساس اطلاعات جستجو شده، قیمت دلار را تحلیل کن"}]}
-User: "یه تصویر از دریا بساز" → {"steps":[{"ai":"claude","prompt":"درباره تصویری که Gemini می‌سازد توضیح بده"},{"ai":"gemini-image","prompt":"A beautiful ocean scene, calm waves, sunset, photorealistic"}]}`;
+OUTPUT FORMAT:
+{"action":"answer","reply":"جواب فارسی اینجا"}
+{"action":"sonnet"}
+{"action":"search","query":"عبارت جستجو به فارسی"}
+{"action":"image","prompt":"detailed English image prompt"}
+{"action":"search+image","query":"عبارت جستجو","prompt":"English image prompt"}`;
 
+    const SYS_SONNET = `تو Claude هستی در Planning With AI. سوال پیچیده یا تخصصی داری. جواب کامل، دقیق و باکیفیت بده. به فارسی جواب بده.`;
+
+    const SYS_PERP = `تو Perplexity هستی — متخصص سرچ. اطلاعات به‌روز و دقیق بده. به فارسی جواب بده.`;
+
+    /* ── ORCHESTRATOR ────────────────────────────────────────────────── */
     async function orchestrate(userMsg, fileData=null) {
-      // Ask Claude Leader for a plan (with retry)
-      let plan = null;
+      // Step 1: Ask Haiku what to do
+      let decision = null;
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
-          const leaderRes = await fetch(`${WORKER_URL}/claude`, {
-            method: "POST", headers: {"Content-Type": "application/json"},
+          const res = await fetch(`${WORKER_URL}/claude`, {
+            method:"POST", headers:{"Content-Type":"application/json"},
             body: JSON.stringify({
-              model: "claude-sonnet-4-5",
-              max_tokens: 500,
-              system: SYS_LEADER,
-              messages: [{ role: "user", content: `User message: "${userMsg}"` }]
+              model: "claude-haiku-4-5",
+              max_tokens: 400,
+              system: SYS_HAIKU,
+              messages: [{ role:"user", content:`${currentUser}: ${userMsg}` }]
             })
           });
-          const leaderData = await leaderRes.json();
-          const raw = (leaderData.content?.[0]?.text || "").replace(/```json|```/gi,"").trim();
+          const data = await res.json();
+          const raw = (data.content?.[0]?.text || "").replace(/```json|```/gi,"").trim();
           const s = raw.indexOf("{"), e = raw.lastIndexOf("}");
           if (s === -1) throw new Error("no JSON");
-          const parsed = JSON.parse(raw.substring(s, e+1));
-
-          // Validate: must have steps array with valid entries
-          if (!Array.isArray(parsed.steps) || parsed.steps.length === 0) throw new Error("empty steps");
-          const validAIs = ["claude", "perplexity", "gemini-image"];
-          const valid = parsed.steps.every(st =>
-            st && validAIs.includes(st.ai) && typeof st.prompt === "string" && st.prompt.trim().length > 0
-          );
-          if (!valid) throw new Error("invalid steps");
-
-          plan = parsed;
-          break; // success
+          decision = JSON.parse(raw.substring(s, e+1));
+          if (!decision.action) throw new Error("no action");
+          break;
         } catch(err) {
-          console.warn(`Leader attempt ${attempt+1} failed:`, err.message);
-          if (attempt === 1) {
-            // Both attempts failed — fall back to Claude only
-            plan = { steps: [{ ai: "claude", prompt: userMsg }] };
-          }
+          console.warn("Haiku decision attempt", attempt+1, "failed:", err.message);
+          if (attempt === 1) decision = { action:"sonnet" }; // safe fallback
         }
       }
 
-      // Execute steps one by one (in order), never skip
-      let perplexityResult = "";
-      for (const step of (plan.steps || [])) {
-        const prompt = (step.prompt || userMsg).trim() || userMsg;
-        try {
-          if (step.ai === "perplexity") {
-            perplexityResult = await askPerplexity(prompt);
-          } else if (step.ai === "claude") {
-            const claudePrompt = perplexityResult
-              ? `${prompt}\n\nاطلاعات از Perplexity:\n${perplexityResult}`
-              : prompt;
-            await askClaude(claudePrompt, fileData);
-          } else if (step.ai === "gemini-image") {
-            await askGeminiImage(prompt);
-          }
-        } catch(stepErr) {
-          console.error(`Step ${step.ai} failed:`, stepErr);
-          // Continue to next step even if this one fails
+      const action = decision.action;
+
+      // Step 2: Execute decision
+      try {
+        if (action === "answer") {
+          // Haiku answers directly — fastest path (1 call total)
+          const bubble = createStreamingBubble("Claude", "💭 دارم فکر می‌کنم...");
+          finalizeStreamingBubble(bubble, decision.reply || "");
+          removeStreamingBubble(bubble);
+          if ((decision.reply || "").trim())
+            await addDoc(messagesRef, {sender:"Claude", text:decision.reply, timestamp:serverTimestamp()});
+
+        } else if (action === "sonnet") {
+          // Complex question — use Sonnet
+          await askSonnet(userMsg, fileData);
+
+        } else if (action === "search") {
+          // Perplexity searches, Haiku summarizes
+          const searchResult = await askPerplexity(decision.query || userMsg);
+          if (searchResult) await askHaikuSummary(userMsg, searchResult);
+
+        } else if (action === "image") {
+          // Gemini generates image
+          await askGeminiImage(decision.prompt || userMsg);
+
+        } else if (action === "search+image") {
+          // Perplexity searches + Gemini makes image
+          const searchResult = await askPerplexity(decision.query || userMsg);
+          if (searchResult) await askHaikuSummary(userMsg, searchResult);
+          await askGeminiImage(decision.prompt || userMsg);
         }
+      } catch(err) {
+        console.error("Orchestrate step failed:", err);
+        // Last resort fallback
+        await askSonnet(userMsg, fileData);
       }
     }
 
-    const SYS_CLAUDE = `تو Claude هستی در گروه "Planning With AI". به فارسی جواب بده. مفید، دقیق و روشن باش.`;
-
-    const SYS_PERP_SEARCH = `تو Perplexity هستی — متخصص سرچ. اطلاعات به‌روز و دقیق بده. به فارسی جواب بده.`;
+    /* Haiku summarizes search results — fast + shows sources */
+    async function askHaikuSummary(originalQ, searchResult) {
+      const bubble = createStreamingBubble("Claude", "📝 دارم خلاصه می‌کنم...");
+      try {
+        const res = await fetch(`${WORKER_URL}/claude`, {
+          method:"POST", headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({
+            model: "claude-haiku-4-5",
+            max_tokens: 600,
+            system: `تو Claude هستی. اطلاعات سرچ شده رو به فارسی خلاصه و تحلیل کن. مختصر و مفید باش.`,
+            messages:[{ role:"user", content:`سوال: ${originalQ}\n\nنتیجه سرچ:\n${searchResult}` }],
+            stream: true
+          })
+        });
+        const full = await readSSEProgressive(res, bubble, json => {
+          if (json.type==="content_block_delta" && json.delta?.type==="text_delta") return json.delta.text;
+          return "";
+        });
+        finalizeStreamingBubble(bubble, full);
+        removeStreamingBubble(bubble);
+        if (full.trim()) await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+      } catch(e) { console.error("Haiku summary:", e); removeStreamingBubble(bubble); }
+    }
 
     /* ============ STREAMING UI HELPER ============
        Shows a live message bubble that the sender sees being typed.
@@ -860,9 +894,9 @@ User: "یه تصویر از دریا بساز" → {"steps":[{"ai":"claude","pro
     }
     function removeStreamingBubble(div) { if (div?.parentNode) div.parentNode.removeChild(div); }
 
-    /* ============ CLAUDE ============ */
-    async function askClaude(userMessage, fileData=null) {
-      const bubble = createStreamingBubble("Claude", "💭 دارم فکر می‌کنم...");
+    /* ============ SONNET — complex questions ============ */
+    async function askSonnet(userMessage, fileData=null) {
+      const bubble = createStreamingBubble("Claude", "🧠 دارم عمیق فکر می‌کنم...");
       try {
         const userContent = [];
         if (fileData?.mimeType?.startsWith("image/")) userContent.push({ type:"image", source:{type:"base64", media_type:fileData.mimeType, data:fileData.base64} });
@@ -871,7 +905,7 @@ User: "یه تصویر از دریا بساز" → {"steps":[{"ai":"claude","pro
         if (!history.length || history[history.length-1].role !== "user") history.push({ role:"user", content: userContent.length===1 ? userContent[0].text : userContent });
         const res = await fetch(`${WORKER_URL}/claude`, {
           method:"POST", headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({ model:"claude-sonnet-4-5", max_tokens:1024, system:SYS_CLAUDE, messages:history, stream:true })
+          body: JSON.stringify({ model:"claude-sonnet-4-5", max_tokens:1500, system:SYS_SONNET, messages:history, stream:true })
         });
         const full = await readSSEProgressive(res, bubble, json => {
           if (json.type === "content_block_delta" && json.delta?.type === "text_delta") return json.delta.text;
@@ -880,7 +914,7 @@ User: "یه تصویر از دریا بساز" → {"steps":[{"ai":"claude","pro
         finalizeStreamingBubble(bubble, full);
         removeStreamingBubble(bubble);
         if (full.trim()) await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
-      } catch(e) { console.error("Claude:", e); removeStreamingBubble(bubble); }
+      } catch(e) { console.error("Sonnet:", e); removeStreamingBubble(bubble); }
     }
 
     /* ============ GEMINI IMAGE ============ */
@@ -955,7 +989,7 @@ User: "یه تصویر از دریا بساز" → {"steps":[{"ai":"claude","pro
           body: JSON.stringify({
             model:"sonar",
             messages:[
-              {role:"system", content:SYS_PERP_SEARCH},
+              {role:"system", content:SYS_PERP},
               {role:"user", content:`${currentUser}: ${prompt}`}
             ]
           })
