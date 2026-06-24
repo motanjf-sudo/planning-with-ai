@@ -844,12 +844,8 @@ OUTPUT FORMAT:
       // Step 2: Execute decision
       try {
         if (action === "answer") {
-          // Haiku answers directly — fastest path (1 call total)
-          const bubble = createStreamingBubble("Claude", "💭 دارم فکر می‌کنم...");
-          finalizeStreamingBubble(bubble, decision.reply || "");
-          removeStreamingBubble(bubble);
-          if ((decision.reply || "").trim())
-            await addDoc(messagesRef, {sender:"Claude", text:decision.reply, timestamp:serverTimestamp()});
+          // Haiku answers with streaming — word by word
+          await askHaiku(userMsg, fileData);
 
         } else if (action === "sonnet") {
           // Complex question — use Sonnet
@@ -933,6 +929,31 @@ OUTPUT FORMAT:
       if (t) t.innerHTML = renderMarkdown(text);
     }
     function removeStreamingBubble(div) { if (div?.parentNode) div.parentNode.removeChild(div); }
+
+    /* ============ HAIKU — simple questions, streaming ============ */
+    async function askHaiku(userMessage, fileData=null) {
+      const bubble = createStreamingBubble("Claude", "💭 دارم فکر می‌کنم...");
+      try {
+        const history = buildClaudeHistory(userMessage, fileData);
+        const res = await fetch(`${WORKER_URL}/claude`, {
+          method:"POST", headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({
+            model: "claude-haiku-4-5",
+            max_tokens: 800,
+            system: `تو Claude هستی در Planning With AI. جواب کوتاه، مفید و دوستانه بده. به فارسی جواب بده.`,
+            messages: history,
+            stream: true
+          })
+        });
+        const full = await readSSEProgressive(res, bubble, json => {
+          if (json.type === "content_block_delta" && json.delta?.type === "text_delta") return json.delta.text;
+          return "";
+        });
+        finalizeStreamingBubble(bubble, full);
+        removeStreamingBubble(bubble);
+        if (full.trim()) await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+      } catch(e) { console.error("Haiku:", e); removeStreamingBubble(bubble); }
+    }
 
     /* ============ SONNET — complex questions ============ */
     async function askSonnet(userMessage, fileData=null) {
