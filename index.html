@@ -824,29 +824,31 @@
     // Router: Haiku returns ONE word to decide what to do
     // Combined: Haiku decides AND answers in one call if simple
     const SYS_COMBINED = `تو Claude هستی در Planning With AI.
-پیام کاربر رو بخون و یکی از این کارها رو بکن:
+تاریخچه‌ی مکالمه رو داری و باید با توجه به context جواب بدی.
 
-اگه سوال ساده، احوال‌پرسی، یا چیزی که می‌دونی هست:
+پیام آخر کاربر رو بخون و یکی از این کارها رو بکن:
+
+اگه سوال ساده، احوال‌پرسی، یا چیزی که می‌دونی هست (شامل جواب دادن به سوال قبلی خودت):
 مستقیم جواب بده به فارسی. کوتاه، دوستانه، مفید.
+مهم: اگه کاربر داره به سوال قبلی تو جواب میده، اون رو با context بررسی کن.
 
 اگه نیاز به یکی از این‌ها داشت، فقط همون کلمه رو بنویس:
-- HARD → تحلیل عمیق، کد پیچیده، سوال تخصصی
-- SEARCH → اطلاعات به‌روز اینترنت، اخبار، قیمت
-- IMAGE → ساخت تصویر (هر زبانی: عکس/تصویر/image/draw)
+- HARD → تحلیل عمیق، کد پیچیده، نوشتن متن بلند، سوال تخصصی
+- SEARCH → اطلاعات به‌روز اینترنت، اخبار، قیمت امروز
+- IMAGE → ساخت تصویر (هر زبانی: عکس/تصویر/image/draw/بکش)
 - SEARCH+IMAGE → هم سرچ هم تصویر
-- CALC → محاسبه ریاضی
+- CALC → محاسبه ریاضی (ضرب، تقسیم، جذر، توان و...)
 
-قوانین:
+قوانین مهم:
 - اگه می‌دونی جواب بده، نگو HARD
-- فقط اگه واقعاً نیاز به سرچ/تصویر/محاسبه/تخصص داره، اون کلمه رو بنویس
-- هرگز چرت و پرت نگو — اگه مطمئن نیستی بنویس HARD
-- حافظه‌ی مکالمه داری و پیام‌های قبلی رو می‌بینی`;
+- فقط یه کلمه از لیست بالا بنویس یا مستقیم جواب بده
+- هرگز چرت و پرت نگو — اگه مطمئن نیستی بنویس HARD`;
     const SYS_SONNET = `تو Claude هستی در Planning With AI. این یه سوال پیچیده یا تخصصیه. جواب کامل، دقیق و باکیفیت بده. به فارسی جواب بده. حافظه‌ی مکالمه داری.`;
     const SYS_PERP = `متخصص سرچ اینترنت هستی. اطلاعات دقیق و به‌روز بده. به فارسی جواب بده.`;
 
     /* ── ORCHESTRATOR ────────────────────────────────────────────────── */
     async function orchestrate(userMsg, fileData=null) {
-      const bubble = createStreamingBubble("Claude", "💭 دارم فکر می‌کنم...");
+      const bubble = createStreamingBubble("Claude");
       try {
         // Single call: Haiku decides AND answers if simple
         const history = buildClaudeHistory(userMsg, fileData);
@@ -897,7 +899,7 @@
 
     /* ── CALC: Sonnet extracts expression, JS evaluates it accurately ── */
     async function askCalc(userMsg) {
-      const bubble = createStreamingBubble("Claude", "🧮 دارم حساب می‌کنم...");
+      const bubble = createStreamingBubble("Claude");
       try {
         // Step 1: Sonnet extracts the math expression (silent)
         const extractRes = await fetch(`${WORKER_URL}/claude`, {
@@ -1036,7 +1038,7 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
 
     /* ============ HAIKU — simple/chat questions ============ */
     async function askHaiku(userMessage, fileData=null) {
-      const bubble = createStreamingBubble("Claude", "💭 دارم فکر می‌کنم...");
+      const bubble = createStreamingBubble("Claude");
       try {
         const history = buildClaudeHistory(userMessage, fileData);
         const res = await fetch(`${WORKER_URL}/claude`, {
@@ -1058,7 +1060,7 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
 
     /* ============ SONNET — complex questions ============ */
     async function askSonnet(userMessage, fileData=null) {
-      const bubble = createStreamingBubble("Claude", "🧠 دارم عمیق فکر می‌کنم...");
+      const bubble = createStreamingBubble("Claude");
       try {
         const history = buildClaudeHistory(userMessage, fileData);
         const res = await fetch(`${WORKER_URL}/claude`, {
@@ -1105,7 +1107,7 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
     }
 
     async function askGeminiImage(prompt) {
-      const bubble = createStreamingBubble("Gemini", "🎨 دارم تصویر می‌سازم...");
+      const bubble = createStreamingBubble("Gemini");
       try {
         const imgRes = await fetch(`${WORKER_URL}/gemini-image`, {
           method:"POST", headers:{"Content-Type":"application/json"},
@@ -1137,7 +1139,7 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
 
     /* ============ PERPLEXITY ============ */
     async function askPerplexity(prompt) {
-      const bubble = createStreamingBubble("Perplexity", "🔍 دارم سرچ می‌کنم...");
+      const bubble = createStreamingBubble("Perplexity");
       try {
         // Perplexity sonar does not support streaming reliably — use non-stream
         const res = await fetch(`${WORKER_URL}/perplexity`, {
