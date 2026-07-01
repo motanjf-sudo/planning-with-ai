@@ -1022,14 +1022,16 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
     let _streamThrottle = 0;
     function updateStreamingBubble(div, text) {
       const now = Date.now();
-      if (now - _streamThrottle < 60) return; // update max ~16x/sec
+      if (now - _streamThrottle < 60) return;
       _streamThrottle = now;
+      // Don't update if user is selecting text
+      const sel = window.getSelection();
+      if (sel && sel.toString().length > 0) return;
       const s = div.querySelector(".msg-status");
       if (s) s.remove();
       const t = div.querySelector(".msg-text");
       if (!t) return;
       t.innerHTML = escHtml(text).replace(/\n/g, "<br>") + '<span class="stream-caret"></span>';
-      // Only scroll if user is already near bottom — never force scroll
       const mc = $("messages-container");
       const distFromBottom = mc.scrollHeight - mc.scrollTop - mc.clientHeight;
       if (distFromBottom < 80) mc.scrollTop = mc.scrollHeight;
