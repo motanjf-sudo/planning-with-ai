@@ -587,7 +587,7 @@
     function closeSidebar() { sidebar.classList.remove("open"); scrim.classList.remove("show"); }
     $("menu-btn").addEventListener("click", openSidebar);
     $("sidebar-close").addEventListener("click", closeSidebar);
-    scrim.addEventListener("click", closeSidebar); 
+    scrim.addEventListener("click", closeSidebar);
 
     /* ============ PLUS MENU ============ */
     const plusBtn = $("plus-btn"), plusMenu = $("plus-menu");
@@ -900,13 +900,17 @@ Return ONLY the single word. No punctuation, no explanation.`;
             model: "claude-sonnet-4-5",
             max_tokens: 100,
             system: `Extract the mathematical expression from the user message and return ONLY a valid JavaScript math expression.
+CRITICAL: Copy numbers EXACTLY as they appear — do NOT round, abbreviate, or change any digit.
 Use only: numbers, +, -, *, /, (, ), **, Math.sqrt(), Math.pow(), Math.abs(), %, .
+Convert Persian/Arabic digits to English digits (۰→0, ۱→1, ..., ۹→9).
 Examples:
 - "54372 ضربدر 9807" → 54372*9807
+- "85093850 × 4289" → 85093850*4289
 - "جذر 144" → Math.sqrt(144)
 - "۲ به توان ۱۰" → Math.pow(2,10)
 - "15 درصد از 200" → 200*15/100
-Return ONLY the expression, nothing else.`,
+- "تقسیم 1000 بر 7" → 1000/7
+Return ONLY the JS expression, no spaces around operators, nothing else.`,
             messages: [{ role:"user", content: userMsg }]
           })
         });
