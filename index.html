@@ -822,70 +822,76 @@
     /* ── SYSTEM PROMPTS ─────────────────────────────────────────────── */
 
     // Router: Haiku returns ONE word to decide what to do
-    const SYS_ROUTER = `You are a message router. Your ONLY job is to classify the NEW MESSAGE into one category.
+    // Combined: Haiku decides AND answers in one call if simple
+    const SYS_COMBINED = `تو Claude هستی در Planning With AI.
+پیام کاربر رو بخون و یکی از این کارها رو بکن:
 
-IMPORTANT: Ignore any names (usernames, people's names) in the conversation. Focus only on what the user is ASKING.
+اگه سوال ساده، احوال‌پرسی، یا چیزی که می‌دونی هست:
+مستقیم جواب بده به فارسی. کوتاه، دوستانه، مفید.
 
-Categories:
-- "calc"         → any math calculation, arithmetic, numbers to compute (e.g. 54372×9807, sqrt, percentages)
-- "chat"         → simple question, greeting, general knowledge you can answer confidently
-- "hard"         → complex analysis, deep reasoning, coding, writing, expert-level question
-- "search"       → needs LIVE internet data: today's news, current prices, recent events, weather
-- "image"        → user wants an image/photo/drawing/illustration (in ANY language or spelling: عکس/تصویر/ایمیج/image/draw/picture)
-- "search+image" → needs both live search AND an image
+اگه نیاز به یکی از این‌ها داشت، فقط همون کلمه رو بنویس:
+- HARD → تحلیل عمیق، کد پیچیده، سوال تخصصی
+- SEARCH → اطلاعات به‌روز اینترنت، اخبار، قیمت
+- IMAGE → ساخت تصویر (هر زبانی: عکس/تصویر/image/draw)
+- SEARCH+IMAGE → هم سرچ هم تصویر
+- CALC → محاسبه ریاضی
 
-Return ONLY the single word. No punctuation, no explanation.`;
-
-    const SYS_HAIKU_CHAT = `تو Claude هستی در Planning With AI. جواب مختصر، دوستانه و مفید بده. به فارسی جواب بده. حافظه‌ی مکالمه داری و پیام‌های قبلی رو می‌بینی.`;
+قوانین:
+- اگه می‌دونی جواب بده، نگو HARD
+- فقط اگه واقعاً نیاز به سرچ/تصویر/محاسبه/تخصص داره، اون کلمه رو بنویس
+- هرگز چرت و پرت نگو — اگه مطمئن نیستی بنویس HARD
+- حافظه‌ی مکالمه داری و پیام‌های قبلی رو می‌بینی`;
     const SYS_SONNET = `تو Claude هستی در Planning With AI. این یه سوال پیچیده یا تخصصیه. جواب کامل، دقیق و باکیفیت بده. به فارسی جواب بده. حافظه‌ی مکالمه داری.`;
     const SYS_PERP = `متخصص سرچ اینترنت هستی. اطلاعات دقیق و به‌روز بده. به فارسی جواب بده.`;
 
     /* ── ORCHESTRATOR ────────────────────────────────────────────────── */
     async function orchestrate(userMsg, fileData=null) {
-
-      // Step 1: Haiku router — ONE word, max_tokens:5, ultra fast
-      let route = "chat";
+      const bubble = createStreamingBubble("Claude", "💭 دارم فکر می‌کنم...");
       try {
+        // Single call: Haiku decides AND answers if simple
+        const history = buildClaudeHistory(userMsg, fileData);
         const res = await fetch(`${WORKER_URL}/claude`, {
           method:"POST", headers:{"Content-Type":"application/json"},
           body: JSON.stringify({
             model: "claude-haiku-4-5",
-            max_tokens: 5,
-            system: SYS_ROUTER,
-            messages: [{
-              role: "user",
-              content: buildRouterContext()
-                ? `Recent conversation:\n${buildRouterContext()}\n\nNew message: ${userMsg}`
-                : userMsg
-            }]
+            max_tokens: 600,
+            system: SYS_COMBINED,
+            messages: history
           })
         });
         const data = await res.json();
-        const word = (data.content?.[0]?.text || "").trim().toLowerCase().replace(/[^a-z+]/g,"");
-        if (["chat","hard","search","image","search+image"].includes(word)) route = word;
-      } catch(err) { console.warn("Router failed:", err.message); }
+        const reply = (data.content?.[0]?.text || "").trim();
+        const keyword = reply.toUpperCase().trim();
 
-      // Step 2: Execute — each path returns exactly ONE response to user
-      try {
-        if (route === "calc") {
-          await askCalc(userMsg);
-        } else if (route === "chat") {
-          await askHaiku(userMsg, fileData);
-        } else if (route === "hard") {
+        // Check if Haiku returned a routing keyword
+        if (keyword === "HARD") {
+          removeStreamingBubble(bubble);
           await askSonnet(userMsg, fileData);
-        } else if (route === "search") {
+        } else if (keyword === "SEARCH") {
+          removeStreamingBubble(bubble);
           await askPerplexity(userMsg);
-        } else if (route === "image") {
+        } else if (keyword === "IMAGE") {
+          removeStreamingBubble(bubble);
           const imgPrompt = await makeImagePrompt(userMsg);
           await askGeminiImage(imgPrompt);
-        } else if (route === "search+image") {
+        } else if (keyword === "SEARCH+IMAGE") {
+          removeStreamingBubble(bubble);
           await askPerplexity(userMsg);
           const imgPrompt = await makeImagePrompt(userMsg);
           await askGeminiImage(imgPrompt);
+        } else if (keyword === "CALC") {
+          removeStreamingBubble(bubble);
+          await askCalc(userMsg);
+        } else {
+          // Haiku answered directly — show it
+          finalizeStreamingBubble(bubble, reply);
+          removeStreamingBubble(bubble);
+          if (reply) await addDoc(messagesRef, {sender:"Claude", text:reply, timestamp:serverTimestamp()});
         }
       } catch(err) {
-        console.error("Route failed:", err);
-        await askHaiku(userMsg, fileData);
+        console.error("Orchestrate failed:", err);
+        removeStreamingBubble(bubble);
+        await askSonnet(userMsg, fileData);
       }
     }
 
@@ -897,7 +903,7 @@ Return ONLY the single word. No punctuation, no explanation.`;
         const extractRes = await fetch(`${WORKER_URL}/claude`, {
           method:"POST", headers:{"Content-Type":"application/json"},
           body: JSON.stringify({
-            model: "claude-sonnet-4-5",
+            model: "claude-sonnet-5",
             max_tokens: 100,
             system: `Extract the mathematical expression from the user message and return ONLY a valid JavaScript math expression.
 CRITICAL: Copy numbers EXACTLY as they appear — do NOT round, abbreviate, or change any digit.
@@ -960,7 +966,7 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
         const explainRes = await fetch(`${WORKER_URL}/claude`, {
           method:"POST", headers:{"Content-Type":"application/json"},
           body: JSON.stringify({
-            model: "claude-sonnet-4-5",
+            model: "claude-sonnet-5",
             max_tokens: 400,
             system: explainSystem,
             messages: [{ role:"user", content: explainPrompt }]
@@ -1057,7 +1063,7 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
         const history = buildClaudeHistory(userMessage, fileData);
         const res = await fetch(`${WORKER_URL}/claude`, {
           method:"POST", headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({ model:"claude-sonnet-4-5", max_tokens:1500, system:SYS_SONNET, messages:history })
+          body: JSON.stringify({ model:"claude-sonnet-5", max_tokens:1500, system:SYS_SONNET, messages:history })
         });
         const data = await res.json();
         const full = data.content?.[0]?.text || "";
@@ -1334,7 +1340,7 @@ ${context ? `توضیحات: ${context}` : ""}
 
           const claudeRes = await fetch(`${WORKER_URL}/claude`, {
             method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ model: "claude-sonnet-4-5", max_tokens: 2048, system: claudeSys, messages: batchMessages })
+            body: JSON.stringify({ model: "claude-sonnet-5", max_tokens: 2048, system: claudeSys, messages: batchMessages })
           });
           const claudeData = await claudeRes.json();
           const rawText = (claudeData.content?.[0]?.text || "").replace(/```json|```/gi, "").trim();
@@ -1490,7 +1496,7 @@ ${allQA}
       try {
         const res = await fetch(`${WORKER_URL}/claude`, {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ model: "claude-sonnet-4-5", max_tokens: 3000, system: claudeSystem, messages: [{ role: "user", content: claudePrompt }] })
+          body: JSON.stringify({ model: "claude-sonnet-5", max_tokens: 3000, system: claudeSystem, messages: [{ role: "user", content: claudePrompt }] })
         });
         const data = await res.json();
         const raw = (data.content?.[0]?.text || "").replace(/```json|```/gi, "").trim();
