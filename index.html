@@ -1031,7 +1031,13 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       if (s) s.remove();
       const t = div.querySelector(".msg-text");
       if (!t) return;
-      t.innerHTML = escHtml(text).replace(/\n/g, "<br>") + '<span class="stream-caret"></span>';
+      // Use a dedicated streaming span to avoid full DOM rebuild
+      let streamer = t.querySelector(".stream-text");
+      if (!streamer) {
+        t.innerHTML = '<span class="stream-text"></span><span class="stream-caret"></span>';
+        streamer = t.querySelector(".stream-text");
+      }
+      streamer.textContent = text;
       const mc = $("messages-container");
       const distFromBottom = mc.scrollHeight - mc.scrollTop - mc.clientHeight;
       if (distFromBottom < 80) mc.scrollTop = mc.scrollHeight;
