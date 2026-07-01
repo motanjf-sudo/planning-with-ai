@@ -1019,8 +1019,20 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       scrollToBottom();
       return div;
     }
+    let _streamThrottle = 0;
     function updateStreamingBubble(div, text) {
-      // no-op — typing indicator shows until response is complete
+      const now = Date.now();
+      if (now - _streamThrottle < 60) return; // update max ~16x/sec
+      _streamThrottle = now;
+      const s = div.querySelector(".msg-status");
+      if (s) s.remove();
+      const t = div.querySelector(".msg-text");
+      if (!t) return;
+      t.innerHTML = escHtml(text).replace(/\n/g, "<br>") + '<span class="stream-caret"></span>';
+      // Only scroll if user is already near bottom — never force scroll
+      const mc = $("messages-container");
+      const distFromBottom = mc.scrollHeight - mc.scrollTop - mc.clientHeight;
+      if (distFromBottom < 80) mc.scrollTop = mc.scrollHeight;
     }
     function finalizeStreamingBubble(div, text) {
       // Remove status line, then show final markdown text
