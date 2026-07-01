@@ -917,15 +917,32 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
         const extractData = await extractRes.json();
         const expr = (extractData.content?.[0]?.text || "").trim().replace(/```/g,"").trim();
 
-        // Step 2: JS evaluates the expression (100% accurate)
+        // Step 2: JS evaluates the expression with BigInt for large integers
         let calcResult = null;
         let calcError = false;
         try {
-          if (!/^[0-9+\-*\/().,%\s\wM]*$/.test(expr)) throw new Error("unsafe");
-          const result = Function('"use strict"; return (' + expr + ')')();
-          if (!isFinite(result)) throw new Error("infinite");
-          // Round floating point errors
-          calcResult = Math.round(result * 1e10) / 1e10;
+          if (!/^[0-9n+\-*\/().,%\s\wM]*$/.test(expr)) throw new Error("unsafe");
+
+          // Try BigInt first for pure integer expressions (multiplication/addition/subtraction)
+          const isIntExpr = /^[\d\s+\-*]+$/.test(expr.trim());
+          if (isIntExpr && !expr.includes('/') && !expr.includes('.')) {
+            try {
+              // Convert all numbers to BigInt
+              const bigExpr = expr.replace(/(\d+)/g, '$1n');
+              const bigResult = Function('"use strict"; return (' + bigExpr + ')')();
+              calcResult = bigResult.toString();
+            } catch(e) {
+              // Fall back to regular float
+              const result = Function('"use strict"; return (' + expr + ')')();
+              if (!isFinite(result)) throw new Error("infinite");
+              calcResult = Math.round(result * 1e10) / 1e10;
+            }
+          } else {
+            // For expressions with division, sqrt, etc. use regular float
+            const result = Function('"use strict"; return (' + expr + ')')();
+            if (!isFinite(result)) throw new Error("infinite");
+            calcResult = Math.round(result * 1e10) / 1e10;
+          }
         } catch(e) {
           calcError = true;
         }
