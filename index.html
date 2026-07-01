@@ -780,121 +780,77 @@
 
     /* ── SYSTEM PROMPTS ─────────────────────────────────────────────── */
 
-    const SYS_HAIKU = `You are Haiku, the fast brain of Planning With AI.
-Your job: read the user message and decide what to do, then act.
+    // Router: Haiku returns ONE word to decide what to do
+    const SYS_ROUTER = `You are a router. Read the user message and return ONLY one word:
+- "chat"         → simple or conversational, you can answer quickly
+- "hard"         → complex analysis, deep reasoning, technical, expert-level
+- "search"       → needs live internet data: news, prices, today info, recent events
+- "image"        → user wants an image/photo/drawing/illustration (in ANY language or spelling)
+- "search+image" → needs both search AND an image
 
-DECISION RULES (pick exactly one action):
-1. You KNOW the answer and it is simple/factual/conversational → action: "answer"
-   Reply directly in Persian. Be concise and helpful.
-2. You are NOT sure, or the question needs deep analysis/complex reasoning → action: "sonnet"
-   Just return the JSON, do not answer.
-3. Question needs current internet data (news, prices, live info) → action: "search"
-   Return a Persian search query.
-4. Question needs an image → action: "image"
-   Return an English image generation prompt (detailed, vivid).
-5. Question needs BOTH search AND image → action: "search+image"
-   Return both a Persian search query and an English image prompt.
+Return ONLY the single word. No punctuation, no explanation.`;
 
-CRITICAL RULES:
-- NEVER make up facts you are unsure about. If unsure → sonnet.
-- NEVER say "I don't know" for simple greetings or easy questions — just answer.
-- Return ONLY raw JSON, no markdown, no explanation.
-
-OUTPUT FORMAT:
-{"action":"answer","reply":"جواب فارسی اینجا"}
-{"action":"sonnet"}
-{"action":"search","query":"عبارت جستجو به فارسی"}
-{"action":"image","prompt":"detailed English image prompt"}
-{"action":"search+image","query":"عبارت جستجو","prompt":"English image prompt"}`;
-
-    const SYS_SONNET = `تو Claude هستی در Planning With AI. سوال پیچیده یا تخصصی داری. جواب کامل، دقیق و باکیفیت بده. به فارسی جواب بده.`;
-
-    const SYS_PERP = `تو Perplexity هستی — متخصص سرچ. اطلاعات به‌روز و دقیق بده. به فارسی جواب بده.`;
+    const SYS_HAIKU_CHAT = `تو Claude هستی در Planning With AI. جواب مختصر، دوستانه و مفید بده. به فارسی جواب بده. حافظه‌ی مکالمه داری و پیام‌های قبلی رو می‌بینی.`;
+    const SYS_SONNET = `تو Claude هستی در Planning With AI. این یه سوال پیچیده یا تخصصیه. جواب کامل، دقیق و باکیفیت بده. به فارسی جواب بده. حافظه‌ی مکالمه داری.`;
+    const SYS_PERP = `متخصص سرچ اینترنت هستی. اطلاعات دقیق و به‌روز بده. به فارسی جواب بده.`;
 
     /* ── ORCHESTRATOR ────────────────────────────────────────────────── */
     async function orchestrate(userMsg, fileData=null) {
-      // Step 1: Ask Haiku what to do
-      let decision = null;
-      for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-          const res = await fetch(`${WORKER_URL}/claude`, {
-            method:"POST", headers:{"Content-Type":"application/json"},
-            body: JSON.stringify({
-              model: "claude-haiku-4-5",
-              max_tokens: 400,
-              system: SYS_HAIKU,
-              messages: [{ role:"user", content:`${currentUser}: ${userMsg}` }]
-            })
-          });
-          const data = await res.json();
-          const raw = (data.content?.[0]?.text || "").replace(/```json|```/gi,"").trim();
-          const s = raw.indexOf("{"), e = raw.lastIndexOf("}");
-          if (s === -1) throw new Error("no JSON");
-          decision = JSON.parse(raw.substring(s, e+1));
-          if (!decision.action) throw new Error("no action");
-          break;
-        } catch(err) {
-          console.warn("Haiku decision attempt", attempt+1, "failed:", err.message);
-          if (attempt === 1) decision = { action:"sonnet" }; // safe fallback
-        }
-      }
 
-      const action = decision.action;
-
-      // Step 2: Execute decision
-      try {
-        if (action === "answer") {
-          // Haiku answers with streaming — word by word
-          await askHaiku(userMsg, fileData);
-
-        } else if (action === "sonnet") {
-          // Complex question — use Sonnet
-          await askSonnet(userMsg, fileData);
-
-        } else if (action === "search") {
-          // Perplexity searches, Haiku summarizes
-          const searchResult = await askPerplexity(decision.query || userMsg);
-          if (searchResult) await askHaikuSummary(userMsg, searchResult);
-
-        } else if (action === "image") {
-          // Gemini generates image
-          await askGeminiImage(decision.prompt || userMsg);
-
-        } else if (action === "search+image") {
-          // Perplexity searches + Gemini makes image
-          const searchResult = await askPerplexity(decision.query || userMsg);
-          if (searchResult) await askHaikuSummary(userMsg, searchResult);
-          await askGeminiImage(decision.prompt || userMsg);
-        }
-      } catch(err) {
-        console.error("Orchestrate step failed:", err);
-        // Last resort fallback
-        await askSonnet(userMsg, fileData);
-      }
-    }
-
-    /* Haiku summarizes search results — fast + shows sources */
-    async function askHaikuSummary(originalQ, searchResult) {
-      const bubble = createStreamingBubble("Claude", "📝 دارم خلاصه می‌کنم...");
+      // Step 1: Haiku router — ONE word, max_tokens:5, ultra fast
+      let route = "chat";
       try {
         const res = await fetch(`${WORKER_URL}/claude`, {
           method:"POST", headers:{"Content-Type":"application/json"},
           body: JSON.stringify({
             model: "claude-haiku-4-5",
-            max_tokens: 600,
-            system: `تو Claude هستی. اطلاعات سرچ شده رو به فارسی خلاصه و تحلیل کن. مختصر و مفید باش.`,
-            messages:[{ role:"user", content:`سوال کاربر: ${originalQ}\n\nاطلاعات سرچ شده:\n${searchResult}\n\nخلاصه کن و جواب بده.` }],
-            stream: true
+            max_tokens: 5,
+            system: SYS_ROUTER,
+            messages: [{ role:"user", content: userMsg }]
           })
         });
-        const full = await readSSEProgressive(res, bubble, json => {
-          if (json.type==="content_block_delta" && json.delta?.type==="text_delta") return json.delta.text;
-          return "";
+        const data = await res.json();
+        const word = (data.content?.[0]?.text || "").trim().toLowerCase().replace(/[^a-z+]/g,"");
+        if (["chat","hard","search","image","search+image"].includes(word)) route = word;
+      } catch(err) { console.warn("Router failed:", err.message); }
+
+      // Step 2: Execute — each path returns exactly ONE response to user
+      try {
+        if (route === "chat") {
+          await askHaiku(userMsg, fileData);
+        } else if (route === "hard") {
+          await askSonnet(userMsg, fileData);
+        } else if (route === "search") {
+          await askPerplexity(userMsg);
+        } else if (route === "image") {
+          const imgPrompt = await makeImagePrompt(userMsg);
+          await askGeminiImage(imgPrompt);
+        } else if (route === "search+image") {
+          await askPerplexity(userMsg);
+          const imgPrompt = await makeImagePrompt(userMsg);
+          await askGeminiImage(imgPrompt);
+        }
+      } catch(err) {
+        console.error("Route failed:", err);
+        await askHaiku(userMsg, fileData);
+      }
+    }
+
+    // Silent: Haiku builds a good English image prompt (no chat bubble shown)
+    async function makeImagePrompt(userMsg) {
+      try {
+        const res = await fetch(`${WORKER_URL}/claude`, {
+          method:"POST", headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({
+            model: "claude-haiku-4-5",
+            max_tokens: 120,
+            system: `Convert the user request to a detailed vivid English image generation prompt. Return ONLY the prompt.`,
+            messages: [{ role:"user", content: userMsg }]
+          })
         });
-        finalizeStreamingBubble(bubble, full);
-        removeStreamingBubble(bubble);
-        if (full.trim()) await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
-      } catch(e) { console.error("Haiku summary:", e); removeStreamingBubble(bubble); }
+        const data = await res.json();
+        return (data.content?.[0]?.text || userMsg).trim();
+      } catch { return userMsg; }
     }
 
     /* ============ STREAMING UI HELPER ============
@@ -930,7 +886,7 @@ OUTPUT FORMAT:
     }
     function removeStreamingBubble(div) { if (div?.parentNode) div.parentNode.removeChild(div); }
 
-    /* ============ HAIKU — simple questions, streaming ============ */
+    /* ============ HAIKU — simple/chat questions ============ */
     async function askHaiku(userMessage, fileData=null) {
       const bubble = createStreamingBubble("Claude", "💭 دارم فکر می‌کنم...");
       try {
@@ -940,7 +896,7 @@ OUTPUT FORMAT:
           body: JSON.stringify({
             model: "claude-haiku-4-5",
             max_tokens: 800,
-            system: `تو Claude هستی در Planning With AI. جواب کوتاه، مفید و دوستانه بده. به فارسی جواب بده.`,
+            system: SYS_HAIKU_CHAT,
             messages: history,
             stream: true
           })
