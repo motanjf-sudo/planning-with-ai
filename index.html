@@ -18,6 +18,29 @@
       --radius: 12px; --radius-sm: 8px;
       --header-h: 56px;
     }
+    /* ── LIGHT THEME ── */
+    body.light {
+      --bg: #f0f2f8; --bg2: #ffffff; --bg3: #e8eaf2; --sidebar: #eceef7;
+      --border: rgba(0,0,0,0.08); --accent: #6c5ce7; --accent2: #8b7cf7;
+      --text: #1a1b2e; --text2: #555770; --text3: #9899aa;
+      --claude-bg: #ede9ff; --claude-border: rgba(108,92,231,0.2);
+      --gemini-bg: #e8f7ed; --gemini-border: rgba(66,200,100,0.2);
+      --perplexity-bg: #e8f4fd; --perplexity-border: rgba(32,156,238,0.2);
+    }
+    body.light .chat-watermark { color: rgba(0,0,0,0.04); }
+    body.light .messages-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); }
+    body.light #message-input { background: var(--bg3); color: var(--text); }
+    body.light .calc-display { background: #dde0ee; }
+    body.light .calc-result { color: var(--text); }
+
+    /* theme toggle button */
+    .theme-btn {
+      background: none; border: none; cursor: pointer;
+      font-size: 20px; padding: 6px 8px; border-radius: 8px;
+      transition: background 0.2s, transform 0.3s;
+      flex-shrink: 0; line-height: 1;
+    }
+    .theme-btn:hover { background: var(--bg3); transform: rotate(20deg); }
     html, body { height: 100%; height: 100dvh; }
     body { font-family: 'Vazirmatn', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; direction: rtl; -webkit-font-smoothing: antialiased; }
     .hidden { display: none !important; }
@@ -296,6 +319,7 @@
           <div class="avatar" id="sidebar-avatar"></div>
           <span id="sidebar-username"></span>
         </div>
+        <button class="theme-btn" id="theme-btn" title="تغییر تم">🌙</button>
         <button class="icon-btn" id="logout-btn" title="خروج">↩</button>
       </div>
     </div>
@@ -739,25 +763,30 @@
        Then the steps are executed one by one, in order. */
 
     /* ── HISTORY BUILDER ────────────────────────────────────────────── */
-    // Builds a clean alternating user/assistant history for Claude.
-    // Only includes messages from the current user and Claude responses,
-    // so other group members' messages don't corrupt the conversation.
+    // Builds clean alternating user/assistant history for Claude.
+    // Only this user's messages + Claude responses — no other group members.
     function buildClaudeHistory(newUserMsg, fileData=null) {
       const history = [];
 
-      // Get last 30 messages and filter to only this user + Claude
-      const relevant = allMessages.slice(-30).filter(m =>
+      // Filter: only current user + Claude, last 40 messages
+      const relevant = allMessages.slice(-40).filter(m =>
         m.sender === currentUser || m.sender === "Claude"
       );
 
       for (const m of relevant) {
         const role = m.sender === "Claude" ? "assistant" : "user";
-        // Skip consecutive same-role (shouldn't happen but safety check)
-        if (history.length && history[history.length-1].role === role) continue;
-        history.push({ role, content: m.text || "" });
+        const text = (m.text || "").trim();
+        if (!text) continue;
+        // Skip consecutive same-role to keep alternating pattern
+        if (history.length && history[history.length-1].role === role) {
+          // Merge into last message instead of skipping
+          history[history.length-1].content += "\n" + text;
+          continue;
+        }
+        history.push({ role, content: text });
       }
 
-      // Build final user message (with optional image)
+      // Build the new user message (with optional image attachment)
       const userContent = [];
       if (fileData?.mimeType?.startsWith("image/"))
         userContent.push({ type:"image", source:{type:"base64", media_type:fileData.mimeType, data:fileData.base64} });
@@ -768,7 +797,7 @@
         content: userContent.length === 1 ? userContent[0].text : userContent
       };
 
-      // If last in history is already user, replace it (avoid consecutive user msgs)
+      // Replace last user message or append
       if (history.length && history[history.length-1].role === "user") {
         history[history.length-1] = finalMsg;
       } else {
@@ -776,6 +805,17 @@
       }
 
       return history;
+    }
+
+    // Builds a short context string for the router (last 4 exchanges)
+    function buildRouterContext() {
+      const relevant = allMessages.slice(-8).filter(m =>
+        m.sender === currentUser || m.sender === "Claude"
+      );
+      if (!relevant.length) return "";
+      return relevant.map(m =>
+        (m.sender === "Claude" ? "Claude" : "User") + ": " + (m.text || "").slice(0, 80)
+      ).join("\n");
     }
 
     /* ── SYSTEM PROMPTS ─────────────────────────────────────────────── */
@@ -806,7 +846,12 @@ Return ONLY the single word. No punctuation, no explanation.`;
             model: "claude-haiku-4-5",
             max_tokens: 5,
             system: SYS_ROUTER,
-            messages: [{ role:"user", content: userMsg }]
+            messages: [{
+              role: "user",
+              content: buildRouterContext()
+                ? `Recent conversation:\n${buildRouterContext()}\n\nNew message: ${userMsg}`
+                : userMsg
+            }]
           })
         });
         const data = await res.json();
@@ -1488,6 +1533,16 @@ ${allQA}
 
     /* ============ START ============ */
     checkSavedUser();
+
+    /* ── THEME TOGGLE ── */
+    const themeBtn = $("theme-btn");
+    const savedTheme = localStorage.getItem("theme") || "dark";
+    if (savedTheme === "light") { document.body.classList.add("light"); themeBtn.textContent = "☀️"; }
+    themeBtn.addEventListener("click", () => {
+      const isLight = document.body.classList.toggle("light");
+      themeBtn.textContent = isLight ? "☀️" : "🌙";
+      localStorage.setItem("theme", isLight ? "light" : "dark");
+    });
   </script>
 </body>
 </html>
