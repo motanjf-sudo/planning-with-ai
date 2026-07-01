@@ -1020,7 +1020,12 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       return div;
     }
     function updateStreamingBubble(div, text) {
-      // no-op during stream — just keep the typing indicator visible
+      const s = div.querySelector(".msg-status");
+      if (s) s.remove();
+      const t = div.querySelector(".msg-text");
+      if (t) t.innerHTML = escHtml(text).replace(/\n/g, "<br>") + '<span class="stream-caret"></span>';
+      const mc = $("messages-container");
+      if (mc.scrollHeight - mc.scrollTop - mc.clientHeight < 200) mc.scrollTop = mc.scrollHeight;
     }
     function finalizeStreamingBubble(div, text) {
       // Remove status line, then show final markdown text
