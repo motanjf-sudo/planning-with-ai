@@ -808,25 +808,31 @@
     }
 
     // Builds a short context string for the router (last 4 exchanges)
+    // We label everything as "User"/"Assistant" to avoid name confusion
     function buildRouterContext() {
-      const relevant = allMessages.slice(-8).filter(m =>
+      const relevant = allMessages.slice(-6).filter(m =>
         m.sender === currentUser || m.sender === "Claude"
       );
       if (!relevant.length) return "";
       return relevant.map(m =>
-        (m.sender === "Claude" ? "Claude" : "User") + ": " + (m.text || "").slice(0, 80)
+        (m.sender === "Claude" ? "Assistant" : "User") + ": " + (m.text || "").slice(0, 60)
       ).join("\n");
     }
 
     /* ── SYSTEM PROMPTS ─────────────────────────────────────────────── */
 
     // Router: Haiku returns ONE word to decide what to do
-    const SYS_ROUTER = `You are a router. Read the user message and return ONLY one word:
-- "chat"         → simple or conversational, you can answer quickly
-- "hard"         → complex analysis, deep reasoning, technical, expert-level
-- "search"       → needs live internet data: news, prices, today info, recent events
-- "image"        → user wants an image/photo/drawing/illustration (in ANY language or spelling)
-- "search+image" → needs both search AND an image
+    const SYS_ROUTER = `You are a message router. Your ONLY job is to classify the NEW MESSAGE into one category.
+
+IMPORTANT: Ignore any names (usernames, people's names) in the conversation. Focus only on what the user is ASKING.
+
+Categories:
+- "calc"         → any math calculation, arithmetic, numbers to compute (e.g. 54372×9807, sqrt, percentages)
+- "chat"         → simple question, greeting, general knowledge you can answer confidently
+- "hard"         → complex analysis, deep reasoning, coding, writing, expert-level question
+- "search"       → needs LIVE internet data: today's news, current prices, recent events, weather
+- "image"        → user wants an image/photo/drawing/illustration (in ANY language or spelling: عکس/تصویر/ایمیج/image/draw/picture)
+- "search+image" → needs both live search AND an image
 
 Return ONLY the single word. No punctuation, no explanation.`;
 
@@ -861,7 +867,9 @@ Return ONLY the single word. No punctuation, no explanation.`;
 
       // Step 2: Execute — each path returns exactly ONE response to user
       try {
-        if (route === "chat") {
+        if (route === "calc") {
+          await askCalc(userMsg);
+        } else if (route === "chat") {
           await askHaiku(userMsg, fileData);
         } else if (route === "hard") {
           await askSonnet(userMsg, fileData);
@@ -878,6 +886,77 @@ Return ONLY the single word. No punctuation, no explanation.`;
       } catch(err) {
         console.error("Route failed:", err);
         await askHaiku(userMsg, fileData);
+      }
+    }
+
+    /* ── CALC: Sonnet extracts expression, JS evaluates it accurately ── */
+    async function askCalc(userMsg) {
+      const bubble = createStreamingBubble("Claude", "🧮 دارم حساب می‌کنم...");
+      try {
+        // Step 1: Sonnet extracts the math expression (silent)
+        const extractRes = await fetch(`${WORKER_URL}/claude`, {
+          method:"POST", headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({
+            model: "claude-sonnet-4-5",
+            max_tokens: 100,
+            system: `Extract the mathematical expression from the user message and return ONLY a valid JavaScript math expression.
+Use only: numbers, +, -, *, /, (, ), **, Math.sqrt(), Math.pow(), Math.abs(), %, .
+Examples:
+- "54372 ضربدر 9807" → 54372*9807
+- "جذر 144" → Math.sqrt(144)
+- "۲ به توان ۱۰" → Math.pow(2,10)
+- "15 درصد از 200" → 200*15/100
+Return ONLY the expression, nothing else.`,
+            messages: [{ role:"user", content: userMsg }]
+          })
+        });
+        const extractData = await extractRes.json();
+        const expr = (extractData.content?.[0]?.text || "").trim().replace(/```/g,"").trim();
+
+        // Step 2: JS evaluates the expression (100% accurate)
+        let calcResult = null;
+        let calcError = false;
+        try {
+          if (!/^[0-9+\-*\/().,%\s\wM]*$/.test(expr)) throw new Error("unsafe");
+          const result = Function('"use strict"; return (' + expr + ')')();
+          if (!isFinite(result)) throw new Error("infinite");
+          // Round floating point errors
+          calcResult = Math.round(result * 1e10) / 1e10;
+        } catch(e) {
+          calcError = true;
+        }
+
+        // Step 3: Sonnet explains the answer beautifully (streaming)
+        const explainSystem = `تو Claude هستی. یه محاسبه انجام شده، نتیجه رو به کاربر توضیح بده. مختصر و واضح.`;
+        const explainPrompt = calcError
+          ? `سوال: ${userMsg}
+نتوانستم محاسبه کنم. با Sonnet توضیح بده.`
+          : `سوال: ${userMsg}
+عبارت: ${expr}
+جواب دقیق: ${calcResult}
+این نتیجه رو به فارسی توضیح بده.`;
+
+        const explainRes = await fetch(`${WORKER_URL}/claude`, {
+          method:"POST", headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({
+            model: "claude-sonnet-4-5",
+            max_tokens: 400,
+            system: explainSystem,
+            messages: [{ role:"user", content: explainPrompt }],
+            stream: true
+          })
+        });
+        const full = await readSSEProgressive(explainRes, bubble, json => {
+          if (json.type==="content_block_delta" && json.delta?.type==="text_delta") return json.delta.text;
+          return "";
+        });
+        finalizeStreamingBubble(bubble, full);
+        removeStreamingBubble(bubble);
+        if (full.trim()) await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+      } catch(e) {
+        console.error("Calc:", e);
+        removeStreamingBubble(bubble);
+        await askSonnet(userMsg); // fallback
       }
     }
 
