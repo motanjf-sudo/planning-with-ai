@@ -142,9 +142,12 @@
     .msg-text p { margin: 0 0 8px; } .msg-text p:last-child { margin-bottom: 0; }
     .msg-text strong { font-weight: 700; color: var(--text); }
     .msg-text em { font-style: italic; }
-    .msg-text code { background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 5px; font-family: monospace; font-size: 13px; direction: ltr; display: inline-block; color: var(--text); }
+    .msg-text code { background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 5px; font-family: monospace; font-size: 13px; direction: ltr; display: inline-block; color: #e8e9f0; }
     .msg-text pre { background: #0a0b0f; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin: 8px 0; overflow-x: auto; direction: ltr; text-align: left; }
     .msg-text pre code { background: none; padding: 0; font-size: 13px; line-height: 1.6; color: #e8e9f0; }
+    body.light .msg-text code { background: #1e2029; color: #e8e9f0; }
+    body.light .msg-text pre { background: #1e2029; border-color: rgba(0,0,0,0.2); }
+    body.light .msg-text pre code { color: #e8e9f0; }
     body.light .msg-text code { background: rgba(0,0,0,0.07); color: #1a1b2e; }
     body.light .msg-text pre { background: #1e2029; border-color: rgba(0,0,0,0.15); }
     body.light .msg-text pre code { color: #e8e9f0; }
@@ -824,53 +827,64 @@
 
     /* ── SYSTEM PROMPTS ─────────────────────────────────────────────── */
 
-    // Router: Haiku returns ONE word to decide what to do
-    // Combined: Haiku decides AND answers in one call if simple
-    const SYS_COMBINED = `تو Claude هستی در Planning With AI.
-تاریخچه‌ی مکالمه رو داری و باید با توجه به context جواب بدی.
+    /* ── SYSTEM PROMPTS ─────────────────────────────────────────────── */
 
-پیام آخر کاربر رو بخون و یکی از این کارها رو بکن:
+    // Groq: هم تصمیم میگیره هم جواب میده — در یه call
+    const SYS_GROQ = `تو یه دستیار هوشمند فارسی‌زبان هستی در برنامه‌ی Planning With AI.
+تاریخچه‌ی کامل مکالمه رو داری و باید با توجه به context جواب بدی.
 
-اگه سوال ساده، احوال‌پرسی، یا چیزی که می‌دونی هست (شامل جواب دادن به سوال قبلی خودت):
-مستقیم جواب بده به فارسی. کوتاه، دوستانه، مفید.
-مهم: اگه کاربر داره به سوال قبلی تو جواب میده، اون رو با context بررسی کن.
+وقتی پیام کاربر رو خوندی، یکی از این دو کار رو بکن:
 
-اگه نیاز به یکی از این‌ها داشت، فقط همون کلمه رو بنویس:
-- HARD → تحلیل عمیق، کد پیچیده، نوشتن متن بلند، سوال تخصصی
-- SEARCH → اطلاعات به‌روز اینترنت، اخبار، قیمت امروز
-- IMAGE → ساخت تصویر (هر زبانی: عکس/تصویر/image/draw/بکش)
-- SEARCH+IMAGE → هم سرچ هم تصویر
-- CALC → محاسبه ریاضی (ضرب، تقسیم، جذر، توان و...)
+━━━ حالت اول: خودت جواب بده ━━━
+اگه سوال ساده، احوال‌پرسی، دانش عمومی، یا چیزیه که مطمئنی جوابش رو میدونی:
+← مستقیم به فارسی جواب بده. روان، دوستانه، دقیق و مفید.
+← اگه کاربر داره به سوال قبلی تو جواب میده، اون رو با context بررسی کن و واکنش درست نشون بده.
+← هرگز اطلاعات نادرست نده — اگه مطمئن نیستی بنویس HARD
 
-قوانین مهم:
-- اگه می‌دونی جواب بده، نگو HARD
-- فقط یه کلمه از لیست بالا بنویس یا مستقیم جواب بده
-- هرگز چرت و پرت نگو — اگه مطمئن نیستی بنویس HARD`;
-    const SYS_SONNET = `تو Claude هستی در Planning With AI. این یه سوال پیچیده یا تخصصیه. جواب کامل، دقیق و باکیفیت بده. به فارسی جواب بده. حافظه‌ی مکالمه داری.`;
-    const SYS_PERP = `متخصص سرچ اینترنت هستی. اطلاعات دقیق و به‌روز بده. به فارسی جواب بده.`;
+━━━ حالت دوم: یه کلمه بنویس ━━━
+فقط اگه واقعاً نیازه، دقیقاً یکی از این کلمات رو بنویس:
+
+HARD       ← تحلیل عمیق، کد پیچیده، نوشتن متن تخصصی یا بلند، سوال تخصصی که مطمئن نیستی
+SEARCH     ← اطلاعات به‌روز اینترنت: اخبار امروز، قیمت لحظه‌ای، رویدادهای اخیر
+IMAGE      ← ساخت تصویر، نقاشی، طراحی (به هر زبانی: عکس/تصویر/بکش/image/draw/photo)
+SEARCH+IMAGE ← هم اطلاعات به‌روز لازمه هم تصویر
+CALC       ← محاسبه‌ی ریاضی: ضرب، تقسیم، جمع، تفریق، جذر، توان، درصد
+
+قوانین طلایی:
+• فقط یه کلمه از لیست بالا بنویس یا مستقیم جواب بده — هیچ چیز دیگه‌ای نه
+• اگه جوابش رو میدونی، خودت بده — نگو HARD
+• هرگز چرت و پرت نگو`;
+
+    // Sonnet 5: برای سوالات سنگین و تخصصی
+    const SYS_SONNET = `تو Claude هستی در Planning With AI.
+این یه سوال پیچیده یا تخصصیه که نیاز به تحلیل عمیق داره.
+جواب کامل، دقیق و باکیفیت بده. به فارسی روان جواب بده.
+تاریخچه‌ی مکالمه داری — از context استفاده کن.`;
+
+    // Perplexity: برای سرچ اینترنت
+    const SYS_PERP = `تو متخصص جستجوی اینترنتی هستی.
+اطلاعات دقیق، به‌روز و معتبر بده. منابع مهم رو ذکر کن. به فارسی روان جواب بده.`;
 
     /* ── ORCHESTRATOR ────────────────────────────────────────────────── */
     async function orchestrate(userMsg, fileData=null) {
       const bubble = createStreamingBubble("Claude");
       try {
-        // Single call: Haiku decides AND answers if simple
         const history = buildClaudeHistory(userMsg, fileData);
         const res = await fetch(`${WORKER_URL}/groq`, {
           method:"POST", headers:{"Content-Type":"application/json"},
           body: JSON.stringify({
-            model: "llama-3.3-70b-versatile",
-            max_tokens: 600,
+            model: "llama-3.1-8b-instant",
+            max_tokens: 700,
             messages: [
-              { role: "system", content: SYS_COMBINED },
+              { role: "system", content: SYS_GROQ },
               ...history
             ]
           })
         });
         const data = await res.json();
         const reply = (data.choices?.[0]?.message?.content || "").trim();
-        const keyword = reply.toUpperCase().trim();
+        const keyword = reply.toUpperCase().replace(/[^A-Z+]/g, "");
 
-        // Check if Haiku returned a routing keyword
         if (keyword === "HARD") {
           removeStreamingBubble(bubble);
           await askSonnet(userMsg, fileData);
@@ -881,7 +895,7 @@
           removeStreamingBubble(bubble);
           const imgPrompt = await makeImagePrompt(userMsg);
           await askGeminiImage(imgPrompt);
-        } else if (keyword === "SEARCH+IMAGE") {
+        } else if (keyword === "SEARCH+IMAGE" || keyword === "SEARCHIMAGE") {
           removeStreamingBubble(bubble);
           await askPerplexity(userMsg);
           const imgPrompt = await makeImagePrompt(userMsg);
@@ -890,7 +904,7 @@
           removeStreamingBubble(bubble);
           await askCalc(userMsg);
         } else {
-          // Haiku answered directly — show it
+          // Groq answered directly
           finalizeStreamingBubble(bubble, reply);
           removeStreamingBubble(bubble);
           if (reply) await addDoc(messagesRef, {sender:"Claude", text:reply, timestamp:serverTimestamp()});
@@ -1042,17 +1056,18 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
     function removeStreamingBubble(div) { if (div?.parentNode) div.parentNode.removeChild(div); }
 
     /* ============ HAIKU — simple/chat questions ============ */
-    async function askHaiku(userMessage, fileData=null) {
+    async function askGroqDirect(userMessage, fileData=null) {
+      // Groq answers directly when orchestrator decided to answer but needs retry
       const bubble = createStreamingBubble("Claude");
       try {
         const history = buildClaudeHistory(userMessage, fileData);
         const res = await fetch(`${WORKER_URL}/groq`, {
           method:"POST", headers:{"Content-Type":"application/json"},
           body: JSON.stringify({
-            model: "llama-3.3-70b-versatile",
+            model: "llama-3.1-8b-instant",
             max_tokens: 800,
             messages: [
-              { role: "system", content: SYS_HAIKU_CHAT },
+              { role: "system", content: SYS_GROQ },
               ...history
             ]
           })
@@ -1062,7 +1077,7 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
         finalizeStreamingBubble(bubble, full);
         removeStreamingBubble(bubble);
         if (full.trim()) await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
-      } catch(e) { console.error("Haiku:", e); removeStreamingBubble(bubble); }
+      } catch(e) { console.error("Groq direct:", e); removeStreamingBubble(bubble); }
     }
 
     /* ============ SONNET — complex questions ============ */
