@@ -142,9 +142,12 @@
     .msg-text p { margin: 0 0 8px; } .msg-text p:last-child { margin-bottom: 0; }
     .msg-text strong { font-weight: 700; color: var(--text); }
     .msg-text em { font-style: italic; }
-    .msg-text code { background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 5px; font-family: monospace; font-size: 13px; direction: ltr; display: inline-block; }
+    .msg-text code { background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 5px; font-family: monospace; font-size: 13px; direction: ltr; display: inline-block; color: var(--text); }
     .msg-text pre { background: #0a0b0f; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin: 8px 0; overflow-x: auto; direction: ltr; text-align: left; }
-    .msg-text pre code { background: none; padding: 0; font-size: 13px; line-height: 1.6; }
+    .msg-text pre code { background: none; padding: 0; font-size: 13px; line-height: 1.6; color: #e8e9f0; }
+    body.light .msg-text code { background: rgba(0,0,0,0.07); color: #1a1b2e; }
+    body.light .msg-text pre { background: #1e2029; border-color: rgba(0,0,0,0.15); }
+    body.light .msg-text pre code { color: #e8e9f0; }
     .msg-text ul, .msg-text ol { margin: 6px 0; padding-right: 22px; }
     .msg-text li { margin: 3px 0; }
     .msg-text a { color: var(--accent2); }
@@ -852,17 +855,19 @@
       try {
         // Single call: Haiku decides AND answers if simple
         const history = buildClaudeHistory(userMsg, fileData);
-        const res = await fetch(`${WORKER_URL}/claude`, {
+        const res = await fetch(`${WORKER_URL}/groq`, {
           method:"POST", headers:{"Content-Type":"application/json"},
           body: JSON.stringify({
-            model: "claude-haiku-4-5",
+            model: "llama-3.3-70b-versatile",
             max_tokens: 600,
-            system: SYS_COMBINED,
-            messages: history
+            messages: [
+              { role: "system", content: SYS_COMBINED },
+              ...history
+            ]
           })
         });
         const data = await res.json();
-        const reply = (data.content?.[0]?.text || "").trim();
+        const reply = (data.choices?.[0]?.message?.content || "").trim();
         const keyword = reply.toUpperCase().trim();
 
         // Check if Haiku returned a routing keyword
@@ -1041,17 +1046,19 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       const bubble = createStreamingBubble("Claude");
       try {
         const history = buildClaudeHistory(userMessage, fileData);
-        const res = await fetch(`${WORKER_URL}/claude`, {
+        const res = await fetch(`${WORKER_URL}/groq`, {
           method:"POST", headers:{"Content-Type":"application/json"},
           body: JSON.stringify({
-            model: "claude-haiku-4-5",
+            model: "llama-3.3-70b-versatile",
             max_tokens: 800,
-            system: SYS_HAIKU_CHAT,
-            messages: history
+            messages: [
+              { role: "system", content: SYS_HAIKU_CHAT },
+              ...history
+            ]
           })
         });
         const data = await res.json();
-        const full = data.content?.[0]?.text || "";
+        const full = data.choices?.[0]?.message?.content || "";
         finalizeStreamingBubble(bubble, full);
         removeStreamingBubble(bubble);
         if (full.trim()) await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
