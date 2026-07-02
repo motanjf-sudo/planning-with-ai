@@ -827,10 +827,8 @@
 
     /* ── SYSTEM PROMPTS ─────────────────────────────────────────────── */
 
-    /* ── SYSTEM PROMPTS ─────────────────────────────────────────────── */
-
-    // Groq: هم تصمیم میگیره هم جواب میده — در یه call
-    const SYS_GROQ = `تو یه دستیار هوشمند فارسی‌زبان هستی در برنامه‌ی Planning With AI.
+    // Haiku: هم تصمیم میگیره هم جواب میده — در یه call
+    const SYS_HAIKU = `تو Claude هستی در Planning With AI.
 تاریخچه‌ی کامل مکالمه رو داری و باید با توجه به context جواب بدی.
 
 وقتی پیام کاربر رو خوندی، یکی از این دو کار رو بکن:
@@ -870,19 +868,17 @@ CALC       ← محاسبه‌ی ریاضی: ضرب، تقسیم، جمع، تف
       const bubble = createStreamingBubble("Claude");
       try {
         const history = buildClaudeHistory(userMsg, fileData);
-        const res = await fetch(`${WORKER_URL}/groq`, {
+        const res = await fetch(`${WORKER_URL}/claude`, {
           method:"POST", headers:{"Content-Type":"application/json"},
           body: JSON.stringify({
-            model: "llama-3.1-8b-instant",
+            model: "claude-haiku-4-5",
             max_tokens: 700,
-            messages: [
-              { role: "system", content: SYS_GROQ },
-              ...history
-            ]
+            system: SYS_HAIKU,
+            messages: history
           })
         });
         const data = await res.json();
-        const reply = (data.choices?.[0]?.message?.content || "").trim();
+        const reply = (data.content?.find(b => b.type === "text")?.text || "").trim();
         const keyword = reply.toUpperCase().replace(/[^A-Z+]/g, "");
 
         if (keyword === "HARD") {
@@ -904,7 +900,7 @@ CALC       ← محاسبه‌ی ریاضی: ضرب، تقسیم، جمع، تف
           removeStreamingBubble(bubble);
           await askCalc(userMsg);
         } else {
-          // Groq answered directly
+          // Haiku answered directly
           finalizeStreamingBubble(bubble, reply);
           removeStreamingBubble(bubble);
           if (reply) await addDoc(messagesRef, {sender:"Claude", text:reply, timestamp:serverTimestamp()});
@@ -1056,28 +1052,25 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
     function removeStreamingBubble(div) { if (div?.parentNode) div.parentNode.removeChild(div); }
 
     /* ============ HAIKU — simple/chat questions ============ */
-    async function askGroqDirect(userMessage, fileData=null) {
-      // Groq answers directly when orchestrator decided to answer but needs retry
+    async function askHaikuDirect(userMessage, fileData=null) {
       const bubble = createStreamingBubble("Claude");
       try {
         const history = buildClaudeHistory(userMessage, fileData);
-        const res = await fetch(`${WORKER_URL}/groq`, {
+        const res = await fetch(`${WORKER_URL}/claude`, {
           method:"POST", headers:{"Content-Type":"application/json"},
           body: JSON.stringify({
-            model: "llama-3.1-8b-instant",
+            model: "claude-haiku-4-5",
             max_tokens: 800,
-            messages: [
-              { role: "system", content: SYS_GROQ },
-              ...history
-            ]
+            system: SYS_HAIKU,
+            messages: history
           })
         });
         const data = await res.json();
-        const full = data.choices?.[0]?.message?.content || "";
+        const full = data.content?.find(b => b.type === "text")?.text || "";
         finalizeStreamingBubble(bubble, full);
         removeStreamingBubble(bubble);
         if (full.trim()) await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
-      } catch(e) { console.error("Groq direct:", e); removeStreamingBubble(bubble); }
+      } catch(e) { console.error("Haiku direct:", e); removeStreamingBubble(bubble); }
     }
 
     /* ============ SONNET — complex questions ============ */
