@@ -842,7 +842,8 @@
 ━━━ حالت دوم: یه کلمه بنویس ━━━
 فقط اگه واقعاً نیازه، دقیقاً یکی از این کلمات رو بنویس:
 
-HARD       ← تحلیل عمیق، کد پیچیده، نوشتن متن تخصصی یا بلند، سوال تخصصی که مطمئن نیستی
+HARD       ← کد متوسط، توضیح تخصصی، تحلیل متوسط، سوالی که مطمئن نیستی
+EXPERT     ← مقاله بلند و سنگین، کد خیلی پیچیده، تحقیق عمیق، پروژه بزرگ، نوشتن حرفه‌ای
 SEARCH     ← اطلاعات به‌روز اینترنت: اخبار امروز، قیمت لحظه‌ای، رویدادهای اخیر
 IMAGE      ← ساخت تصویر، نقاشی، طراحی (به هر زبانی: عکس/تصویر/بکش/image/draw/photo)
 SEARCH+IMAGE ← هم اطلاعات به‌روز لازمه هم تصویر
@@ -853,11 +854,24 @@ CALC       ← محاسبه‌ی ریاضی: ضرب، تقسیم، جمع، تف
 • اگه جوابش رو میدونی، خودت بده — نگو HARD
 • هرگز چرت و پرت نگو`;
 
-    // Sonnet 5: برای سوالات سنگین و تخصصی
-    const SYS_SONNET = `تو Claude هستی در Planning With AI.
-این یه سوال پیچیده یا تخصصیه که نیاز به تحلیل عمیق داره.
-جواب کامل، دقیق و باکیفیت بده. به فارسی روان جواب بده.
-تاریخچه‌ی مکالمه داری — از context استفاده کن.`;
+    // Sonnet 5: کد، تحلیل، توضیح تخصصی
+    const SYS_SONNET = `تو Claude هستی در Planning With AI — متخصص کد و تحلیل.
+تاریخچه‌ی مکالمه داری — از context استفاده کن.
+
+قانون مهم: قبل از انجام هر کاری، اگه اطلاعات کافی نداری، دقیقاً یک سوال کوتاه بپرس.
+فقط یک سوال — نه بیشتر. وقتی جواب گرفتی، کار رو با کیفیت بالا انجام بده.
+اگه اطلاعات کافی داری، مستقیم شروع کن.
+جواب کامل، دقیق و باکیفیت بده. به فارسی روان جواب بده.`;
+
+    // Opus 4.8: مقاله سنگین، پروژه بزرگ، تحقیق عمیق
+    const SYS_OPUS = `تو Claude Opus هستی در Planning With AI — قوی‌ترین مدل برای کارهای سنگین.
+تاریخچه‌ی مکالمه داری — از context استفاده کن.
+
+قانون مهم: قبل از شروع، اگه اطلاعات کافی نداری، دقیقاً یک سوال کلیدی بپرس.
+فقط یک سوال — نه بیشتر. انتخاب کن مهم‌ترین چیزی که باید بدونی چیه.
+وقتی جواب گرفتی، با تمام توانت کار رو انجام بده — کامل، عمیق، حرفه‌ای.
+اگه اطلاعات کافی داری، مستقیم شروع کن.
+به فارسی روان و حرفه‌ای بنویس.`;
 
     // Perplexity: برای سرچ اینترنت
     const SYS_PERP = `تو متخصص جستجوی اینترنتی هستی.
@@ -884,6 +898,9 @@ CALC       ← محاسبه‌ی ریاضی: ضرب، تقسیم، جمع، تف
         if (keyword === "HARD") {
           removeStreamingBubble(bubble);
           await askSonnet(userMsg, fileData);
+        } else if (keyword === "EXPERT") {
+          removeStreamingBubble(bubble);
+          await askOpus(userMsg, fileData);
         } else if (keyword === "SEARCH") {
           removeStreamingBubble(bubble);
           await askPerplexity(userMsg);
@@ -910,6 +927,28 @@ CALC       ← محاسبه‌ی ریاضی: ضرب، تقسیم، جمع، تف
         removeStreamingBubble(bubble);
         await askSonnet(userMsg, fileData);
       }
+    }
+
+    /* ============ OPUS 4.8 — expert tasks ============ */
+    async function askOpus(userMessage, fileData=null) {
+      const bubble = createStreamingBubble("Claude");
+      try {
+        const history = buildClaudeHistory(userMessage, fileData);
+        const res = await fetch(`${WORKER_URL}/claude`, {
+          method:"POST", headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({
+            model: "claude-opus-4-8",
+            max_tokens: 4000,
+            system: SYS_OPUS,
+            messages: history
+          })
+        });
+        const data = await res.json();
+        const full = data.content?.find(b => b.type === "text")?.text || "";
+        finalizeStreamingBubble(bubble, full);
+        removeStreamingBubble(bubble);
+        if (full.trim()) await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+      } catch(e) { console.error("Opus:", e); removeStreamingBubble(bubble); }
     }
 
     /* ── CALC: Sonnet extracts expression, JS evaluates it accurately ── */
