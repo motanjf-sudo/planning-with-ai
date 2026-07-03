@@ -1253,17 +1253,11 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       if (s) s.remove();
       const t = div.querySelector(".msg-text");
       if (!t) return;
+      // Just remove the caret — keep whatever streaming showed, no re-render
       const caret = t.querySelector(".stream-caret");
       if (caret) caret.remove();
-      const streamer = t.querySelector(".stream-live");
-      if (streamer) {
-        // Already has markdown from streaming — just do final render + code blocks
-        streamer.innerHTML = renderMarkdown(text);
-        extractAndReplaceCodeBlocks(streamer, text);
-      } else {
-        t.innerHTML = renderMarkdown(text);
-        extractAndReplaceCodeBlocks(t, text);
-      }
+      // Extract code blocks without changing the text
+      extractAndReplaceCodeBlocks(t, text);
     }
     function removeStreamingBubble(div) { if (div?.parentNode) div.parentNode.removeChild(div); }
 
