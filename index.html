@@ -1245,18 +1245,20 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       if (s) s.remove();
       const t = div.querySelector(".msg-text");
       if (!t) return;
-      // Use requestAnimationFrame to sync with browser paint — avoids visible jump
-      requestAnimationFrame(() => {
-        t.style.opacity = "0";
+      const streamer = t.querySelector(".stream-live");
+      const caret = t.querySelector(".stream-caret");
+      if (caret) caret.remove();
+      if (streamer) {
+        // Replace streamer content with markdown — no full DOM rebuild
+        const rendered = renderMarkdown(text);
+        streamer.innerHTML = rendered;
+        streamer.className = ""; // remove stream-live class
+        // Extract code blocks inside streamer
+        extractAndReplaceCodeBlocks(streamer, text);
+      } else {
         t.innerHTML = renderMarkdown(text);
         extractAndReplaceCodeBlocks(t, text);
-        // Fade in
-        requestAnimationFrame(() => {
-          t.style.transition = "opacity 0.15s";
-          t.style.opacity = "1";
-          setTimeout(() => { t.style.transition = ""; }, 200);
-        });
-      });
+      }
     }
     function removeStreamingBubble(div) { if (div?.parentNode) div.parentNode.removeChild(div); }
 
