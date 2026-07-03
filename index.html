@@ -1227,17 +1227,13 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       if (s) s.remove();
       const t = div.querySelector(".msg-text");
       if (!t) return;
-      // Use a persistent span — avoid full DOM rebuild
+      // Plain text during stream — fast, no flicker
       let streamer = t.querySelector(".stream-live");
-      let caret = t.querySelector(".stream-caret");
       if (!streamer) {
         t.innerHTML = '<span class="stream-live"></span><span class="stream-caret"></span>';
         streamer = t.querySelector(".stream-live");
-        caret = t.querySelector(".stream-caret");
       }
-      // Render markdown during streaming so finalize doesn't cause a jump
-      streamer.innerHTML = renderMarkdown(text);
-      if (caret) streamer.appendChild(caret);
+      streamer.textContent = text;
       // Only scroll if user is already near bottom (within 150px)
       const mc = $("messages-container");
       if (mc.scrollHeight - mc.scrollTop - mc.clientHeight < 150) {
@@ -1249,17 +1245,18 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       if (s) s.remove();
       const t = div.querySelector(".msg-text");
       if (!t) return;
-      const caret = t.querySelector(".stream-caret");
-      if (caret) caret.remove();
-      // If already rendered by streaming, just extract code blocks
-      const streamer = t.querySelector(".stream-live");
-      if (streamer) {
-        // Already has markdown — just unwrap and extract code blocks
+      // Use requestAnimationFrame to sync with browser paint — avoids visible jump
+      requestAnimationFrame(() => {
+        t.style.opacity = "0";
         t.innerHTML = renderMarkdown(text);
-      } else {
-        t.innerHTML = renderMarkdown(text);
-      }
-      extractAndReplaceCodeBlocks(t, text);
+        extractAndReplaceCodeBlocks(t, text);
+        // Fade in
+        requestAnimationFrame(() => {
+          t.style.transition = "opacity 0.15s";
+          t.style.opacity = "1";
+          setTimeout(() => { t.style.transition = ""; }, 200);
+        });
+      });
     }
     function removeStreamingBubble(div) { if (div?.parentNode) div.parentNode.removeChild(div); }
 
