@@ -1217,7 +1217,7 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
     function updateStreamingBubble(div, text) {
       // Throttle to ~20fps max
       const now = Date.now();
-      if (now - _lastStreamRender < 50) return;
+      if (now - _lastStreamRender < 16) return; // ~60fps
       _lastStreamRender = now;
       // Don't update if user is selecting text
       const sel = window.getSelection();
