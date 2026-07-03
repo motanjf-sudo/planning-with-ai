@@ -1037,7 +1037,17 @@ CALC       ← محاسبه‌ی ریاضی: ضرب، تقسیم، جمع، تف
         const full = data.content?.find(b => b.type === "text")?.text || "";
         finalizeStreamingBubble(bubble, full);
         removeStreamingBubble(bubble);
-        if (full.trim()) await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+        if (full.trim()) {
+          const sizeKB = new Blob([full]).size / 1024;
+          if (sizeKB < 900) {
+            await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+          } else {
+            const memMsg = { id:"mem_"+Date.now(), sender:"Claude", text:full, timestamp:{toDate:()=>new Date()} };
+            allMessages.push(memMsg);
+            renderMessages();
+            scrollToBottom();
+          }
+        }
       } catch(e) { console.error("Opus:", e); removeStreamingBubble(bubble); }
     }
 
@@ -1213,13 +1223,25 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
         const history = buildClaudeHistory(userMessage, fileData);
         const res = await fetch(`${WORKER_URL}/claude`, {
           method:"POST", headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({ model:"claude-sonnet-5", max_tokens:1500, system:SYS_SONNET, messages:history })
+          body: JSON.stringify({ model:"claude-sonnet-5", max_tokens:4000, system:SYS_SONNET, messages:history })
         });
         const data = await res.json();
-        const full = data.content?.[0]?.text || "";
+        const full = data.content?.find(b => b.type === "text")?.text || data.content?.[0]?.text || "";
         finalizeStreamingBubble(bubble, full);
         removeStreamingBubble(bubble);
-        if (full.trim()) await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+        if (full.trim()) {
+          // Only save to Firestore if under 900KB — otherwise keep in memory only
+          const sizeKB = new Blob([full]).size / 1024;
+          if (sizeKB < 900) {
+            await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+          } else {
+            // Show in chat from memory — won't survive refresh but that's OK
+            const memMsg = { id:"mem_"+Date.now(), sender:"Claude", text:full, timestamp:{toDate:()=>new Date()} };
+            allMessages.push(memMsg);
+            renderMessages();
+            scrollToBottom();
+          }
+        }
       } catch(e) { console.error("Sonnet:", e); removeStreamingBubble(bubble); }
     }
 
