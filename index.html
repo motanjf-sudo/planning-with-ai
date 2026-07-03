@@ -1213,12 +1213,9 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       scrollToBottom();
       return div;
     }
-    let _lastStreamRender = 0;
+    let _lastSentenceRender = 0;
+    let _lastRenderedText = "";
     function updateStreamingBubble(div, text) {
-      // Throttle to ~20fps max
-      const now = Date.now();
-      if (now - _lastStreamRender < 8) return; // ~120fps
-      _lastStreamRender = now;
       // Don't update if user is selecting text
       const sel = window.getSelection();
       if (sel && sel.toString().length > 0) return;
@@ -1227,14 +1224,25 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       if (s) s.remove();
       const t = div.querySelector(".msg-text");
       if (!t) return;
-      // Plain text during stream — fast, no flicker
-      let streamer = t.querySelector(".stream-live");
-      if (!streamer) {
+      // Init structure
+      if (!t.querySelector(".stream-live")) {
         t.innerHTML = '<span class="stream-live"></span><span class="stream-caret"></span>';
-        streamer = t.querySelector(".stream-live");
       }
-      streamer.textContent = text;
-      // Only scroll if user is already near bottom (within 150px)
+      const streamer = t.querySelector(".stream-live");
+      const caret = t.querySelector(".stream-caret");
+      if (!streamer) return;
+      // Render markdown only at sentence boundaries or every 200ms
+      const now = Date.now();
+      const lastChar = text[text.length - 1] || "";
+      const isBoundary = [".", "!", "?", "\n", ":", "،", "؟", "!"].includes(lastChar);
+      const timePassed = now - _lastSentenceRender > 200;
+      if (isBoundary || timePassed) {
+        _lastSentenceRender = now;
+        _lastRenderedText = text;
+        streamer.innerHTML = renderMarkdown(text);
+        if (caret && !streamer.contains(caret)) t.appendChild(caret);
+      }
+      // Scroll
       const mc = $("messages-container");
       if (mc.scrollHeight - mc.scrollTop - mc.clientHeight < 150) {
         mc.scrollTop = mc.scrollHeight;
@@ -1245,15 +1253,12 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       if (s) s.remove();
       const t = div.querySelector(".msg-text");
       if (!t) return;
-      const streamer = t.querySelector(".stream-live");
       const caret = t.querySelector(".stream-caret");
       if (caret) caret.remove();
+      const streamer = t.querySelector(".stream-live");
       if (streamer) {
-        // Replace streamer content with markdown — no full DOM rebuild
-        const rendered = renderMarkdown(text);
-        streamer.innerHTML = rendered;
-        streamer.className = ""; // remove stream-live class
-        // Extract code blocks inside streamer
+        // Already has markdown from streaming — just do final render + code blocks
+        streamer.innerHTML = renderMarkdown(text);
         extractAndReplaceCodeBlocks(streamer, text);
       } else {
         t.innerHTML = renderMarkdown(text);
