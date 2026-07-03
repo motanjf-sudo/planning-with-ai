@@ -78,6 +78,67 @@
     .icon-btn:hover { color: var(--text); background: var(--bg3); }
 
     .chat-area { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
+
+    /* ── ARTIFACT PANEL ── */
+    .artifact-panel {
+      width: 0; min-width: 0; background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      transition: width 0.3s ease, min-width 0.3s ease;
+      overflow: hidden; flex-shrink: 0;
+    }
+    .artifact-panel.open { width: 45%; min-width: 320px; }
+    .artifact-header {
+      padding: 12px 16px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0; gap: 8px; background: var(--bg2);
+    }
+    .artifact-title { font-size: 13px; font-weight: 600; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+    .artifact-tabs { display: flex; gap: 4px; flex-shrink: 0; }
+    .artifact-tab {
+      padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;
+      cursor: pointer; border: 1px solid var(--border); background: none; color: var(--text3);
+      transition: all 0.15s;
+    }
+    .artifact-tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .artifact-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .artifact-btn {
+      padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;
+      cursor: pointer; border: 1px solid var(--border); background: var(--bg3);
+      color: var(--text2); transition: all 0.15s; white-space: nowrap;
+    }
+    .artifact-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+    .artifact-close {
+      width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--bg3); color: var(--text3); cursor: pointer; font-size: 14px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .artifact-close:hover { color: var(--text); background: var(--bg2); }
+    .artifact-body { flex: 1; overflow: hidden; position: relative; }
+    .artifact-iframe { width: 100%; height: 100%; border: none; background: white; }
+    .artifact-code {
+      width: 100%; height: 100%; overflow: auto; padding: 16px;
+      font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6;
+      color: #e8e9f0; background: #0a0b0f; direction: ltr; text-align: left;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    /* artifact card inside message */
+    .artifact-card {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px 14px; margin-top: 10px;
+      cursor: pointer; transition: all 0.2s; max-width: 280px;
+      text-decoration: none;
+    }
+    .artifact-card:hover { border-color: var(--accent); background: rgba(124,110,247,0.08); }
+    .artifact-card-icon { font-size: 20px; flex-shrink: 0; }
+    .artifact-card-info { min-width: 0; }
+    .artifact-card-title { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .artifact-card-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+    .artifact-card-arrow { color: var(--text3); font-size: 14px; flex-shrink: 0; margin-right: auto; }
+    @media (max-width: 768px) {
+      .artifact-panel.open { width: 100%; position: fixed; inset: 0; z-index: 200; }
+    }
     .chat-header { padding: 0 14px; height: var(--header-h); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--bg2); flex-shrink: 0; gap: 10px; }
     .chat-header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; min-width: 0; }
     .menu-btn { display: none; background: none; border: none; color: var(--text); font-size: 22px; cursor: pointer; padding: 4px 6px; line-height: 1; flex-shrink: 0; }
@@ -327,6 +388,26 @@
         </div>
         <button class="theme-btn" id="theme-btn" title="تغییر تم">🌙</button>
         <button class="icon-btn" id="logout-btn" title="خروج">↩</button>
+      </div>
+    </div>
+
+    <!-- ARTIFACT PANEL -->
+    <div class="artifact-panel" id="artifact-panel">
+      <div class="artifact-header">
+        <div class="artifact-title" id="artifact-title">کد</div>
+        <div class="artifact-tabs" id="artifact-tabs" style="display:none">
+          <button class="artifact-tab active" id="tab-preview" onclick="switchArtifactTab('preview')">پیش‌نمایش</button>
+          <button class="artifact-tab" id="tab-code" onclick="switchArtifactTab('code')">کد</button>
+        </div>
+        <div class="artifact-actions">
+          <button class="artifact-btn" id="artifact-copy-btn" onclick="copyArtifactCode()">📋 کپی</button>
+          <button class="artifact-btn" id="artifact-dl-btn" onclick="downloadArtifact()">⬇ دانلود</button>
+        </div>
+        <button class="artifact-close" onclick="closeArtifactPanel()">✕</button>
+      </div>
+      <div class="artifact-body" id="artifact-body">
+        <iframe class="artifact-iframe hidden" id="artifact-iframe" sandbox="allow-scripts allow-same-origin"></iframe>
+        <div class="artifact-code hidden" id="artifact-code-view"></div>
       </div>
     </div>
 
@@ -666,7 +747,15 @@
       if (allMessages.length === 0 && !streaming) {
         mc.innerHTML = '<div class="loading-msgs">هنوز پیامی نیست. اولین نفر باش! 👋</div>'; return;
       }
-      allMessages.forEach(msg => mc.appendChild(createMessageEl(msg)));
+      allMessages.forEach(msg => {
+        const el = createMessageEl(msg);
+        mc.appendChild(el);
+        // Extract code blocks for AI messages
+        if (["Claude","Gemini","Perplexity"].includes(msg.sender) && msg.text) {
+          const t = el.querySelector(".msg-text");
+          if (t) extractAndReplaceCodeBlocks(t, msg.text);
+        }
+      });
       if (streaming) mc.appendChild(streaming);
       if (wasAtBottom || allMessages[allMessages.length-1]?.sender === currentUser) scrollToBottom();
     }
@@ -689,7 +778,8 @@
       let content = "";
       if (msg.isSearch) content += `<div class="search-badge">🔍 نتیجه سرچ</div>`;
       // AI messages get markdown; human messages stay plain (escaped)
-      content += `<div class="msg-text">${isAI ? renderMarkdown(msg.text) : escHtml(msg.text).replace(/\n/g,"<br>")}</div>`;
+      const msgRendered = isAI ? renderMarkdown(msg.text) : escHtml(msg.text).replace(/\n/g,"<br>");
+      content += `<div class="msg-text" data-raw="${escHtml(msg.text)}">${msgRendered}</div>`;
       // image: prefer persisted imageData, fall back to runtime cache
       const imgSrc = msg.imageData || (msg.imageId ? imageCache.get(msg.imageId) : null);
       if (imgSrc) content += `<img class="msg-img" src="${imgSrc}" alt="تصویر" />`;
@@ -1086,7 +1176,11 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       const s = div.querySelector(".msg-status");
       if (s) s.remove();
       const t = div.querySelector(".msg-text");
-      if (t) t.innerHTML = renderMarkdown(text);
+      if (t) {
+        t.innerHTML = renderMarkdown(text);
+        // Replace code blocks with artifact cards
+        extractAndReplaceCodeBlocks(t, text);
+      }
     }
     function removeStreamingBubble(div) { if (div?.parentNode) div.parentNode.removeChild(div); }
 
@@ -1687,6 +1781,116 @@ ${allQA}
 
     /* ============ START ============ */
     checkSavedUser();
+
+    /* ── ARTIFACT PANEL ── */
+    let currentArtifact = { code: "", lang: "", title: "" };
+
+    window.switchArtifactTab = function(tab) {
+      const iframe = $("artifact-iframe");
+      const codeView = $("artifact-code-view");
+      $("tab-preview").classList.toggle("active", tab === "preview");
+      $("tab-code").classList.toggle("active", tab === "code");
+      if (tab === "preview") {
+        iframe.classList.remove("hidden");
+        codeView.classList.add("hidden");
+      } else {
+        iframe.classList.add("hidden");
+        codeView.classList.remove("hidden");
+      }
+    };
+
+    window.closeArtifactPanel = function() {
+      $("artifact-panel").classList.remove("open");
+    };
+
+    window.copyArtifactCode = function() {
+      navigator.clipboard.writeText(currentArtifact.code).then(() => {
+        const btn = $("artifact-copy-btn");
+        btn.textContent = "✅ کپی شد!";
+        setTimeout(() => { btn.textContent = "📋 کپی"; }, 2000);
+      }).catch(() => alert("کپی موفق نبود"));
+    };
+
+    window.downloadArtifact = function() {
+      const ext = currentArtifact.lang === "python" ? "py" :
+                  currentArtifact.lang === "html" ? "html" :
+                  currentArtifact.lang === "css" ? "css" :
+                  currentArtifact.lang === "js" ? "js" : "txt";
+      const blob = new Blob([currentArtifact.code], { type: "text/plain" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "code." + ext;
+      a.click();
+    };
+
+    function openArtifact(code, lang, title) {
+      currentArtifact = { code, lang, title };
+      $("artifact-title").textContent = title || "کد";
+      const panel = $("artifact-panel");
+      const iframe = $("artifact-iframe");
+      const codeView = $("artifact-code-view");
+      const tabs = $("artifact-tabs");
+
+      const isWeb = ["html", "css", "js", "javascript"].includes(lang.toLowerCase());
+
+      if (isWeb) {
+        tabs.style.display = "flex";
+        // show preview by default
+        iframe.classList.remove("hidden");
+        codeView.classList.add("hidden");
+        $("tab-preview").classList.add("active");
+        $("tab-code").classList.remove("active");
+        // inject into iframe
+        let src = code;
+        if (lang === "css") src = `<style>${code}</style><p>CSS بارگذاری شد</p>`;
+        if (lang === "js" || lang === "javascript") src = `<script>${code}<\/script><p>JS اجرا شد</p>`;
+        iframe.srcdoc = src;
+      } else {
+        tabs.style.display = "none";
+        iframe.classList.add("hidden");
+        codeView.classList.remove("hidden");
+        // syntax highlight (simple)
+        codeView.textContent = code;
+      }
+
+      panel.classList.add("open");
+    }
+
+    // Extract code blocks from rendered markdown and make them clickable cards
+    function extractAndReplaceCodeBlocks(msgDiv, fullText) {
+      const codeBlockRegex = new RegExp('```(\\w*)\\n?([\\s\\S]*?)```', 'g');
+      let match;
+      const codes = [];
+      while ((match = codeBlockRegex.exec(fullText)) !== null) {
+        codes.push({ lang: match[1] || "code", code: match[2] });
+      }
+      if (!codes.length) return;
+
+      // Replace pre elements with artifact cards
+      const pres = msgDiv.querySelectorAll("pre");
+      pres.forEach((pre, i) => {
+        if (!codes[i]) return;
+        const { lang, code } = codes[i];
+        const langLabels = { html:"HTML", css:"CSS", js:"JavaScript", javascript:"JavaScript", python:"Python", py:"Python" };
+        const label = langLabels[lang.toLowerCase()] || lang || "کد";
+        const icons = { html:"🌐", css:"🎨", js:"⚡", javascript:"⚡", python:"🐍", py:"🐍" };
+        const icon = icons[lang.toLowerCase()] || "📄";
+        const lines = code.trim().split("\n").length;
+        const title = `${label} • ${lines} خط`;
+
+        const card = document.createElement("div");
+        card.className = "artifact-card";
+        card.innerHTML = `
+          <span class="artifact-card-icon">${icon}</span>
+          <div class="artifact-card-info">
+            <div class="artifact-card-title">${label}</div>
+            <div class="artifact-card-sub">${lines} خط کد</div>
+          </div>
+          <span class="artifact-card-arrow">←</span>`;
+        card.addEventListener("click", () => openArtifact(code, lang, title));
+        pre.replaceWith(card);
+      });
+    }
 
     /* ── THEME TOGGLE ── */
     const themeBtn = $("theme-btn");
