@@ -1217,7 +1217,7 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
     function updateStreamingBubble(div, text) {
       // Throttle to ~20fps max
       const now = Date.now();
-      if (now - _lastStreamRender < 16) return; // ~60fps
+      if (now - _lastStreamRender < 8) return; // ~120fps
       _lastStreamRender = now;
       // Don't update if user is selecting text
       const sel = window.getSelection();
@@ -1229,12 +1229,15 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       if (!t) return;
       // Use a persistent span — avoid full DOM rebuild
       let streamer = t.querySelector(".stream-live");
+      let caret = t.querySelector(".stream-caret");
       if (!streamer) {
         t.innerHTML = '<span class="stream-live"></span><span class="stream-caret"></span>';
         streamer = t.querySelector(".stream-live");
+        caret = t.querySelector(".stream-caret");
       }
-      // Use textContent to avoid HTML injection and DOM flicker
-      streamer.textContent = text;
+      // Render markdown during streaming so finalize doesn't cause a jump
+      streamer.innerHTML = renderMarkdown(text);
+      if (caret) streamer.appendChild(caret);
       // Only scroll if user is already near bottom (within 150px)
       const mc = $("messages-container");
       if (mc.scrollHeight - mc.scrollTop - mc.clientHeight < 150) {
@@ -1242,15 +1245,21 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       }
     }
     function finalizeStreamingBubble(div, text) {
-      // Remove status line, then show final markdown text
       const s = div.querySelector(".msg-status");
       if (s) s.remove();
       const t = div.querySelector(".msg-text");
-      if (t) {
+      if (!t) return;
+      const caret = t.querySelector(".stream-caret");
+      if (caret) caret.remove();
+      // If already rendered by streaming, just extract code blocks
+      const streamer = t.querySelector(".stream-live");
+      if (streamer) {
+        // Already has markdown — just unwrap and extract code blocks
         t.innerHTML = renderMarkdown(text);
-        // Replace code blocks with artifact cards
-        extractAndReplaceCodeBlocks(t, text);
+      } else {
+        t.innerHTML = renderMarkdown(text);
       }
+      extractAndReplaceCodeBlocks(t, text);
     }
     function removeStreamingBubble(div) { if (div?.parentNode) div.parentNode.removeChild(div); }
 
