@@ -732,9 +732,11 @@
       mc.innerHTML = '<div class="loading-msgs">در حال بارگذاری...</div>';
       const q = query(messagesRef, orderBy("timestamp", "asc"));
       onSnapshot(q, snapshot => {
+        const wasEmpty = allMessages.length === 0;
         allMessages = [];
         snapshot.forEach(d => allMessages.push({ id: d.id, ...d.data() }));
-        renderMessages();
+        if (wasEmpty) clearAndRenderMessages();
+        else renderMessages();
         updateMemberCount();
       });
     }
@@ -742,27 +744,54 @@
     function renderMessages() {
       const mc = $("messages-container");
       const wasAtBottom = mc.scrollHeight - mc.scrollTop - mc.clientHeight < 120;
-      // keep any live-streaming element that isn't in Firestore yet
-      const streaming = mc.querySelector(".streaming-msg");
-      mc.innerHTML = "";
-      if (allMessages.length === 0 && !streaming) {
+
+      if (allMessages.length === 0) {
         mc.innerHTML = '<div class="loading-msgs">هنوز پیامی نیست. اولین نفر باش! 👋</div>'; return;
       }
-      // Track which messages are already rendered as permanent bubbles
-      const existingIds = new Set();
-      mc.querySelectorAll("[data-msg-id]").forEach(el => existingIds.add(el.dataset.msgId));
 
+      // Find which message IDs are already in DOM — don't re-render them
+      const renderedIds = new Set();
+      mc.querySelectorAll(".msg-group[data-id]").forEach(el => renderedIds.add(el.dataset.id));
+
+      // Only append NEW messages — never clear the whole DOM
+      let addedAny = false;
       allMessages.forEach(msg => {
-        if (existingIds.has(msg.id)) return; // already rendered, skip
+        if (renderedIds.has(msg.id)) return;
         const el = createMessageEl(msg);
+        el.dataset.id = msg.id;
+        // Insert before any streaming bubble
+        const streaming = mc.querySelector(".streaming-msg");
+        if (streaming) mc.insertBefore(el, streaming);
+        else mc.appendChild(el);
+        if (["Claude","Gemini","Perplexity"].includes(msg.sender) && msg.text) {
+          const t = el.querySelector(".msg-text");
+          if (t) extractAndReplaceCodeBlocks(t, msg.text);
+        }
+        addedAny = true;
+      });
+
+      if (addedAny || wasAtBottom) {
+        if (wasAtBottom || allMessages[allMessages.length-1]?.sender === currentUser) scrollToBottom();
+      }
+    }
+
+    function clearAndRenderMessages() {
+      // Full re-render only on initial load
+      const mc = $("messages-container");
+      mc.innerHTML = "";
+      if (allMessages.length === 0) {
+        mc.innerHTML = '<div class="loading-msgs">هنوز پیامی نیست. اولین نفر باش! 👋</div>'; return;
+      }
+      allMessages.forEach(msg => {
+        const el = createMessageEl(msg);
+        el.dataset.id = msg.id;
         mc.appendChild(el);
         if (["Claude","Gemini","Perplexity"].includes(msg.sender) && msg.text) {
           const t = el.querySelector(".msg-text");
           if (t) extractAndReplaceCodeBlocks(t, msg.text);
         }
       });
-      if (streaming) mc.appendChild(streaming);
-      if (wasAtBottom || allMessages[allMessages.length-1]?.sender === currentUser) scrollToBottom();
+      scrollToBottom();
     }
 
     function createMessageEl(msg) {
@@ -1076,10 +1105,8 @@ CALC       ← محاسبه‌ی ریاضی: ضرب، تقسیم، جمع، تف
         });
         if (full.trim()) {
           const sizeKB = new Blob([full]).size / 1024;
-          let sonnetDocId = null;
           if (sizeKB < 900) {
-            const sonnetRef = await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
-            sonnetDocId = sonnetRef?.id;
+            await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
           } else {
             const memMsg = { id:"mem_"+Date.now(), sender:"Claude", text:full, timestamp:{toDate:()=>new Date()} };
             allMessages.push(memMsg);
@@ -1244,7 +1271,7 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       const mc = $("messages-container");
       if (mc.scrollHeight - mc.scrollTop - mc.clientHeight < 150) mc.scrollTop = mc.scrollHeight;
     }
-    function finalizeStreamingBubble(div, text, msgId) {
+    function finalizeStreamingBubble(div, text) {
       const s = div.querySelector(".msg-status");
       if (s) s.remove();
       const t = div.querySelector(".msg-text");
@@ -1252,13 +1279,8 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       const caret = t.querySelector(".stream-caret");
       if (caret) caret.remove();
       delete t.dataset.streamInit;
-      // Mark with message ID so renderMessages won't re-render it
-      if (msgId) div.dataset.msgId = msgId;
     }
-    function removeStreamingBubble(div) {
-      // Don't remove — just mark as permanent so renderMessages skips it
-      if (div) div.classList.remove("streaming-msg");
-    }
+    function removeStreamingBubble(div) { if (div?.parentNode) div.parentNode.removeChild(div); }
 
     /* ============ HAIKU — simple/chat questions ============ */
     async function askHaikuDirect(userMessage, fileData=null) {
@@ -1279,9 +1301,9 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
           if (json.type === "content_block_delta" && json.delta?.type === "text_delta") return json.delta.text;
           return "";
         });
-        const haikuDocRef = full.trim() ? await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()}) : null;
-        finalizeStreamingBubble(bubble, full, haikuDocRef?.id);
+        finalizeStreamingBubble(bubble, full);
         removeStreamingBubble(bubble);
+        if (full.trim()) await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
       } catch(e) { console.error("Haiku direct:", e); removeStreamingBubble(bubble); }
     }
 
