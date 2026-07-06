@@ -1248,15 +1248,11 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       if (!t) return;
       const caret = t.querySelector(".stream-caret");
       if (caret) caret.remove();
-      // If never streamed (e.g. empty response), set content
+      // Don't re-render — streaming already set the content
+      // Just extract code blocks from what's already there
       const live = t.querySelector(".stream-live");
-      if (live) {
-        live.innerHTML = renderMarkdown(text);
-        extractAndReplaceCodeBlocks(live, text);
-      } else {
-        t.innerHTML = renderMarkdown(text);
-        extractAndReplaceCodeBlocks(t, text);
-      }
+      const target = live || t;
+      extractAndReplaceCodeBlocks(target, text);
       delete t.dataset.streamInit;
     }
     function removeStreamingBubble(div) { if (div?.parentNode) div.parentNode.removeChild(div); }
