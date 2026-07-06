@@ -748,10 +748,14 @@
       if (allMessages.length === 0 && !streaming) {
         mc.innerHTML = '<div class="loading-msgs">هنوز پیامی نیست. اولین نفر باش! 👋</div>'; return;
       }
+      // Track which messages are already rendered as permanent bubbles
+      const existingIds = new Set();
+      mc.querySelectorAll("[data-msg-id]").forEach(el => existingIds.add(el.dataset.msgId));
+
       allMessages.forEach(msg => {
+        if (existingIds.has(msg.id)) return; // already rendered, skip
         const el = createMessageEl(msg);
         mc.appendChild(el);
-        // Extract code blocks for AI messages
         if (["Claude","Gemini","Perplexity"].includes(msg.sender) && msg.text) {
           const t = el.querySelector(".msg-text");
           if (t) extractAndReplaceCodeBlocks(t, msg.text);
@@ -1070,12 +1074,12 @@ CALC       ← محاسبه‌ی ریاضی: ضرب، تقسیم، جمع، تف
           if (json.type === "content_block_delta" && json.delta?.type === "text_delta") return json.delta.text;
           return "";
         });
-        finalizeStreamingBubble(bubble, full);
-        removeStreamingBubble(bubble);
         if (full.trim()) {
           const sizeKB = new Blob([full]).size / 1024;
+          let sonnetDocId = null;
           if (sizeKB < 900) {
-            await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+            const sonnetRef = await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+            sonnetDocId = sonnetRef?.id;
           } else {
             const memMsg = { id:"mem_"+Date.now(), sender:"Claude", text:full, timestamp:{toDate:()=>new Date()} };
             allMessages.push(memMsg);
@@ -1240,18 +1244,21 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       const mc = $("messages-container");
       if (mc.scrollHeight - mc.scrollTop - mc.clientHeight < 150) mc.scrollTop = mc.scrollHeight;
     }
-    function finalizeStreamingBubble(div, text) {
-      // Remove status + caret — NO re-render (already markdown from streaming)
+    function finalizeStreamingBubble(div, text, msgId) {
       const s = div.querySelector(".msg-status");
       if (s) s.remove();
       const t = div.querySelector(".msg-text");
       if (!t) return;
       const caret = t.querySelector(".stream-caret");
       if (caret) caret.remove();
-      // Don't re-render, don't extract code blocks — zero DOM changes = zero jump
       delete t.dataset.streamInit;
+      // Mark with message ID so renderMessages won't re-render it
+      if (msgId) div.dataset.msgId = msgId;
     }
-    function removeStreamingBubble(div) { if (div?.parentNode) div.parentNode.removeChild(div); }
+    function removeStreamingBubble(div) {
+      // Don't remove — just mark as permanent so renderMessages skips it
+      if (div) div.classList.remove("streaming-msg");
+    }
 
     /* ============ HAIKU — simple/chat questions ============ */
     async function askHaikuDirect(userMessage, fileData=null) {
@@ -1272,9 +1279,9 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
           if (json.type === "content_block_delta" && json.delta?.type === "text_delta") return json.delta.text;
           return "";
         });
-        finalizeStreamingBubble(bubble, full);
+        const haikuDocRef = full.trim() ? await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()}) : null;
+        finalizeStreamingBubble(bubble, full, haikuDocRef?.id);
         removeStreamingBubble(bubble);
-        if (full.trim()) await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
       } catch(e) { console.error("Haiku direct:", e); removeStreamingBubble(bubble); }
     }
 
