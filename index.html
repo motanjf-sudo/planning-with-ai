@@ -217,6 +217,10 @@
     .msg-text a { color: var(--accent2); }
     .msg-text h1, .msg-text h2, .msg-text h3 { font-size: 15px; font-weight: 700; margin: 10px 0 6px; }
     .stream-live { white-space: pre-wrap; word-break: break-word; }
+    .tts-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 15px; padding: 3px 6px; border-radius: 6px; transition: all 0.2s; margin-right: auto; }
+    .tts-btn:hover { color: var(--accent); background: rgba(124,110,247,0.1); }
+    .tts-btn.playing { color: var(--accent); animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
     .stream-caret { display: inline-block; width: 7px; height: 15px; background: var(--accent2); margin-right: 2px; border-radius: 1px; animation: blink 1s step-end infinite; vertical-align: text-bottom; }
     .msg-status { font-size: 13px; color: var(--text2); font-style: italic; margin-bottom: 6px; opacity: 0.85; }
     @keyframes blink { 50% { opacity: 0; } }
@@ -800,6 +804,7 @@
       const isMe = msg.sender === currentUser;
       const div = document.createElement("div");
       div.className = "msg-group" + (isC ? " is-claude" : isG ? " is-gemini" : isP ? " is-perplexity" : "");
+      div.dataset.id = msg.id;
       let timeStr = "";
       if (msg.timestamp) {
         const d = msg.timestamp.toDate ? msg.timestamp.toDate() : new Date(msg.timestamp);
@@ -831,6 +836,7 @@
             <span class="msg-name ${nameClass}">${escHtml(msg.sender)}</span>
             <span class="msg-time">${timeStr}</span>
             ${isMe ? `<button class="msg-delete" data-id="${msg.id}">🗑</button>` : ''}
+            ${isAI ? `<button class="tts-btn" onclick="speakMessage(this, ${JSON.stringify(msg.text || '').replace(/`/g,"'")})">🔊</button>` : ''}
           </div>
           ${content}
         </div>`;
@@ -1981,6 +1987,66 @@ ${allQA}
         pre.replaceWith(card);
       });
     }
+
+    /* ── TEXT TO SPEECH ── */
+    let currentAudio = null;
+    let currentTtsBtn = null;
+
+    window.speakMessage = async function(btn, text) {
+      // Stop if already playing
+      if (currentAudio && !currentAudio.paused) {
+        currentAudio.pause();
+        currentAudio = null;
+        if (currentTtsBtn) { currentTtsBtn.textContent = "🔊"; currentTtsBtn.classList.remove("playing"); }
+        if (currentTtsBtn === btn) { currentTtsBtn = null; return; }
+      }
+
+      // Clean text (remove markdown symbols)
+      const clean = text.replace(/[#*`_~]/g, "").trim();
+      if (!clean) return;
+
+      btn.textContent = "⏳";
+      btn.classList.add("playing");
+      currentTtsBtn = btn;
+
+      try {
+        const res = await fetch(`${WORKER_URL}/tts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: clean })
+        });
+
+        if (!res.ok) throw new Error("TTS failed");
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        currentAudio = audio;
+
+        btn.textContent = "⏸";
+        audio.play();
+
+        audio.onended = () => {
+          btn.textContent = "🔊";
+          btn.classList.remove("playing");
+          URL.revokeObjectURL(url);
+          currentAudio = null;
+          currentTtsBtn = null;
+        };
+
+        audio.onerror = () => {
+          btn.textContent = "🔊";
+          btn.classList.remove("playing");
+          currentAudio = null;
+          currentTtsBtn = null;
+        };
+      } catch(e) {
+        console.error("TTS:", e);
+        btn.textContent = "🔊";
+        btn.classList.remove("playing");
+        currentTtsBtn = null;
+      }
+    };
 
     /* ── THEME TOGGLE ── */
     const themeBtn = $("theme-btn");
