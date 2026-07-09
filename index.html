@@ -204,6 +204,9 @@
     .msg-text h1, .msg-text h2, .msg-text h3 { font-size: 15px; font-weight: 700; margin: 10px 0 6px; }
     .stream-live { white-space: pre-wrap; word-break: break-word; }
     .tts-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 15px; padding: 3px 6px; border-radius: 6px; transition: all 0.2s; margin-right: auto; }
+    .model-selector { display: flex; gap: 4px; padding: 6px 14px 0; }
+    .model-btn { padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border); background: none; color: var(--text3); font-family: inherit; font-size: 12px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .model-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
     .tts-btn:hover { color: var(--accent); background: rgba(124,110,247,0.1); }
     .tts-btn.playing { color: var(--accent); animation: pulse 1s infinite; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
@@ -419,6 +422,12 @@
 
       <div class="file-preview hidden" id="file-preview"></div>
 
+      <div class="model-selector">
+        <button class="model-btn active" data-model="auto">🚀 Auto</button>
+        <button class="model-btn" data-model="fast">⚡ Fast</button>
+        <button class="model-btn" data-model="smart">🧠 Smart</button>
+        <button class="model-btn" data-model="expert">💎 Expert</button>
+      </div>
       <div class="input-area">
         <div class="plus-btn" id="plus-btn">+
           <div class="plus-menu hidden" id="plus-menu">
@@ -842,6 +851,16 @@
       $("member-count").textContent = s.size > 0 ? `${s.size} نفر` : "";
     }
 
+    /* ============ MODEL SELECTOR ============ */
+    let selectedModel = "auto";
+    document.querySelectorAll(".model-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".model-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        selectedModel = btn.dataset.model;
+      });
+    });
+
     /* ============ SEND MESSAGE ============ */
     $("send-btn").addEventListener("click", sendMessage);
     msgInput.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
@@ -866,7 +885,7 @@
       const userMsg = text || `فایل: ${fileName}`;
       try {
         await addDoc(messagesRef, { sender: currentUser, text: text || "", ...(fileName && {fileName, fileType}), timestamp: serverTimestamp() });
-        await orchestrate(userMsg, fileData);
+        await orchestrate(userMsg, fileData, selectedModel);
       } catch(e) { console.error(e); }
       finally { $("send-btn").disabled = false; msgInput.focus(); }
     }
@@ -987,7 +1006,12 @@ context مکالمه رو داری — از آن استفاده کن.
     // Keywords Haiku might return
     const KEYWORDS = ["HARD","EXPERT","SEARCH","IMAGE","SEARCH+IMAGE","SEARCHIMAGE","CALC"];
 
-    async function orchestrate(userMsg, fileData=null) {
+    async function orchestrate(userMsg, fileData=null, mode="auto") {
+      // Direct model shortcuts
+      if (mode === "fast") { await askHaikuDirect(userMsg, fileData); return; }
+      if (mode === "smart") { await askSonnet(userMsg, fileData); return; }
+      if (mode === "expert") { await askOpus(userMsg, fileData); return; }
+
       const bubble = createStreamingBubble("Claude");
       try {
         const history = buildClaudeHistory(userMsg, fileData);
