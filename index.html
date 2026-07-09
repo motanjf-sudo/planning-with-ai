@@ -1978,15 +1978,10 @@ ${allQA}
     /* ── TEXT TO SPEECH ── */
     let currentAudio = null;
     let currentTtsBtn = null;
-
-    // Event delegation for TTS buttons
-    document.addEventListener("click", e => {
-      const btn = e.target.closest(".tts-btn");
-      if (btn) speakMessage(btn, btn.dataset.text || "");
-    });
+    const ttsCache = new Map();
 
     window.speakMessage = async function(btn, text) {
-      // Stop if already playing
+      // Stop current
       if (currentAudio && !currentAudio.paused) {
         currentAudio.pause();
         currentAudio = null;
@@ -1994,12 +1989,12 @@ ${allQA}
         if (currentTtsBtn === btn) { currentTtsBtn = null; return; }
       }
 
-      // Clean text — remove markdown and emojis
+      // Clean: remove markdown + emojis
       const clean = text
-        .replace(/[#*`_~]/g, "")
-        .replace(/\p{Emoji}/gu, "")
-        .replace(/[\u2600-\u27BF]/g, "")
-        .trim();
+        .replace(/[#*`_~>]/g, "")
+        .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, "") // surrogate pairs (emojis)
+        .replace(/[\u2600-\u27BF\u2B00-\u2BFF]/g, "")
+        .replace(/\s+/g, " ").trim();
       if (!clean) return;
 
       btn.textContent = "⏳";
@@ -2007,30 +2002,32 @@ ${allQA}
       currentTtsBtn = btn;
 
       try {
-        const res = await fetch(`${WORKER_URL}/gemini-tts`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: clean })
-        });
+        let url;
+        if (ttsCache.has(clean)) {
+          url = ttsCache.get(clean);
+        } else {
+          const res = await fetch(`${WORKER_URL}/gemini-tts`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: clean })
+          });
+          if (!res.ok) throw new Error("TTS failed");
+          const blob = await res.blob();
+          url = URL.createObjectURL(blob);
+          ttsCache.set(clean, url);
+        }
 
-        if (!res.ok) throw new Error("TTS failed");
-
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
         currentAudio = audio;
-
         btn.textContent = "⏸";
         audio.play();
 
         audio.onended = () => {
           btn.textContent = "🔊";
           btn.classList.remove("playing");
-          URL.revokeObjectURL(url);
           currentAudio = null;
           currentTtsBtn = null;
         };
-
         audio.onerror = () => {
           btn.textContent = "🔊";
           btn.classList.remove("playing");
