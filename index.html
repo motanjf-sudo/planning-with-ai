@@ -1985,15 +1985,6 @@ ${allQA}
       if (btn) speakMessage(btn, btn.dataset.text || "");
     });
 
-    // TTS via event delegation
-    document.addEventListener("click", e => {
-      const btn = e.target.closest(".tts-btn");
-      if (btn) {
-        const text = btn.dataset.text || "";
-        speakMessage(btn, text);
-      }
-    });
-
     window.speakMessage = async function(btn, text) {
       // Stop if already playing
       if (currentAudio && !currentAudio.paused) {
@@ -2003,8 +1994,12 @@ ${allQA}
         if (currentTtsBtn === btn) { currentTtsBtn = null; return; }
       }
 
-      // Clean text (remove markdown symbols)
-      const clean = text.replace(/[#*`_~]/g, "").trim();
+      // Clean text — remove markdown and emojis
+      const clean = text
+        .replace(/[#*`_~]/g, "")
+        .replace(/\p{Emoji}/gu, "")
+        .replace(/[\u2600-\u27BF]/g, "")
+        .trim();
       if (!clean) return;
 
       btn.textContent = "⏳";
