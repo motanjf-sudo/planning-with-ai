@@ -1976,69 +1976,74 @@ ${allQA}
     }
 
     /* ── TEXT TO SPEECH ── */
-    let currentAudio = null;
-    let currentTtsBtn = null;
-    const ttsCache = new Map();
+    let _ttsAudio = null;
+    let _ttsBtn = null;
+    let _ttsLoading = false;
+    const _ttsCache = new Map();
+
+    function _ttsReset(btn) {
+      if (btn) { btn.textContent = "🔊"; btn.classList.remove("playing"); }
+      _ttsAudio = null;
+      _ttsBtn = null;
+      _ttsLoading = false;
+    }
 
     window.speakMessage = async function(btn, text) {
-      // Stop current
-      if (currentAudio && !currentAudio.paused) {
-        currentAudio.pause();
-        currentAudio = null;
-        if (currentTtsBtn) { currentTtsBtn.textContent = "🔊"; currentTtsBtn.classList.remove("playing"); }
-        if (currentTtsBtn === btn) { currentTtsBtn = null; return; }
+      // Prevent double-fire
+      if (_ttsLoading) return;
+
+      // Toggle off if same button
+      if (_ttsAudio && !_ttsAudio.paused) {
+        _ttsAudio.pause();
+        _ttsReset(_ttsBtn);
+        return;
       }
 
-      // Clean: remove markdown + emojis
+      // Clean text: strip markdown, emojis, URLs
       const clean = text
-        .replace(/[#*`_~>]/g, "")
-        .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, "") // surrogate pairs (emojis)
-        .replace(/[\u2600-\u27BF\u2B00-\u2BFF]/g, "")
-        .replace(/\s+/g, " ").trim();
+        .replace(/https?:\/\/\S+/g, "")
+        .replace(/[#*`_~>[\]]/g, "")
+        .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, "")
+        .replace(/[\u2190-\u27FF\u2B00-\u2BFF\u3000-\u303F]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+
       if (!clean) return;
 
+      // Limit length to avoid Gemini issues
+      const limited = clean.length > 800 ? clean.slice(0, 800) + "..." : clean;
+
+      _ttsLoading = true;
       btn.textContent = "⏳";
       btn.classList.add("playing");
-      currentTtsBtn = btn;
+      _ttsBtn = btn;
 
       try {
-        let url;
-        if (ttsCache.has(clean)) {
-          url = ttsCache.get(clean);
-        } else {
+        let url = _ttsCache.get(limited);
+
+        if (!url) {
           const res = await fetch(`${WORKER_URL}/gemini-tts`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: clean })
+            body: JSON.stringify({ text: limited })
           });
-          if (!res.ok) throw new Error("TTS failed");
+          if (!res.ok) throw new Error("TTS " + res.status);
           const blob = await res.blob();
           url = URL.createObjectURL(blob);
-          ttsCache.set(clean, url);
+          _ttsCache.set(limited, url);
         }
 
+        _ttsLoading = false;
         const audio = new Audio(url);
-        currentAudio = audio;
+        _ttsAudio = audio;
         btn.textContent = "⏸";
         audio.play();
+        audio.onended = () => _ttsReset(btn);
+        audio.onerror = () => _ttsReset(btn);
 
-        audio.onended = () => {
-          btn.textContent = "🔊";
-          btn.classList.remove("playing");
-          currentAudio = null;
-          currentTtsBtn = null;
-        };
-        audio.onerror = () => {
-          btn.textContent = "🔊";
-          btn.classList.remove("playing");
-          currentAudio = null;
-          currentTtsBtn = null;
-        };
       } catch(e) {
         console.error("TTS:", e);
-        btn.textContent = "🔊";
-        btn.classList.remove("playing");
-        currentTtsBtn = null;
+        _ttsReset(btn);
       }
     };
 
