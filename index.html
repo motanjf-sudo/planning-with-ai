@@ -161,7 +161,7 @@
     .loading-msgs { color: var(--text3); font-size: 14px; text-align: center; margin: auto; }
     .chat-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 38px; color: rgba(255,255,255,0.03); white-space: nowrap; pointer-events: none; user-select: none; font-weight: 700; letter-spacing: 2px; z-index: 0; }
     .msg-group { display: flex; gap: 10px; padding: 8px 10px; border-radius: var(--radius-sm); align-items: flex-start; position: relative; z-index: 1; }
-    .msg-group.is-user { background: var(--user-bubble); border: 1px solid var(--user-border); border-radius: var(--radius); margin: 4px 0; }
+    .msg-group.is-user { background: var(--user-bubble); border: 1px solid var(--user-border); border-radius: var(--radius); margin: 4px 0 4px auto; max-width: 75%; width: fit-content; }
     .msg-group.is-user:hover { background: var(--user-bubble); }
     .msg-group:hover { background: rgba(255,255,255,0.02); }
     .msg-group.is-claude { background: none; border: none; margin: 4px 0; }
@@ -415,7 +415,7 @@
       <div class="messages-container" id="messages-container">
         <div class="loading-msgs">در حال بارگذاری پیام‌ها...</div>
       </div>
-      <div class="chat-watermark">امیرطاها نجفی از مدرسه نیکان</div>
+
 
       <div class="file-preview hidden" id="file-preview"></div>
 
@@ -821,11 +821,13 @@
             <span class="msg-name ${nameClass}">${escHtml(msg.sender)}</span>
             <span class="msg-time">${timeStr}</span>
             ${isMe ? `<button class="msg-delete" data-id="${msg.id}">🗑</button>` : ''}
-            ${isAI ? `<button class="tts-btn" onclick="speakMessage(this, ${JSON.stringify(msg.text || '').replace(/`/g,"'")})">🔊</button>` : ''}
+            ${isAI ? `<button class="tts-btn" data-text="${escHtml(msg.text||'')}">🔊</button>` : ''}
           </div>
           ${content}
         </div>`;
       if (isMe) div.querySelector('.msg-delete').addEventListener('click', () => deleteMessage(msg.id));
+      const ttsBtn = div.querySelector('.tts-btn');
+      if (ttsBtn) ttsBtn.addEventListener('click', () => speakMessage(ttsBtn, msg.text || ''));
       return div;
     }
 
@@ -1976,6 +1978,21 @@ ${allQA}
     /* ── TEXT TO SPEECH ── */
     let currentAudio = null;
     let currentTtsBtn = null;
+
+    // Event delegation for TTS buttons
+    document.addEventListener("click", e => {
+      const btn = e.target.closest(".tts-btn");
+      if (btn) speakMessage(btn, btn.dataset.text || "");
+    });
+
+    // TTS via event delegation
+    document.addEventListener("click", e => {
+      const btn = e.target.closest(".tts-btn");
+      if (btn) {
+        const text = btn.dataset.text || "";
+        speakMessage(btn, text);
+      }
+    });
 
     window.speakMessage = async function(btn, text) {
       // Stop if already playing
