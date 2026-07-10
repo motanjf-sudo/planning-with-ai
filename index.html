@@ -1271,7 +1271,7 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
     let _lastStreamUpdate = 0;
     function updateStreamingBubble(div, text) {
       const now = Date.now();
-      if (now - _lastStreamUpdate < 25) return;
+      if (now - _lastStreamUpdate < 30) return;
       _lastStreamUpdate = now;
       const sel = window.getSelection();
       if (sel && sel.toString().length > 0) return;
@@ -1281,10 +1281,15 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       if (!t) return;
       if (!t.dataset.streaming) {
         t.dataset.streaming = "1";
-        t.innerHTML = '<span class="stream-live"></span><span class="stream-caret"></span>';
+        t.innerHTML = '<div class="stream-live"></div><span class="stream-caret"></span>';
       }
       const live = t.querySelector(".stream-live");
-      if (live) live.textContent = text;
+      const caret = t.querySelector(".stream-caret");
+      if (live) {
+        live.innerHTML = renderMarkdown(text);
+        // Keep caret at end
+        if (caret) t.appendChild(caret);
+      }
       const mc = $("messages-container");
       if (mc.scrollHeight - mc.scrollTop - mc.clientHeight < 150) mc.scrollTop = mc.scrollHeight;
     }
@@ -1293,17 +1298,20 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       if (s) s.remove();
       const t = div.querySelector(".msg-text");
       if (!t) return;
-      delete t.dataset.streaming;
-      t.style.opacity = "0";
-      t.style.transition = "opacity 0.1s";
-      requestAnimationFrame(() => {
+      // Remove caret only — content already rendered by streaming
+      const caret = t.querySelector(".stream-caret");
+      if (caret) caret.remove();
+      const live = t.querySelector(".stream-live");
+      if (live) {
+        // Final render to ensure completeness + extract code blocks
+        live.innerHTML = renderMarkdown(text);
+        extractAndReplaceCodeBlocks(live, text);
+      } else {
+        // Fallback if streaming never ran
         t.innerHTML = renderMarkdown(text);
         extractAndReplaceCodeBlocks(t, text);
-        requestAnimationFrame(() => {
-          t.style.opacity = "1";
-          setTimeout(() => { t.style.transition = ""; }, 150);
-        });
-      });
+      }
+      delete t.dataset.streaming;
     }
     function removeStreamingBubble(div, docId) {
       if (!div?.parentNode) return;
