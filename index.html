@@ -1038,87 +1038,60 @@ Approach:
     // Keywords Haiku might return
     const KEYWORDS = ["HARD","EXPERT","SEARCH","IMAGE","SEARCH+IMAGE","SEARCHIMAGE","CALC"];
 
+    const GROQ_ROUTER_SYSTEM = `You are a classifier. Reply with EXACTLY one of these words, nothing else:
+ANSWER
+HARD
+EXPERT
+SEARCH
+IMAGE
+CALC
+
+Rules:
+ANSWER = greetings, simple facts, general knowledge, short questions
+HARD = code, programming, writing, analysis, technical questions
+EXPERT = long article, big project, deep research, professional writing
+SEARCH = today news, live prices, recent events, current information
+IMAGE = draw, create image, photo, design
+CALC = math calculation
+
+Do NOT explain. Do NOT answer the question. Output ONE word ONLY.`;
+
     async function orchestrate(userMsg, fileData=null, mode="auto") {
       // Direct model shortcuts
       if (mode === "fast") { await askHaikuDirect(userMsg, fileData); return; }
       if (mode === "smart") { await askSonnet(userMsg, fileData); return; }
       if (mode === "expert") { await askOpus(userMsg, fileData); return; }
 
-      const bubble = createStreamingBubble("Claude");
       try {
-        const history = buildClaudeHistory(userMsg, fileData);
-
-        // Stream Haiku response
-        const res = await fetch(`${WORKER_URL}/claude`, {
+        // Use Groq for fast routing
+        const routeRes = await fetch(`${WORKER_URL}/groq`, {
           method:"POST", headers:{"Content-Type":"application/json"},
           body: JSON.stringify({
-            model: "claude-haiku-4-5",
-            max_tokens: 700,
-            system: SYS_HAIKU,
-            messages: history,
-            stream: true
+            model: "llama-3.3-70b-versatile",
+            max_tokens: 10,
+            messages: [
+              { role: "system", content: GROQ_ROUTER_SYSTEM },
+              { role: "user", content: userMsg }
+            ]
           })
         });
+        const routeData = await routeRes.json();
+        const keyword = (routeData.choices?.[0]?.message?.content || "ANSWER").trim().toUpperCase().replace(/[^A-Z+]/g,"");
 
-        // Read stream — show text live, but stop if we detect a keyword early
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "", full = "";
-        let detectedKeyword = null;
-
-        outer: while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop();
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed.startsWith("data:")) continue;
-            const data = trimmed.slice(5).trim();
-            if (data === "[DONE]" || data === "") continue;
-            try {
-              const json = JSON.parse(data);
-              if (json.type === "content_block_delta" && json.delta?.type === "text_delta") {
-                full += json.delta.text;
-                const kw = full.trim().toUpperCase().replace(/[^A-Z+]/g,"");
-                // If we got a keyword and it's short (not a real answer), stop streaming
-                if (KEYWORDS.includes(kw) && full.trim().length < 20) {
-                  detectedKeyword = kw;
-                  reader.cancel();
-                  break outer;
-                }
-                // Otherwise show live
-                updateStreamingBubble(bubble, full);
-              }
-            } catch { /* ignore */ }
-          }
+        if (keyword === "HARD") await askSonnet(userMsg, fileData);
+        else if (keyword === "EXPERT") await askOpus(userMsg, fileData);
+        else if (keyword === "SEARCH") await askPerplexity(userMsg);
+        else if (keyword === "IMAGE") { const p = await makeImagePrompt(userMsg); await askGeminiImage(p); }
+        else if (keyword === "SEARCH+IMAGE" || keyword === "SEARCHIMAGE") {
+          await askPerplexity(userMsg);
+          const p = await makeImagePrompt(userMsg);
+          await askGeminiImage(p);
         }
-
-        const keyword = detectedKeyword || full.trim().toUpperCase().replace(/[^A-Z+]/g,"");
-
-        if (KEYWORDS.includes(keyword) && full.trim().length < 20) {
-          removeStreamingBubble(bubble);
-          if (keyword === "HARD") await askSonnet(userMsg, fileData);
-          else if (keyword === "EXPERT") await askOpus(userMsg, fileData);
-          else if (keyword === "SEARCH") await askPerplexity(userMsg);
-          else if (keyword === "IMAGE") { const p = await makeImagePrompt(userMsg); await askGeminiImage(p); }
-          else if (keyword === "SEARCH+IMAGE" || keyword === "SEARCHIMAGE") {
-            await askPerplexity(userMsg);
-            const p = await makeImagePrompt(userMsg);
-            await askGeminiImage(p);
-          }
-          else if (keyword === "CALC") await askCalc(userMsg);
-        } else {
-          // Haiku answered directly with streaming
-          finalizeStreamingBubble(bubble, full);
-          removeStreamingBubble(bubble);
-          if (full.trim()) await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
-        }
+        else if (keyword === "CALC") await askCalc(userMsg);
+        else await askHaikuDirect(userMsg, fileData); // ANSWER
       } catch(err) {
         console.error("Orchestrate failed:", err);
-        removeStreamingBubble(bubble);
-        await askSonnet(userMsg, fileData);
+        await askHaikuDirect(userMsg, fileData);
       }
     }
 
