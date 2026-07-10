@@ -865,9 +865,12 @@
     $("send-btn").addEventListener("click", sendMessage);
     msgInput.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
 
+    let _sending = false;
     async function sendMessage() {
+      if (_sending) return;
       const text = msgInput.value.trim();
       if (!text && !pendingFile) return;
+      _sending = true;
       msgInput.value = ""; msgInput.style.height = "auto";
       $("send-btn").disabled = true;
 
@@ -887,7 +890,7 @@
         await addDoc(messagesRef, { sender: currentUser, text: text || "", ...(fileName && {fileName, fileType}), timestamp: serverTimestamp() });
         await orchestrate(userMsg, fileData, selectedModel);
       } catch(e) { console.error(e); }
-      finally { $("send-btn").disabled = false; msgInput.focus(); }
+      finally { $("send-btn").disabled = false; msgInput.focus(); _sending = false; }
     }
 
     function fileToBase64(file) {
@@ -963,44 +966,48 @@
 
     /* ── SYSTEM PROMPTS ─────────────────────────────────────────────── */
 
-    const SYS_HAIKU = `تو یک دستیار هوشمند فارسی‌زبان هستی در Planning With AI.
-هدفت: سریع‌ترین و دقیق‌ترین جواب ممکن.
+    const SYS_HAIKU = `You are a smart Persian-language assistant in Planning With AI.
+Always respond in fluent, natural Persian (Farsi) unless the user writes in another language.
 
-قانون اول: اگه جوابش رو میدونی → مستقیم جواب بده. فارسی روان، دوستانه، دقیق.
-قانون دوم: اگه نیاز به کمک تخصصی داری → فقط یکی از این کلمات رو بنویس:
+RULE: Read the user message carefully, then do ONE of these:
 
-HARD       → کد، برنامه‌نویسی، توضیح تخصصی، تحلیل، سوال پیچیده
-EXPERT     → مقاله بلند، پروژه بزرگ، تحقیق عمیق، نوشتن حرفه‌ای
-SEARCH     → اخبار امروز، قیمت لحظه‌ای، رویدادهای اخیر، اطلاعات به‌روز
-IMAGE      → ساخت تصویر، عکس، نقاشی، طراحی
-SEARCH+IMAGE → هم سرچ هم تصویر
-CALC       → هر محاسبه ریاضی
+1. Answer directly — for greetings, general knowledge, simple questions, follow-ups. Be warm, concise, accurate.
 
-مهم: فقط یه کلمه یا جواب مستقیم. هیچ چیز دیگه‌ای ننویس.`;
+2. Write ONLY one keyword — when you truly need a specialist:
+HARD       → code, programming, technical explanation, analysis, complex question
+EXPERT     → long article, big project, deep research, professional writing
+SEARCH     → today's news, live prices, recent events, current information
+IMAGE      → create image, draw, design, photo
+SEARCH+IMAGE → need both search and image
+CALC       → any math calculation
 
-    const SYS_SONNET = `تو یک متخصص کد و تحلیل در Planning With AI هستی.
-زبان: فارسی روان و حرفه‌ای.
-context مکالمه رو داری — از آن استفاده کن.
+CRITICAL RULES:
+- If you know the answer → answer directly, never say HARD
+- Write ONLY the keyword OR a direct answer, nothing else
+- No explanations, no mixing keyword with text
+- Keep answers warm, helpful and natural`;
 
-رویکرد:
-• اگه درخواست واضحه → مستقیم شروع کن
-• اگه اطلاعات کمه → دقیقاً یک سوال کلیدی بپرس، نه بیشتر
-• کد: تمیز، کامنت‌دار، قابل اجرا
-• متن: ساختارمند، دقیق، کامل
-• همیشه بهترین کیفیت ممکن رو ارائه بده`;
+    const SYS_SONNET = `You are an expert assistant in Planning With AI, specialized in code, analysis and technical topics.
+Always respond in fluent Persian (Farsi) unless the user writes in another language.
 
-    const SYS_OPUS = `تو Claude Opus هستی — قوی‌ترین مدل هوش مصنوعی در Planning With AI.
-برای کارهای سنگین و پیچیده طراحی شدی.
-زبان: فارسی حرفه‌ای و روان.
+Approach:
+- If the request is clear → start immediately with high quality output
+- If one key detail is missing → ask exactly ONE short question, then proceed
+- Code: clean, commented, working
+- Text: well-structured, accurate, complete
+- Always give the best possible quality`;
 
-رویکرد:
-• اگه درخواست کاملاً واضحه → بلافاصله شروع کن با بالاترین کیفیت
-• اگه یه نکته کلیدی کمه → دقیقاً یک سوال مهم بپرس
-• مقاله: ساختار قوی، محتوای غنی، منسجم
-• پروژه: معماری درست، جزئیات کامل، قابل اجرا
-• هیچ‌وقت کم‌کاری نکن — کامل‌ترین و بهترین خروجی ممکن رو بده`;
+    const SYS_OPUS = `You are Claude Opus in Planning With AI — the most powerful model for heavy tasks.
+Always respond in fluent, professional Persian (Farsi) unless the user writes in another language.
 
-    const SYS_PERP = `متخصص جستجوی اینترنتی. اطلاعات دقیق و به‌روز بده. منابع معتبر ذکر کن. فارسی روان.`;
+Approach:
+- If the request is fully clear → start immediately with maximum quality
+- If one critical detail is missing → ask exactly ONE important question
+- Articles: strong structure, rich content, cohesive
+- Projects: solid architecture, complete details, executable
+- Never cut corners — deliver the most complete and best possible output`;
+
+    const SYS_PERP = `You are a web search specialist. Provide accurate, up-to-date information with credible sources. Respond in fluent Persian.`;
 
     /* ── ORCHESTRATOR ────────────────────────────────────────────────── */
     // Keywords Haiku might return
