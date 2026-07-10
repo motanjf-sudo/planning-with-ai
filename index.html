@@ -1314,8 +1314,8 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
           return "";
         });
         finalizeStreamingBubble(bubble, full);
-        removeStreamingBubble(bubble);
         if (full.trim()) await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+        removeStreamingBubble(bubble);
       } catch(e) { console.error("Haiku direct:", e); removeStreamingBubble(bubble); }
     }
 
@@ -1333,7 +1333,6 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
           return "";
         });
         finalizeStreamingBubble(bubble, full);
-        removeStreamingBubble(bubble);
         if (full.trim()) {
           // Only save to Firestore if under 900KB — otherwise keep in memory only
           const sizeKB = new Blob([full]).size / 1024;
@@ -1347,6 +1346,7 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
             scrollToBottom();
           }
         }
+        removeStreamingBubble(bubble);
       } catch(e) { console.error("Sonnet:", e); removeStreamingBubble(bubble); }
     }
 
