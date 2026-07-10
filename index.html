@@ -761,9 +761,9 @@
         mc.innerHTML = '<div class="loading-msgs">هنوز پیامی نیست. اولین نفر باش! 👋</div>'; return;
       }
 
-      // Find which message IDs are already in DOM — don't re-render them
+      // Collect ALL rendered IDs — both permanent messages AND streaming bubbles that have been marked
       const renderedIds = new Set();
-      mc.querySelectorAll(".msg-group[data-id]").forEach(el => renderedIds.add(el.dataset.id));
+      mc.querySelectorAll("[data-id]").forEach(el => renderedIds.add(el.dataset.id));
 
       // Only append NEW messages — never clear the whole DOM
       let addedAny = false;
@@ -782,7 +782,7 @@
         addedAny = true;
       });
 
-      if (addedAny || wasAtBottom) {
+      if (addedAny) {
         if (wasAtBottom || allMessages[allMessages.length-1]?.sender === currentUser) scrollToBottom();
       }
     }
@@ -1117,16 +1117,22 @@ Do NOT explain. Do NOT answer the question. Output ONE word ONLY.`;
           if (json.type === "content_block_delta" && json.delta?.type === "text_delta") return json.delta.text;
           return "";
         });
+        finalizeStreamingBubble(bubble, full);
         if (full.trim()) {
           const sizeKB = new Blob([full]).size / 1024;
           if (sizeKB < 900) {
-            await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+            const ref = await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+            removeStreamingBubble(bubble, ref.id);
           } else {
-            const memMsg = { id:"mem_"+Date.now(), sender:"Claude", text:full, timestamp:{toDate:()=>new Date()} };
+            const memId = "mem_"+Date.now();
+            const memMsg = { id:memId, sender:"Claude", text:full, timestamp:{toDate:()=>new Date()} };
             allMessages.push(memMsg);
+            removeStreamingBubble(bubble, memId);
             renderMessages();
             scrollToBottom();
           }
+        } else {
+          removeStreamingBubble(bubble);
         }
       } catch(e) { console.error("Opus:", e); removeStreamingBubble(bubble); }
     }
@@ -1211,8 +1217,12 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
         const explainData = await explainRes.json();
         const full = explainData.content?.[0]?.text || "";
         finalizeStreamingBubble(bubble, full);
-        removeStreamingBubble(bubble);
-        if (full.trim()) await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+        if (full.trim()) {
+          const ref = await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+          removeStreamingBubble(bubble, ref.id);
+        } else {
+          removeStreamingBubble(bubble);
+        }
       } catch(e) {
         console.error("Calc:", e);
         removeStreamingBubble(bubble);
@@ -1295,7 +1305,13 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
         });
       });
     }
-    function removeStreamingBubble(div) { if (div?.parentNode) div.parentNode.removeChild(div); }
+    function removeStreamingBubble(div, docId) {
+      if (!div?.parentNode) return;
+      // Mark with doc ID BEFORE removing so renderMessages won't re-add it
+      if (docId) div.dataset.id = docId;
+      // Small delay to let onSnapshot fire first and see the marked ID
+      setTimeout(() => { if (div?.parentNode) div.parentNode.removeChild(div); }, 50);
+    }
 
     /* ============ HAIKU — simple/chat questions ============ */
     async function askHaikuDirect(userMessage, fileData=null) {
@@ -1317,8 +1333,12 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
           return "";
         });
         finalizeStreamingBubble(bubble, full);
-        if (full.trim()) await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
-        removeStreamingBubble(bubble);
+        if (full.trim()) {
+          const ref = await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+          removeStreamingBubble(bubble, ref.id);
+        } else {
+          removeStreamingBubble(bubble);
+        }
       } catch(e) { console.error("Haiku direct:", e); removeStreamingBubble(bubble); }
     }
 
@@ -1340,16 +1360,19 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
           // Only save to Firestore if under 900KB — otherwise keep in memory only
           const sizeKB = new Blob([full]).size / 1024;
           if (sizeKB < 900) {
-            await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+            const ref = await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+            removeStreamingBubble(bubble, ref.id);
           } else {
-            // Show in chat from memory — won't survive refresh but that's OK
-            const memMsg = { id:"mem_"+Date.now(), sender:"Claude", text:full, timestamp:{toDate:()=>new Date()} };
+            const memId = "mem_"+Date.now();
+            const memMsg = { id:memId, sender:"Claude", text:full, timestamp:{toDate:()=>new Date()} };
             allMessages.push(memMsg);
+            removeStreamingBubble(bubble, memId);
             renderMessages();
             scrollToBottom();
           }
+        } else {
+          removeStreamingBubble(bubble);
         }
-        removeStreamingBubble(bubble);
       } catch(e) { console.error("Sonnet:", e); removeStreamingBubble(bubble); }
     }
 
@@ -1434,8 +1457,12 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
         const text = data.choices?.[0]?.message?.content || "";
         const citations = data.citations || [];
         finalizeStreamingBubble(bubble, text);
-        removeStreamingBubble(bubble);
-        if (text.trim()) await addDoc(messagesRef, {sender:"Perplexity", text, sources:citations, isSearch:true, timestamp:serverTimestamp()});
+        if (text.trim()) {
+          const ref = await addDoc(messagesRef, {sender:"Perplexity", text, sources:citations, isSearch:true, timestamp:serverTimestamp()});
+          removeStreamingBubble(bubble, ref.id);
+        } else {
+          removeStreamingBubble(bubble);
+        }
         return text;
       } catch(e) { console.error("Perplexity:", e); removeStreamingBubble(bubble); return ""; }
     }
