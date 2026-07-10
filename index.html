@@ -1285,7 +1285,7 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
     let _lastStreamUpdate = 0;
     function updateStreamingBubble(div, text) {
       const now = Date.now();
-      if (now - _lastStreamUpdate < 30) return;
+      if (now - _lastStreamUpdate < 25) return;
       _lastStreamUpdate = now;
       const sel = window.getSelection();
       if (sel && sel.toString().length > 0) return;
@@ -1295,10 +1295,10 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       if (!t) return;
       if (!t.dataset.streaming) {
         t.dataset.streaming = "1";
-        t.innerHTML = '<div class="stream-live"></div><span class="stream-caret"></span>';
+        t.innerHTML = '<span class="stream-live"></span><span class="stream-caret"></span>';
       }
       const live = t.querySelector(".stream-live");
-      if (live) live.innerHTML = renderMarkdown(text);
+      if (live) live.textContent = text;
       const mc = $("messages-container");
       if (mc.scrollHeight - mc.scrollTop - mc.clientHeight < 150) mc.scrollTop = mc.scrollHeight;
     }
@@ -1307,17 +1307,17 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       if (s) s.remove();
       const t = div.querySelector(".msg-text");
       if (!t) return;
-      const caret = t.querySelector(".stream-caret");
-      if (caret) caret.remove();
-      // Already rendered during streaming — just extract code blocks
-      const live = t.querySelector(".stream-live");
-      if (live) {
-        extractAndReplaceCodeBlocks(live, text);
-      } else {
+      delete t.dataset.streaming;
+      t.style.opacity = "0";
+      t.style.transition = "opacity 0.1s";
+      requestAnimationFrame(() => {
         t.innerHTML = renderMarkdown(text);
         extractAndReplaceCodeBlocks(t, text);
-      }
-      delete t.dataset.streaming;
+        requestAnimationFrame(() => {
+          t.style.opacity = "1";
+          setTimeout(() => { t.style.transition = ""; }, 150);
+        });
+      });
     }
     function removeStreamingBubble(div) { if (div?.parentNode) div.parentNode.removeChild(div); }
 
