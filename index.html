@@ -1316,7 +1316,11 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
             max_tokens: 800,
             reasoning_effort: "none",
             messages: [
-              { role: "system", content: "You are a helpful Persian-language assistant. Always respond in natural, fluent Persian (Farsi). Be warm, concise and accurate. No markdown formatting." },
+              { role: "system", content: "You are a helpful Persian-language assistant. Always respond in natural, fluent Persian (Farsi). Be warm, friendly and conversational. Use emojis naturally. Format responses clearly with line breaks and structure when needed." },
+              ...allMessages.slice(-10).filter(m => m.sender === currentUser || m.sender === "Claude").map(m => ({
+                role: m.sender === currentUser ? "user" : "assistant",
+                content: m.text || ""
+              })),
               { role: "user", content: userMessage }
             ]
           })
