@@ -1315,6 +1315,7 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
             model: "qwen/qwen3.6-27b",
             max_tokens: 800,
             reasoning_effort: "none",
+            stream: true,
             messages: [
               { role: "system", content: "You are a helpful Persian-language assistant. Always respond in natural, fluent Persian (Farsi). Be warm, friendly and conversational. Use emojis naturally. Format responses clearly with line breaks and structure when needed." },
               ...allMessages.slice(-10).filter(m => m.sender === currentUser || m.sender === "Claude").map(m => ({
@@ -1325,8 +1326,12 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
             ]
           })
         });
-        const data = await res.json();
-        const full = data.choices?.[0]?.message?.content || "";
+
+        const full = await readSSEProgressive(res, bubble, json => {
+          const delta = json.choices?.[0]?.delta?.content;
+          return delta || "";
+        });
+
         finalizeStreamingBubble(bubble, full);
         if (full.trim()) {
           const ref = await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
