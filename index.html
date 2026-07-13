@@ -1102,6 +1102,7 @@ Do NOT explain. Do NOT answer the question. Output ONE word ONLY.`;
         if (full.trim()) {
           const sizeKB = new Blob([full]).size / 1024;
           if (sizeKB < 900) {
+            bubble.dataset.id = "temp_" + Date.now();
             const ref = await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
             removeStreamingBubble(bubble, ref.id);
           } else {
@@ -1333,7 +1334,12 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
 
         finalizeStreamingBubble(bubble, full);
         if (full.trim()) {
+          // Mark bubble with temp ID BEFORE addDoc to prevent renderMessages from re-adding
+          const tempId = "temp_" + Date.now();
+          bubble.dataset.id = tempId;
           const ref = await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+          // Update to real ID
+          bubble.dataset.id = ref.id;
           removeStreamingBubble(bubble, ref.id);
         } else {
           removeStreamingBubble(bubble);
@@ -1359,6 +1365,7 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
           // Only save to Firestore if under 900KB — otherwise keep in memory only
           const sizeKB = new Blob([full]).size / 1024;
           if (sizeKB < 900) {
+            bubble.dataset.id = "temp_" + Date.now();
             const ref = await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
             removeStreamingBubble(bubble, ref.id);
           } else {
