@@ -1283,14 +1283,10 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       if (s) s.remove();
       const t = div.querySelector(".msg-text");
       if (!t) return;
-      // Remove caret only — content already rendered by streaming
+      // Remove caret only — NO DOM changes, content already rendered by streaming
       const caret = t.querySelector(".stream-caret");
       if (caret) caret.remove();
-      const live = t.querySelector(".stream-live");
-      if (live) {
-        // Already rendered during streaming — just extract code blocks
-        extractAndReplaceCodeBlocks(live, text);
-      } else {
+      if (!t.querySelector(".stream-live")) {
         // Fallback if streaming never ran
         t.innerHTML = renderMarkdown(text);
         extractAndReplaceCodeBlocks(t, text);
