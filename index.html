@@ -761,20 +761,25 @@
         mc.innerHTML = '<div class="loading-msgs">هنوز پیامی نیست. اولین نفر باش! 👋</div>'; return;
       }
 
-      // Collect ALL rendered IDs — both permanent messages AND streaming bubbles that have been marked
+      // Collect ALL rendered IDs
       const renderedIds = new Set();
       mc.querySelectorAll("[data-id]").forEach(el => renderedIds.add(el.dataset.id));
 
-      // Only append NEW messages — never clear the whole DOM
       let addedAny = false;
       allMessages.forEach(msg => {
         if (renderedIds.has(msg.id)) return;
         const el = createMessageEl(msg);
         el.dataset.id = msg.id;
-        // Insert before any streaming bubble
+        // Check if there's a streaming bubble to replace (same content)
         const streaming = mc.querySelector(".streaming-msg");
-        if (streaming) mc.insertBefore(el, streaming);
-        else mc.appendChild(el);
+        if (streaming && ["Claude","Gemini","Perplexity"].includes(msg.sender)) {
+          // Replace streaming bubble with permanent message
+          mc.replaceChild(el, streaming);
+        } else if (streaming) {
+          mc.insertBefore(el, streaming);
+        } else {
+          mc.appendChild(el);
+        }
         if (["Claude","Gemini","Perplexity"].includes(msg.sender) && msg.text) {
           const t = el.querySelector(".msg-text");
           if (t) extractAndReplaceCodeBlocks(t, msg.text);
@@ -1103,8 +1108,7 @@ Do NOT explain. Do NOT answer the question. Output ONE word ONLY.`;
           const sizeKB = new Blob([full]).size / 1024;
           if (sizeKB < 900) {
             const ref = await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
-            bubble.classList.remove("streaming-msg");
-            bubble.dataset.id = ref.id;
+            removeStreamingBubble(bubble, ref.id);
           } else {
             const memId = "mem_"+Date.now();
             const memMsg = { id:memId, sender:"Claude", text:full, timestamp:{toDate:()=>new Date()} };
@@ -1331,9 +1335,7 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
         finalizeStreamingBubble(bubble, full);
         if (full.trim()) {
           const ref = await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
-          // Convert bubble to permanent message — don't remove it
-          bubble.classList.remove("streaming-msg");
-          bubble.dataset.id = ref.id;
+          removeStreamingBubble(bubble, ref.id);
         } else {
           removeStreamingBubble(bubble);
         }
@@ -1359,14 +1361,14 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
           const sizeKB = new Blob([full]).size / 1024;
           if (sizeKB < 900) {
             const ref = await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
-            bubble.classList.remove("streaming-msg");
-            bubble.dataset.id = ref.id;
+            removeStreamingBubble(bubble, ref.id);
           } else {
             const memId = "mem_"+Date.now();
-            bubble.classList.remove("streaming-msg");
-            bubble.dataset.id = memId;
             const memMsg = { id:memId, sender:"Claude", text:full, timestamp:{toDate:()=>new Date()} };
             allMessages.push(memMsg);
+            removeStreamingBubble(bubble, memId);
+            renderMessages();
+            scrollToBottom();
           }
         } else {
           removeStreamingBubble(bubble);
