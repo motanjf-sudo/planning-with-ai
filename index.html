@@ -1102,8 +1102,9 @@ Do NOT explain. Do NOT answer the question. Output ONE word ONLY.`;
         if (full.trim()) {
           const sizeKB = new Blob([full]).size / 1024;
           if (sizeKB < 900) {
-            if (bubble?.parentNode) bubble.parentNode.removeChild(bubble);
-            await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+            const ref = await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+            bubble.classList.remove("streaming-msg");
+            bubble.dataset.id = ref.id;
           } else {
             const memId = "mem_"+Date.now();
             const memMsg = { id:memId, sender:"Claude", text:full, timestamp:{toDate:()=>new Date()} };
@@ -1329,9 +1330,10 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
 
         finalizeStreamingBubble(bubble, full);
         if (full.trim()) {
-          // Remove bubble BEFORE addDoc so renderMessages handles it cleanly
-          if (bubble?.parentNode) bubble.parentNode.removeChild(bubble);
-          await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+          const ref = await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+          // Convert bubble to permanent message — don't remove it
+          bubble.classList.remove("streaming-msg");
+          bubble.dataset.id = ref.id;
         } else {
           removeStreamingBubble(bubble);
         }
@@ -1356,15 +1358,15 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
           // Only save to Firestore if under 900KB — otherwise keep in memory only
           const sizeKB = new Blob([full]).size / 1024;
           if (sizeKB < 900) {
-            if (bubble?.parentNode) bubble.parentNode.removeChild(bubble);
-            await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+            const ref = await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+            bubble.classList.remove("streaming-msg");
+            bubble.dataset.id = ref.id;
           } else {
-            if (bubble?.parentNode) bubble.parentNode.removeChild(bubble);
             const memId = "mem_"+Date.now();
+            bubble.classList.remove("streaming-msg");
+            bubble.dataset.id = memId;
             const memMsg = { id:memId, sender:"Claude", text:full, timestamp:{toDate:()=>new Date()} };
             allMessages.push(memMsg);
-            renderMessages();
-            scrollToBottom();
           }
         } else {
           removeStreamingBubble(bubble);
