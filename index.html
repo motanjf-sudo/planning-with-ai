@@ -1287,8 +1287,7 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       if (caret) caret.remove();
       const live = t.querySelector(".stream-live");
       if (live) {
-        // Final render to ensure completeness + extract code blocks
-        live.innerHTML = renderMarkdown(text);
+        // Already rendered during streaming — just extract code blocks
         extractAndReplaceCodeBlocks(live, text);
       } else {
         // Fallback if streaming never ran
@@ -1317,7 +1316,7 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
             reasoning_effort: "none",
             stream: true,
             messages: [
-              { role: "system", content: "You are a helpful Persian-language assistant. Always respond in natural, fluent Persian (Farsi). Be warm, friendly and conversational. Use emojis naturally. Format responses clearly with line breaks and structure when needed." },
+              { role: "system", content: "You are a helpful Persian-language assistant. Always respond in natural, fluent Persian (Farsi). Be warm and friendly. Use emojis naturally. Use markdown formatting — headers, bold, bullet points, tables when needed. IMPORTANT: Match response length to question complexity. Simple questions = 2-3 lines. Complex questions = detailed answer. Never over-explain simple facts." },
               ...allMessages.slice(-10).filter(m => m.sender === currentUser || m.sender === "Claude").map(m => ({
                 role: m.sender === currentUser ? "user" : "assistant",
                 content: m.text || ""
