@@ -1427,12 +1427,12 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
           method:"POST", headers:{"Content-Type":"application/json"},
           body: JSON.stringify({
             model: "qwen/qwen3.6-27b",
-            max_tokens: 1000,
+            max_tokens: 1500,
             reasoning_effort: "none",
             stream: true,
             messages: [
               { role: "system", content: "You are a helpful Persian-language assistant. Always respond in natural, fluent Persian (Farsi). Be warm and friendly. Use emojis naturally. Use markdown formatting — headers, bold, bullet points, tables when needed. IMPORTANT: Match response length to question complexity. Simple questions = 2-3 lines. Complex questions = detailed answer. Never over-explain simple facts." },
-              ...allMessages.slice(-10).filter(m => m.sender === currentUser || m.sender === "Claude").map(m => ({
+              ...allMessages.slice(-5).filter(m => m.sender === currentUser || m.sender === "Claude").map(m => ({
                 role: m.sender === currentUser ? "user" : "assistant",
                 content: m.text || ""
               })),
