@@ -1363,7 +1363,6 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
           body: JSON.stringify({
             model: "qwen/qwen3.6-27b",
             max_tokens: 120,
-            reasoning_effort: "none",
             messages: [
               { role: "system", content: "Convert the user request to a detailed vivid English image generation prompt. Return ONLY the prompt, nothing else." },
               { role: "user", content: userMsg }
@@ -1453,7 +1452,6 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
           body: JSON.stringify({
             model: "qwen/qwen3.6-27b",
             max_tokens: 1500,
-            reasoning_effort: "none",
             stream: true,
             messages: [
               { role: "system", content: "You are a helpful Persian-language assistant. Always respond in natural, fluent Persian (Farsi). Be warm and friendly. Use emojis naturally. Use markdown formatting — headers, bold, bullet points, tables when needed. IMPORTANT: Match response length to question complexity. Simple questions = 2-3 lines. Complex questions = detailed answer. Never over-explain simple facts." },
