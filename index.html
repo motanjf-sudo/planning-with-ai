@@ -603,31 +603,34 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, deleteDoc, setDoc, updateDoc, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
     const WORKER_URL = "https://planning-ai.motanjf.workers.dev";
-    const firebaseConfig = {
-      apiKey: "AIzaSyAKX7Qphz83ImmoLplsdlLvoHknnny1nU4",
-      authDomain: "planning-with-ai-46ccb.firebaseapp.com",
-      projectId: "planning-with-ai-46ccb",
-      storageBucket: "planning-with-ai-46ccb.firebasestorage.app",
-      messagingSenderId: "460552947425",
-      appId: "1:460552947425:web:feae278abe8d1d6e4b99a0"
-    };
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    // Chat management
+
+    // ---- localStorage Database ----
     let currentChatId = null;
     let messagesRef = null;
     let unsubscribeMessages = null;
-    let allChats = []; // list of user's chats
+    let allChats = [];
 
-    function getChatMessagesRef(chatId) {
-      return collection(db, "users", currentUser, "chats", chatId, "messages");
+    function serverTimestamp() { return { toDate: () => new Date() }; }
+    
+    function lsGet(key) {
+      try { return JSON.parse(localStorage.getItem(key)) || null; } catch { return null; }
     }
-    function getChatsRef() {
-      return collection(db, "users", currentUser, "chats");
+    function lsSet(key, val) {
+      try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+    }
+    
+    function getChatsFromLS() {
+      return lsGet("chats_" + currentUser) || [];
+    }
+    function saveChatsToLS(chats) {
+      lsSet("chats_" + currentUser, chats);
+    }
+    function getMessagesFromLS(chatId) {
+      return lsGet("msgs_" + chatId) || [];
+    }
+    function saveMessagesToLS(chatId, msgs) {
+      lsSet("msgs_" + chatId, msgs);
     }
 
     let currentUser = null;
@@ -795,33 +798,33 @@
       $("chat-screen").classList.remove("hidden");
       $("sidebar-username").textContent = currentUser;
       $("sidebar-avatar").textContent = currentUser.charAt(0).toUpperCase();
-      listenChats();
+      loadChats();
     }
 
-    /* ============ CHAT LIST MANAGEMENT ============ */
-    async function createNewChat() {
-      const chatRef = doc(getChatsRef());
-      await setDoc(chatRef, {
-        name: "چت جدید",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        owner: currentUser
-      });
-      switchToChat(chatRef.id, "چت جدید");
+    /* ============ CHAT LIST MANAGEMENT (localStorage) ============ */
+    function generateId() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     }
 
-    function listenChats() {
-      const q = query(getChatsRef(), orderBy("updatedAt", "desc"));
-      onSnapshot(q, snapshot => {
-        allChats = [];
-        snapshot.forEach(d => allChats.push({ id: d.id, ...d.data() }));
-        renderChatList();
-        // If no chats, create one
-        if (allChats.length === 0) createNewChat();
-        // If no current chat, load first
-        else if (!currentChatId) switchToChat(allChats[0].id, allChats[0].name);
-      });
+    function createNewChat() {
+      const chatId = generateId();
+      const chat = { id: chatId, name: "چت جدید", updatedAt: Date.now() };
+      const chats = getChatsFromLS();
+      chats.unshift(chat);
+      saveChatsToLS(chats);
+      allChats = chats;
+      renderChatList();
+      switchToChat(chatId, "چت جدید");
     }
+
+    function loadChats() {
+      allChats = getChatsFromLS();
+      renderChatList();
+      if (allChats.length === 0) createNewChat();
+      else if (!currentChatId) switchToChat(allChats[0].id, allChats[0].name);
+    }
+
+    function listenChats() { loadChats(); }
 
     function renderChatList() {
       const list = $("chat-list");
@@ -840,54 +843,40 @@
       });
     }
 
-    async function deleteChatConfirm(chatId) {
+    function deleteChatConfirm(chatId) {
       if (!confirm("این چت حذف بشه؟")) return;
-      // Delete all messages
-      const msgs = await getDocs(getChatMessagesRef(chatId));
-      for (const m of msgs.docs) await deleteDoc(m.ref);
-      // Delete chat doc
-      await deleteDoc(doc(db, "users", currentUser, "chats", chatId));
-      // If it was current chat, switch to first available
+      localStorage.removeItem("msgs_" + chatId);
+      const chats = getChatsFromLS().filter(c => c.id !== chatId);
+      saveChatsToLS(chats);
+      allChats = chats;
+      renderChatList();
       if (currentChatId === chatId) {
         currentChatId = null;
-        const remaining = allChats.filter(c => c.id !== chatId);
-        if (remaining.length > 0) switchToChat(remaining[0].id, remaining[0].name);
+        if (chats.length > 0) switchToChat(chats[0].id, chats[0].name);
         else createNewChat();
       }
     }
 
     function switchToChat(chatId, chatName) {
       currentChatId = chatId;
-      messagesRef = getChatMessagesRef(chatId);
-      // Update header
       $("chat-title-header").textContent = chatName || "چت جدید";
-      // Update sidebar active state
       document.querySelectorAll(".chat-list-item").forEach(el => {
         el.classList.toggle("active", el.dataset.chatId === chatId);
       });
-      // Reset messages
       allMessages = [];
       listenMessages();
-      // Close sidebar on mobile
       closeSidebar();
     }
 
     $("new-chat-btn").addEventListener("click", createNewChat);
 
-    /* ============ FIRESTORE LISTEN ============ */
+    /* ============ localStorage LISTEN ============ */
     function listenMessages() {
-      if (unsubscribeMessages) { unsubscribeMessages(); unsubscribeMessages = null; }
       const mc = $("messages-container");
       mc.innerHTML = '<div class="loading-msgs">در حال بارگذاری...</div>';
-      if (!messagesRef) return;
-      const q = query(messagesRef, orderBy("timestamp", "asc"));
-      unsubscribeMessages = onSnapshot(q, snapshot => {
-        const wasEmpty = allMessages.length === 0;
-        allMessages = [];
-        snapshot.forEach(d => allMessages.push({ id: d.id, ...d.data() }));
-        if (wasEmpty) clearAndRenderMessages();
-        else renderMessages();
-      });
+      if (!currentChatId) return;
+      allMessages = getMessagesFromLS(currentChatId);
+      clearAndRenderMessages();
     }
 
     function renderMessages() {
@@ -998,7 +987,7 @@
 
     async function deleteMessage(id) {
       if (!confirm("پیام حذف بشه؟")) return;
-      try { await deleteDoc(doc(db, "users", currentUser, "chats", currentChatId, "messages", id)); } catch(e) { console.error(e); }
+      try { allMessages = allMessages.filter(m => m.id !== id); saveMessagesToLS(currentChatId, allMessages); renderMessages(); } catch(e) { console.error(e); }
     }
 
     function scrollToBottom() { setTimeout(() => { const mc = $("messages-container"); mc.scrollTop = mc.scrollHeight; }, 50); }
@@ -1056,16 +1045,16 @@
       const userMsg = text || `فایل: ${fileName}`;
       try {
         const isFirstMessage = allMessages.filter(m => m.sender === currentUser).length === 0;
-        await addDoc(messagesRef, { sender: currentUser, text: text || "", ...(fileName && {fileName, fileType}), timestamp: serverTimestamp() });
+        const userMsgId = Date.now().toString(36) + Math.random().toString(36).slice(2);
+        const userMsg = { id: userMsgId, sender: currentUser, text: text || "", ...(fileName && {fileName, fileType}), timestamp: Date.now() };
+        allMessages.push(userMsg);
+        saveMessagesToLS(currentChatId, allMessages);
         // Auto-name chat from first message
         if (isFirstMessage && currentChatId) {
           const shortName = (text || "چت جدید").slice(0, 30).split("\n")[0].trim();
-          updateDoc(doc(db, "users", currentUser, "chats", currentChatId), {
-            name: shortName,
-            updatedAt: serverTimestamp()
-          }).catch(()=>{});
-        } else if (currentChatId) {
-          updateDoc(doc(db, "users", currentUser, "chats", currentChatId), { updatedAt: serverTimestamp() }).catch(()=>{});
+          const chats = getChatsFromLS();
+          const chat = chats.find(c => c.id === currentChatId);
+          if (chat) { chat.name = shortName; chat.updatedAt = Date.now(); saveChatsToLS(chats); allChats = chats; renderChatList(); $("chat-title-header").textContent = shortName; }
         }
         await orchestrate(userMsg, fileData, selectedModel);
       } catch(e) { console.error(e); }
@@ -1255,7 +1244,7 @@ Do NOT explain. Do NOT answer the question. Output ONE word ONLY.`;
         if (full.trim()) {
           const sizeKB = new Blob([full]).size / 1024;
           if (sizeKB < 900) {
-            const ref = await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+            const ref = lsAddMessage("Claude", full);
             removeStreamingBubble(bubble, ref.id);
           } else {
             const memId = "mem_"+Date.now();
@@ -1352,7 +1341,7 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
         const full = explainData.content?.[0]?.text || "";
         finalizeStreamingBubble(bubble, full);
         if (full.trim()) {
-          const ref = await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+          const ref = lsAddMessage("Claude", full);
           removeStreamingBubble(bubble, ref.id);
         } else {
           removeStreamingBubble(bubble);
@@ -1482,7 +1471,7 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
 
         finalizeStreamingBubble(bubble, full);
         if (full.trim()) {
-          const ref = await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+          const ref = lsAddMessage("Claude", full);
           removeStreamingBubble(bubble, ref.id);
         } else {
           removeStreamingBubble(bubble);
@@ -1508,7 +1497,7 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
           // Only save to Firestore if under 900KB — otherwise keep in memory only
           const sizeKB = new Blob([full]).size / 1024;
           if (sizeKB < 900) {
-            const ref = await addDoc(messagesRef, {sender:"Claude", text:full, timestamp:serverTimestamp()});
+            const ref = lsAddMessage("Claude", full);
             removeStreamingBubble(bubble, ref.id);
           } else {
             const memId = "mem_"+Date.now();
@@ -1569,20 +1558,14 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
         for (const p of parts) { if (p.inlineData) { imageUrl = `data:${p.inlineData.mimeType};base64,${p.inlineData.data}`; break; } }
         if (imageUrl) {
           const imageId = "img_" + Date.now();
-          // Store full-quality in memory cache (for current session)
           imageCache.set(imageId, imageUrl);
-          // Compress before saving to Firestore (stays under 1MB limit)
           const compressed = await compressImage(imageUrl);
-          await addDoc(messagesRef, {
-            sender: "Gemini",
-            text: "🎨 تصویر آماده شد!",
-            imageId,
-            imageData: compressed,
-            timestamp: serverTimestamp()
-          });
+          lsAddMessage("Gemini", "🎨 تصویر آماده شد!", { imageId, imageData: compressed });
         } else {
-          await addDoc(messagesRef, {sender:"Gemini", text:"متأسفم، نتونستم تصویر بسازم.", timestamp:serverTimestamp()});
+          lsAddMessage("Gemini", "متأسفم، نتونستم تصویر بسازم.");
         }
+        renderMessages();
+        scrollToBottom();
       } catch(e) { console.error("Gemini image:", e); removeStreamingBubble(bubble); }
     }
 
@@ -1606,7 +1589,7 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
         const citations = data.citations || [];
         finalizeStreamingBubble(bubble, text);
         if (text.trim()) {
-          const ref = await addDoc(messagesRef, {sender:"Perplexity", text, sources:citations, isSearch:true, timestamp:serverTimestamp()});
+          const ref = lsAddMessage("Perplexity", text, {sources:citations, isSearch:true});
           removeStreamingBubble(bubble, ref.id);
         } else {
           removeStreamingBubble(bubble);
@@ -2195,6 +2178,16 @@ ${allQA}
         card.addEventListener("click", () => openArtifact(code, lang, title));
         pre.replaceWith(card);
       });
+    }
+
+    /* ============ localStorage addDoc replacement ============ */
+    function lsAddMessage(sender, text, extra={}) {
+      if (!currentChatId) return { id: "tmp" };
+      const id = Date.now().toString(36) + Math.random().toString(36).slice(2);
+      const msg = { id, sender, text, timestamp: Date.now(), ...extra };
+      allMessages.push(msg);
+      saveMessagesToLS(currentChatId, allMessages);
+      return { id };
     }
 
     /* ── TEXT TO SPEECH ── */
