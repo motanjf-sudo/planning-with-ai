@@ -2213,6 +2213,8 @@ ${allQA}
       const msg = { id, sender, text, timestamp: Date.now(), ...extra };
       allMessages.push(msg);
       saveMessagesToLS(currentChatId, allMessages);
+      renderMessages();
+      scrollToBottom();
       return { id };
     }
 
