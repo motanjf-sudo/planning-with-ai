@@ -1232,7 +1232,7 @@ Do NOT explain. Do NOT answer the question. Output ONE word ONLY.`;
           method:"POST", headers:{"Content-Type":"application/json"},
           body: JSON.stringify({
             model: "claude-opus-4-8",
-            max_tokens: 1600,
+            max_tokens: 1500,
             system: SYS_OPUS,
             messages: history,
             stream: true
@@ -1451,7 +1451,7 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
           method:"POST", headers:{"Content-Type":"application/json"},
           body: JSON.stringify({
             model: "qwen/qwen3.6-27b",
-            max_tokens: 1600,
+            max_tokens: 1500,
             stream: true,
             messages: [
               { role: "system", content: "You are a helpful Persian-language assistant. Always respond in natural, fluent Persian (Farsi). Be warm and friendly. Use emojis naturally. Use markdown formatting when needed. Match response length to question complexity. IMPORTANT: Always verify facts before confirming them. If a user's answer is wrong, gently correct them with the right answer." },
