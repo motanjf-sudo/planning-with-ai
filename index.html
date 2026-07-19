@@ -1042,13 +1042,15 @@
         $("file-input").value = "";
       }
 
-      const userMsg = text || `فایل: ${fileName}`;
+      const userText = text || `فایل: ${fileName}`;
       try {
         const isFirstMessage = allMessages.filter(m => m.sender === currentUser).length === 0;
         const userMsgId = Date.now().toString(36) + Math.random().toString(36).slice(2);
-        const userMsg = { id: userMsgId, sender: currentUser, text: text || "", ...(fileName && {fileName, fileType}), timestamp: Date.now() };
-        allMessages.push(userMsg);
+        const userMsgObj = { id: userMsgId, sender: currentUser, text: text || "", ...(fileName && {fileName, fileType}), timestamp: Date.now() };
+        allMessages.push(userMsgObj);
         saveMessagesToLS(currentChatId, allMessages);
+        renderMessages();
+        scrollToBottom();
         // Auto-name chat from first message
         if (isFirstMessage && currentChatId) {
           const shortName = (text || "چت جدید").slice(0, 30).split("\n")[0].trim();
@@ -1056,7 +1058,7 @@
           const chat = chats.find(c => c.id === currentChatId);
           if (chat) { chat.name = shortName; chat.updatedAt = Date.now(); saveChatsToLS(chats); allChats = chats; renderChatList(); $("chat-title-header").textContent = shortName; }
         }
-        await orchestrate(userMsg, fileData, selectedModel);
+        await orchestrate(userText, fileData, selectedModel);
       } catch(e) { console.error(e); }
       finally { $("send-btn").disabled = false; msgInput.focus(); _sending = false; }
     }
