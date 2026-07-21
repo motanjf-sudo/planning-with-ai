@@ -666,7 +666,7 @@
       });
 
       // bold + italic (before table processing)
-      text = text.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+      text = text.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
       text = text.replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>");
 
       // markdown tables
