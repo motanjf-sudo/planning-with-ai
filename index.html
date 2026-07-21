@@ -1437,10 +1437,12 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
     }
     function removeStreamingBubble(div, docId) {
       if (!div?.parentNode) return;
-      // Mark with doc ID BEFORE removing so renderMessages won't re-add it
       if (docId) div.dataset.id = docId;
-      // Small delay to let onSnapshot fire first and see the marked ID
-      setTimeout(() => { if (div?.parentNode) div.parentNode.removeChild(div); }, 50);
+      setTimeout(() => { 
+        if (div?.parentNode) div.parentNode.removeChild(div);
+        // Re-render messages to apply code extraction
+        renderMessages();
+      }, 50);
     }
 
     /* ============ HAIKU — simple/chat questions ============ */
