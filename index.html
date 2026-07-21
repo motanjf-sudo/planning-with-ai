@@ -2258,8 +2258,7 @@ ${allQA}
       const msg = { id, sender, text, timestamp: Date.now(), ...extra };
       allMessages.push(msg);
       saveMessagesToLS(currentChatId, allMessages);
-      renderMessages();
-      scrollToBottom();
+      // Don't call renderMessages here — streaming bubble handles display
       return { id };
     }
 
