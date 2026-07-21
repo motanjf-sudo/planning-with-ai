@@ -1425,15 +1425,14 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       if (s) s.remove();
       const t = div.querySelector(".msg-text");
       if (!t) return;
-      // Remove caret only — NO DOM changes, content already rendered by streaming
       const caret = t.querySelector(".stream-caret");
       if (caret) caret.remove();
-      if (!t.querySelector(".stream-live")) {
-        // Fallback if streaming never ran
-        t.innerHTML = renderMarkdown(text);
-        extractAndReplaceCodeBlocks(t, text);
-      }
+      const live = t.querySelector(".stream-live");
+      const container = live || t;
+      container.innerHTML = renderMarkdown(text);
       delete t.dataset.streaming;
+      // Extract code blocks after DOM settles
+      requestAnimationFrame(() => extractAndReplaceCodeBlocks(container, text));
     }
     function removeStreamingBubble(div, docId) {
       if (!div?.parentNode) return;
