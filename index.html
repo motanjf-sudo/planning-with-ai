@@ -1428,18 +1428,57 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       if (!t) return;
       const caret = t.querySelector(".stream-caret");
       if (caret) caret.remove();
-      // Replace stream-live with final rendered content
       const live = t.querySelector(".stream-live");
       if (live) live.remove();
-      t.innerHTML = renderMarkdown(text);
       delete t.dataset.streaming;
-      // Extract code blocks
-      extractAndReplaceCodeBlocks(t, text);
+
+      // Split text into parts: text and code blocks
+      const parts = [];
+      let lastIndex = 0;
+      const codeRegex = /```(\w*)\n?([\s\S]*?)```/g;
+      let match;
+      while ((match = codeRegex.exec(text)) !== null) {
+        if (match.index > lastIndex) {
+          parts.push({ type: "text", content: text.slice(lastIndex, match.index) });
+        }
+        parts.push({ type: "code", lang: match[1] || "code", content: match[2] });
+        lastIndex = match.index + match[0].length;
+      }
+      if (lastIndex < text.length) {
+        parts.push({ type: "text", content: text.slice(lastIndex) });
+      }
+
+      t.innerHTML = "";
+      const langLabels = { html:"HTML", css:"CSS", js:"JavaScript", javascript:"JavaScript", python:"Python", py:"Python" };
+      const icons = { html:"🌐", css:"🎨", js:"⚡", javascript:"⚡", python:"🐍", py:"🐍" };
+
+      parts.forEach(part => {
+        if (part.type === "text") {
+          const textDiv = document.createElement("div");
+          textDiv.innerHTML = renderMarkdown(part.content);
+          t.appendChild(textDiv);
+        } else {
+          const lang = part.lang.toLowerCase();
+          const label = langLabels[lang] || part.lang || "کد";
+          const icon = icons[lang] || "📄";
+          const lines = part.content.trim().split("\n").length;
+          const card = document.createElement("div");
+          card.className = "artifact-card";
+          card.innerHTML = `
+            <span class="artifact-card-icon">${icon}</span>
+            <div class="artifact-card-info">
+              <div class="artifact-card-title">${label}</div>
+              <div class="artifact-card-sub">${lines} خط کد</div>
+            </div>
+            <span class="artifact-card-arrow">←</span>`;
+          card.addEventListener("click", () => openArtifact(part.content, part.lang, `${label} • ${lines} خط`));
+          t.appendChild(card);
+        }
+      });
     }
     function removeStreamingBubble(div, docId) {
       if (!div?.parentNode) return;
       if (docId) {
-        // Convert bubble to permanent — don't remove it
         div.dataset.id = docId;
         div.classList.remove("streaming-msg");
       } else {
