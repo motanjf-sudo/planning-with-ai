@@ -1413,8 +1413,15 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       const live = t.querySelector(".stream-live");
       const caret = t.querySelector(".stream-caret");
       if (live) {
-        // During streaming: show text but hide code blocks
-        const displayText = text.replace(/```[\s\S]*?```/g, "\n⏳ در حال دریافت کد...\n");
+        // During streaming: hide everything from start of code block
+        let displayText = text;
+        // Hide complete code blocks
+        displayText = displayText.replace(/```[\s\S]*?```/g, "\n📎 کد آماده شد\n");
+        // Hide incomplete code block (started but not ended)
+        const lastOpen = displayText.lastIndexOf("```");
+        if (lastOpen !== -1) {
+          displayText = displayText.slice(0, lastOpen) + "\n⏳ در حال دریافت کد...\n";
+        }
         live.innerHTML = renderMarkdown(displayText);
         if (caret) t.appendChild(caret);
       }
