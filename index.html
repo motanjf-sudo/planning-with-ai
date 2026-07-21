@@ -1497,6 +1497,8 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
         const displayFull = full.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
         finalizeStreamingBubble(bubble, displayFull);
         if (displayFull) {
+          const msgDiv = bubble.querySelector(".msg-text");
+          if (msgDiv) extractAndReplaceCodeBlocks(msgDiv, displayFull);
           const ref = lsAddMessage("Claude", displayFull);
           removeStreamingBubble(bubble, ref.id);
         } else {
