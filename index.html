@@ -1428,21 +1428,23 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       if (!t) return;
       const caret = t.querySelector(".stream-caret");
       if (caret) caret.remove();
+      // Replace stream-live with final rendered content
       const live = t.querySelector(".stream-live");
-      const container = live || t;
-      container.innerHTML = renderMarkdown(text);
+      if (live) live.remove();
+      t.innerHTML = renderMarkdown(text);
       delete t.dataset.streaming;
-      // Extract code blocks after DOM settles
-      requestAnimationFrame(() => extractAndReplaceCodeBlocks(container, text));
+      // Extract code blocks
+      extractAndReplaceCodeBlocks(t, text);
     }
     function removeStreamingBubble(div, docId) {
       if (!div?.parentNode) return;
-      if (docId) div.dataset.id = docId;
-      setTimeout(() => { 
-        if (div?.parentNode) div.parentNode.removeChild(div);
-        // Re-render messages to apply code extraction
-        renderMessages();
-      }, 50);
+      if (docId) {
+        // Convert bubble to permanent — don't remove it
+        div.dataset.id = docId;
+        div.classList.remove("streaming-msg");
+      } else {
+        div.parentNode.removeChild(div);
+      }
     }
 
     /* ============ HAIKU — simple/chat questions ============ */
