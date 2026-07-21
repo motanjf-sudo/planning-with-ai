@@ -1413,8 +1413,9 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
       const live = t.querySelector(".stream-live");
       const caret = t.querySelector(".stream-caret");
       if (live) {
-        live.innerHTML = renderMarkdown(text);
-        // Keep caret at end
+        // During streaming: show text but hide code blocks
+        const displayText = text.replace(/```[\s\S]*?```/g, "\n⏳ در حال دریافت کد...\n");
+        live.innerHTML = renderMarkdown(displayText);
         if (caret) t.appendChild(caret);
       }
       const mc = $("messages-container");
