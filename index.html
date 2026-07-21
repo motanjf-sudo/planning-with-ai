@@ -1083,8 +1083,8 @@
     function buildClaudeHistory(newUserMsg, fileData=null) {
       const history = [];
 
-      // Filter: only current user + Claude, last 20 messages
-      const relevant = allMessages.slice(-20).filter(m =>
+      // Filter: only current user + Claude, last 6 messages
+      const relevant = allMessages.slice(-6).filter(m =>
         m.sender === currentUser || m.sender === "Claude"
       );
 
