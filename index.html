@@ -776,7 +776,10 @@
           <option value="claude-sonnet-5">Claude Sonnet 5</option>
           <option value="claude-opus-4-8">Claude Opus 4.8</option>
           <option value="claude-fable-5">Claude Fable 5</option>
-          <option value="gemini">Gemini 2.5 Pro</option>
+          <option value="gemini:gemini-2.5-pro">Gemini 2.5 Pro</option>
+          <option value="gemini:gemini-2.5-flash">Gemini 2.5 Flash</option>
+          <option value="gemini:gemini-3.6-flash">Gemini 3.6 Flash</option>
+          <option value="groq:qwen/qwen3.6-27b">Qwen 3.6 (Groq)</option>
         </select>
         <button class="cc-new" onclick="ccNewChat()" title="گفتگوی جدید">＋</button>
       </div>
@@ -2525,7 +2528,7 @@ ${allQA}
       const g = data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts;
       return Array.isArray(g) ? g.map(p => p.text || "").join("") : "";
     }
-    async function ccCallGemini(row) {
+    async function ccCallGemini(model, row) {
       const contents = ccHistory.map(m => ({
         role: m.role === "assistant" ? "model" : "user",
         parts: [{ text: m.content }]
@@ -2535,7 +2538,7 @@ ${allQA}
       if (firstUser) firstUser.parts[0].text = CC_SYS + "\n\n---\n\n" + firstUser.parts[0].text;
       const res = await fetch(WORKER_URL + "/gemini-chat", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contents, generationConfig: { temperature: 0.7, topP: 0.95, maxOutputTokens: 8192 } })
+        body: JSON.stringify({ model, contents, generationConfig: { temperature: 0.7, topP: 0.95, maxOutputTokens: 8192 } })
       });
       let data = null;
       try { data = await res.json(); } catch (_) {}
@@ -2553,6 +2556,28 @@ ${allQA}
       return text;
     }
 
+    async function ccCallGroq(model, row) {
+      const messages = [{ role: "system", content: CC_SYS }].concat(
+        ccHistory.map(m => ({ role: m.role, content: m.content }))
+      );
+      const res = await fetch(WORKER_URL + "/groq", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model, messages, temperature: 0.6, max_tokens: 8000 })
+      });
+      let data = null;
+      try { data = await res.json(); } catch (_) {}
+      if (res.status === 404) throw new Error("سرویس Groq پیدا نشد — /groq روی worker نیست.");
+      if (!res.ok) {
+        const em = (data && data.error && (data.error.message || data.error)) || ("HTTP " + res.status);
+        throw new Error(em);
+      }
+      let text = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "";
+      text = text.replace(/<think>[\s\S]*?<\/think>/gi, "").trim(); // حذف بخش تفکر مدل‌های reasoning
+      if (!text) throw new Error("پاسخ خالی");
+      ccSetBubble(row, text, false);
+      return text;
+    }
+
     window.ccSend = async function() {
       if (ccBusy) return;
       const inp = $("cc-input");
@@ -2565,10 +2590,11 @@ ${allQA}
       ccBusy = true; $("cc-send").disabled = true;
       const row = ccAppendAI();
       try {
-        const model = $("cc-model").value;
-        const full = model === "gemini"
-          ? await ccCallGemini(row)
-          : await ccStreamClaude(model, row);
+        const sel = $("cc-model").value;
+        let full;
+        if (sel.startsWith("gemini:")) full = await ccCallGemini(sel.slice(7), row);
+        else if (sel.startsWith("groq:")) full = await ccCallGroq(sel.slice(5), row);
+        else full = await ccStreamClaude(sel, row);
         if (full.trim()) {
           ccHistory.push({ role: "assistant", content: full });
           if (ccHistory.length > 20) ccHistory = ccHistory.slice(-20);
@@ -2576,7 +2602,8 @@ ${allQA}
           ccSetBubble(row, "پاسخی دریافت نشد. دوباره تلاش کن.", false);
         }
       } catch (e) {
-        const who = $("cc-model").value === "gemini" ? "Gemini" : "Claude";
+        const sv = $("cc-model").value;
+        const who = sv.startsWith("gemini:") ? "Gemini" : sv.startsWith("groq:") ? "Groq" : "Claude";
         ccSetBubble(row, "⚠ خطا در ارتباط با " + who + ": " + (e.message || e), false);
       } finally {
         ccBusy = false; $("cc-send").disabled = false;
