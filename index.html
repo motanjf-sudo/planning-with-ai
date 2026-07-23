@@ -2542,9 +2542,12 @@ ${allQA}
       });
       let data = null;
       try { data = await res.json(); } catch (_) {}
-      if (res.status === 404) throw new Error("سرویس Gemini پیدا نشد — /gemini-chat روی worker دیپلوی نشده.");
       if (!res.ok) {
-        const em = (data && data.error && (data.error.message || data.error)) || ("HTTP " + res.status);
+        // خطای واقعی Vertex/worker را نشان بده (مثلاً «مدل پیدا نشد» یا «دسترسی رد شد»)
+        let em = "HTTP " + res.status;
+        if (data && data.error) {
+          em = data.error.message || (typeof data.error === "string" ? data.error : JSON.stringify(data.error));
+        }
         throw new Error(em);
       }
       const text = ccExtractGemini(data);
