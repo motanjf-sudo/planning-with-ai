@@ -374,187 +374,145 @@
     }
 
     /* ============================================================
-       CODE IDE  (محیط کد)
+       CODE CHAT (محیط کد) — clean Claude-style code assistant
        ============================================================ */
     #ide-open-btn { color: #7c6ef7; }
     #ide-open-btn:hover { background: rgba(124,110,247,0.12); color: #7c6ef7; }
     #ide-open-btn svg { color: #7c6ef7; }
 
-    #code-ide {
+    #code-chat-screen {
       position: fixed; inset: 0; z-index: 400; display: none;
-      flex-direction: column; direction: ltr;
-      background: #0d0e14; color: #e6e6ef;
-      font-family: 'Vazirmatn', sans-serif;
+      background: var(--bg); color: var(--text);
+      direction: rtl; font-family: 'Vazirmatn', sans-serif;
     }
-    #code-ide.open { display: flex; }
-    #code-ide, #code-ide * { box-sizing: border-box; }
-    .ide-mono { font-family: ui-monospace, 'SF Mono', 'Cascadia Code', 'JetBrains Mono', Consolas, monospace; }
+    #code-chat-screen.open { display: flex; }
+    #code-chat-screen * { box-sizing: border-box; }
+    .cc-main { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; height: 100%; }
 
-    /* Top bar */
-    .ide-topbar {
-      display: flex; align-items: center; gap: 8px;
-      padding: 8px 12px; background: #14151f;
-      border-bottom: 1px solid #23253a; flex-shrink: 0;
-      overflow-x: auto; -webkit-overflow-scrolling: touch;
+    .cc-header {
+      display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+      border-bottom: 1px solid var(--border); background: var(--bg2); flex-shrink: 0;
     }
-    .ide-topbar::-webkit-scrollbar { height: 0; }
-    .ide-back {
-      display: flex; align-items: center; gap: 6px;
-      background: none; border: none; color: #b7b8cc;
-      font-size: 14px; font-weight: 600; cursor: pointer;
-      padding: 7px 10px; border-radius: 8px; font-family: inherit; white-space: nowrap;
+    .cc-back {
+      background: none; border: none; color: var(--text2); font-size: 20px;
+      cursor: pointer; padding: 4px 9px; border-radius: 8px; line-height: 1;
     }
-    .ide-back:hover { background: #23253a; color: #fff; }
-    .ide-select {
-      background: #1c1e2e; color: #e6e6ef; border: 1px solid #2c2f47;
-      border-radius: 8px; padding: 7px 10px; font-size: 13px; font-family: inherit;
-      cursor: pointer; outline: none; white-space: nowrap;
+    .cc-back:hover { background: var(--bg3); color: var(--text); }
+    .cc-title { font-size: 15px; font-weight: 700; color: #7c6ef7; }
+    .cc-header-sp { flex: 1; }
+    .cc-model {
+      background: var(--bg3); color: var(--text); border: 1px solid var(--border);
+      border-radius: 10px; padding: 7px 10px; font-size: 13px; font-family: inherit;
+      cursor: pointer; outline: none;
     }
-    .ide-select:focus { border-color: #7c6ef7; }
-    .ide-topbar-spacer { flex: 1; min-width: 8px; }
-    .ide-btn {
-      background: #1c1e2e; color: #d7d8ec; border: 1px solid #2c2f47;
-      border-radius: 8px; padding: 7px 11px; font-size: 13px; font-weight: 600;
-      cursor: pointer; font-family: inherit; white-space: nowrap; transition: background .15s, border-color .15s;
+    .cc-model:focus { border-color: #7c6ef7; }
+    .cc-new {
+      background: none; border: 1px solid var(--border); color: var(--text2);
+      width: 34px; height: 34px; border-radius: 10px; cursor: pointer; font-size: 18px; line-height: 1;
     }
-    .ide-btn:hover { background: #262943; border-color: #3a3d5c; }
-    .ide-btn.ide-run { background: #7c6ef7; border-color: #7c6ef7; color: #fff; }
-    .ide-btn.ide-run:hover { background: #6b5df0; }
-    .ide-btn.ide-ai { background: rgba(124,110,247,0.15); border-color: #4a3fb0; color: #b9b0ff; }
-    .ide-btn.ide-ai:hover { background: rgba(124,110,247,0.28); }
+    .cc-new:hover { background: var(--bg3); color: var(--text); }
 
-    /* Main layout */
-    .ide-main { flex: 1; display: flex; min-height: 0; }
+    .cc-messages { flex: 1; overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column; gap: 14px; }
+    .cc-empty { margin: auto; text-align: center; color: var(--text2); max-width: 400px; padding: 20px; }
+    .cc-empty h2 { font-size: 22px; color: #7c6ef7; margin-bottom: 10px; font-weight: 700; }
+    .cc-empty p { font-size: 14px; line-height: 1.9; margin-bottom: 20px; }
+    .cc-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .cc-chip {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 20px;
+      padding: 8px 14px; font-size: 13px; color: var(--text); cursor: pointer; font-family: inherit;
+    }
+    .cc-chip:hover { border-color: #7c6ef7; color: #7c6ef7; }
 
-    /* Left file rail */
-    .ide-files {
-      width: 52px; flex-shrink: 0; background: #101119;
-      border-right: 1px solid #23253a; display: flex; flex-direction: column;
-      align-items: center; padding: 10px 0; gap: 4px;
+    .cc-msg { display: flex; max-width: 760px; width: 100%; margin: 0 auto; }
+    .cc-msg.user { justify-content: flex-start; }
+    .cc-msg.ai { justify-content: flex-start; }
+    .cc-bubble { max-width: 90%; }
+    .cc-msg.user .cc-bubble {
+      background: var(--user-bubble); border: 1px solid var(--user-border);
+      border-radius: 16px; padding: 10px 14px; font-size: 14.5px; line-height: 1.8;
+      white-space: pre-wrap; word-break: break-word;
     }
-    .ide-file {
-      width: 40px; height: 40px; border-radius: 9px; border: none;
-      background: none; color: #7b7d99; font-size: 18px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      position: relative; transition: background .15s, color .15s;
+    .cc-msg.ai .cc-bubble { max-width: 100%; width: 100%; }
+    .cc-bubble-content { font-size: 14.5px; line-height: 1.95; }
+    .cc-text { white-space: pre-wrap; word-break: break-word; }
+    .cc-cursor::after { content: "▋"; color: #7c6ef7; margin-right: 2px; animation: ccBlink 1s steps(1) infinite; }
+    @keyframes ccBlink { 50% { opacity: 0; } }
+
+    /* code card (تصویر ۲) */
+    .cc-card {
+      display: flex; align-items: center; gap: 12px; margin: 10px 0;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 11px 14px; cursor: pointer; transition: border-color .15s, box-shadow .15s; max-width: 440px;
     }
-    .ide-file:hover { background: #1c1e2e; color: #c7c8e0; }
-    .ide-file.active { background: rgba(124,110,247,0.18); color: #fff; }
-    .ide-file.active::before {
-      content: ""; position: absolute; left: -10px; top: 8px; bottom: 8px;
-      width: 3px; border-radius: 2px; background: #7c6ef7;
+    .cc-card:hover { border-color: #7c6ef7; box-shadow: 0 4px 14px rgba(124,110,247,0.13); }
+    .cc-card-ic {
+      width: 40px; height: 40px; flex-shrink: 0; border-radius: 9px; background: var(--bg3);
+      display: flex; align-items: center; justify-content: center; color: #7c6ef7;
+      font-weight: 700; font-family: ui-monospace, monospace; font-size: 15px;
     }
-    .ide-file-tag {
-      position: absolute; bottom: 1px; right: 2px; font-size: 8px;
-      font-weight: 700; letter-spacing: .3px; color: inherit; opacity: .8;
+    .cc-card-meta { flex: 1; min-width: 0; }
+    .cc-card-title { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cc-card-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+    .cc-card-arrow { color: var(--text3); font-size: 20px; }
+    .cc-card.pending { cursor: default; }
+    .cc-card.pending:hover { border-color: var(--border); box-shadow: none; }
+
+    /* input */
+    .cc-input-wrap { flex-shrink: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); background: var(--bg); }
+    .cc-input-box {
+      max-width: 760px; margin: 0 auto; display: flex; align-items: flex-end; gap: 8px;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 8px 14px 8px 8px;
+    }
+    .cc-input-box:focus-within { border-color: #7c6ef7; }
+    #cc-input {
+      flex: 1; resize: none; border: none; outline: none; background: none; color: var(--text);
+      font-family: inherit; font-size: 15px; line-height: 1.7; max-height: 160px;
+      direction: rtl; text-align: right; padding: 6px 0;
+    }
+    #cc-input::placeholder { color: var(--text3); }
+    .cc-send {
+      width: 38px; height: 38px; flex-shrink: 0; border: none; border-radius: 12px;
+      background: #7c6ef7; color: #fff; font-size: 18px; cursor: pointer;
+    }
+    .cc-send:hover { background: #6b5df0; }
+    .cc-send:disabled { opacity: .45; cursor: default; }
+
+    /* artifact panel (تصویر ۱) */
+    .cc-artifact {
+      flex: 0 0 0; width: 0; overflow: hidden; display: flex; flex-direction: column;
+      background: var(--bg2); border-right: 0 solid var(--border);
+      transition: flex-basis .2s ease, width .2s ease;
+    }
+    .cc-artifact.show { flex: 0 0 52%; width: 52%; border-right-width: 1px; }
+    .cc-art-head {
+      display: flex; align-items: center; gap: 8px; padding: 9px 12px;
+      border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .cc-art-tabs { display: flex; gap: 2px; background: var(--bg3); border-radius: 9px; padding: 3px; }
+    .cc-art-tab {
+      background: none; border: none; padding: 6px 11px; border-radius: 7px; cursor: pointer;
+      color: var(--text2); font-size: 13px; font-family: inherit; white-space: nowrap;
+    }
+    .cc-art-tab.active { background: var(--bg2); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .cc-art-title {
+      flex: 1; font-size: 13.5px; font-weight: 600; color: var(--text); text-align: center;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; direction: ltr;
+    }
+    .cc-art-btn { background: none; border: 1px solid var(--border); color: var(--text2); border-radius: 8px; padding: 6px 11px; font-size: 12.5px; cursor: pointer; font-family: inherit; }
+    .cc-art-btn:hover { background: var(--bg3); color: var(--text); }
+    .cc-art-close { background: none; border: none; color: var(--text2); font-size: 18px; cursor: pointer; padding: 4px 8px; border-radius: 8px; line-height: 1; }
+    .cc-art-close:hover { background: var(--bg3); color: var(--text); }
+    .cc-art-body { flex: 1; min-height: 0; position: relative; }
+    #cc-art-iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; background: #fff; }
+    #cc-art-iframe.hidden, #cc-art-code.hidden { display: none; }
+    #cc-art-code {
+      position: absolute; inset: 0; margin: 0; overflow: auto; padding: 14px;
+      background: #0d0e14; color: #e6e6ef; direction: ltr; text-align: left;
+      font-family: ui-monospace, 'Cascadia Code', Consolas, monospace; font-size: 13px; line-height: 1.65; white-space: pre;
     }
 
-    /* Editor */
-    .ide-editor-wrap {
-      flex: 1; min-width: 0; display: flex; position: relative;
-      background: #0d0e14; overflow: hidden;
-    }
-    .ide-gutter {
-      flex-shrink: 0; padding: 12px 8px 12px 0; text-align: right;
-      color: #4a4c66; font-size: 13.5px; line-height: 20px;
-      user-select: none; overflow: hidden; direction: ltr;
-      min-width: 42px; border-right: 1px solid #1a1c28;
-    }
-    #ide-code {
-      flex: 1; min-width: 0; resize: none; border: none; outline: none;
-      background: transparent; color: #e6e6ef;
-      padding: 12px 14px; font-size: 13.5px; line-height: 20px;
-      direction: ltr; text-align: left; white-space: pre; overflow: auto;
-      tab-size: 2; -moz-tab-size: 2; caret-color: #7c6ef7;
-    }
-    #ide-code::placeholder { color: #4a4c66; }
-
-    /* Right panel */
-    .ide-right {
-      width: 42%; max-width: 640px; min-width: 280px; flex-shrink: 0;
-      display: flex; flex-direction: column; background: #101119;
-      border-left: 1px solid #23253a;
-    }
-    .ide-tabs { display: flex; border-bottom: 1px solid #23253a; flex-shrink: 0; }
-    .ide-tab {
-      flex: 1; background: none; border: none; color: #7b7d99;
-      padding: 11px 8px; font-size: 13px; font-weight: 600; cursor: pointer;
-      font-family: inherit; border-bottom: 2px solid transparent;
-    }
-    .ide-tab:hover { color: #c7c8e0; }
-    .ide-tab.active { color: #fff; border-bottom-color: #7c6ef7; }
-    .ide-tab-body { flex: 1; min-height: 0; position: relative; }
-    .ide-panel { position: absolute; inset: 0; display: flex; flex-direction: column; }
-    .ide-panel.hidden { display: none; }
-
-    /* Output */
-    #ide-iframe {
-      flex: 1; min-height: 0; width: 100%; border: none; background: #fff;
-    }
-    .ide-console {
-      height: 150px; flex-shrink: 0; overflow-y: auto; background: #0b0c12;
-      border-top: 1px solid #23253a; padding: 6px 0;
-      font-family: ui-monospace, monospace; font-size: 12px; direction: ltr;
-    }
-    .ide-console-head {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 2px 10px 6px; color: #6b6d88; font-size: 11px; font-weight: 700;
-      letter-spacing: .5px; text-transform: uppercase;
-    }
-    .ide-console-clear { background: none; border: none; color: #6b6d88; cursor: pointer; font-size: 14px; }
-    .ide-console-clear:hover { color: #fff; }
-    .ide-log { padding: 2px 10px; border-bottom: 1px solid rgba(255,255,255,0.03); white-space: pre-wrap; word-break: break-word; }
-    .ide-log.log { color: #c7c8e0; }
-    .ide-log.error { color: #ff7b7b; background: rgba(255,80,80,0.06); }
-    .ide-log.warn { color: #f5c451; background: rgba(245,196,81,0.05); }
-    .ide-log-empty { padding: 10px; color: #4a4c66; font-style: italic; }
-
-    /* AI chat */
-    #ide-chat {
-      flex: 1; min-height: 0; overflow-y: auto; padding: 12px;
-      display: flex; flex-direction: column; gap: 10px; direction: rtl;
-    }
-    .ide-msg { max-width: 92%; padding: 9px 12px; border-radius: 12px; font-size: 13.5px; line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
-    .ide-msg.user { align-self: flex-start; background: #262943; color: #ececfb; border-bottom-left-radius: 4px; }
-    .ide-msg.ai { align-self: flex-end; background: #1a1c28; color: #d7d8ec; border: 1px solid #23253a; border-bottom-right-radius: 4px; }
-    .ide-msg pre { background: #0b0c12; border: 1px solid #23253a; border-radius: 8px; padding: 10px; margin: 8px 0; overflow-x: auto; direction: ltr; text-align: left; font-size: 12.5px; }
-    .ide-msg code { font-family: ui-monospace, monospace; }
-    .ide-msg .ide-apply {
-      display: inline-flex; align-items: center; gap: 5px; margin-top: 6px;
-      background: #7c6ef7; color: #fff; border: none; border-radius: 7px;
-      padding: 6px 12px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: 'Vazirmatn', sans-serif;
-    }
-    .ide-msg .ide-apply:hover { background: #6b5df0; }
-    .ide-typing { align-self: flex-end; color: #6b6d88; font-size: 13px; padding: 4px 10px; }
-    .ide-chat-input { display: flex; gap: 8px; padding: 10px; border-top: 1px solid #23253a; flex-shrink: 0; direction: rtl; }
-    #ide-chat-text {
-      flex: 1; resize: none; background: #1c1e2e; border: 1px solid #2c2f47;
-      border-radius: 10px; color: #e6e6ef; padding: 9px 12px; font-family: 'Vazirmatn', sans-serif;
-      font-size: 13.5px; line-height: 1.6; outline: none; max-height: 110px; direction: rtl; text-align: right;
-    }
-    #ide-chat-text:focus { border-color: #7c6ef7; }
-    .ide-chat-send {
-      width: 40px; flex-shrink: 0; background: #7c6ef7; border: none; border-radius: 10px;
-      color: #fff; font-size: 18px; cursor: pointer; align-self: flex-end; height: 40px;
-    }
-    .ide-chat-send:hover { background: #6b5df0; }
-    .ide-chat-send:disabled { opacity: .5; cursor: default; }
-
-    .ide-toast {
-      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-      background: #23253a; color: #fff; padding: 9px 18px; border-radius: 20px;
-      font-size: 13px; z-index: 420; opacity: 0; transition: opacity .2s; pointer-events: none;
-    }
-    .ide-toast.show { opacity: 1; }
-
-    @media (max-width: 760px) {
-      .ide-main { flex-direction: column; }
-      .ide-files { width: 100%; flex-direction: row; justify-content: flex-start;
-        border-right: none; border-bottom: 1px solid #23253a; padding: 6px 8px; gap: 4px; overflow-x: auto; }
-      .ide-file.active::before { left: 8px; right: 8px; top: auto; bottom: -6px; width: auto; height: 3px; }
-      .ide-editor-wrap { flex: 1; min-height: 180px; }
-      .ide-right { width: 100%; max-width: none; height: 46%; min-height: 200px;
-        border-left: none; border-top: 1px solid #23253a; }
+    @media (max-width: 820px) {
+      .cc-artifact.show { position: absolute; inset: 0; width: 100%; flex-basis: 100%; z-index: 5; }
     }
   </style>
 </head>
@@ -791,75 +749,44 @@
     </div>
   </div>
 
-  <!-- ============ CODE IDE (محیط کد) ============ -->
-  <div id="code-ide">
-    <div class="ide-topbar">
-      <button class="ide-back" onclick="closeIDE()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        بازگشت
-      </button>
-      <select id="ide-lang" class="ide-select" title="زبان">
-        <option value="html">HTML</option>
-        <option value="css">CSS</option>
-        <option value="js">JavaScript</option>
-        <option value="python">Python</option>
-        <option value="typescript">TypeScript</option>
-        <option value="sql">SQL</option>
-      </select>
-      <select id="ide-model" class="ide-select" title="مدل هوش مصنوعی">
-        <option value="gemini">Gemini 2.5 Pro</option>
-        <option value="claude">Claude</option>
-      </select>
-      <button class="ide-btn ide-run" onclick="ideRun()">▶ اجرا</button>
-      <button class="ide-btn ide-ai" onclick="ideAskAI()">✨ بپرس از AI</button>
-      <div class="ide-topbar-spacer"></div>
-      <button class="ide-btn" onclick="ideCopy()" title="کپی">📋</button>
-      <button class="ide-btn" onclick="ideClear()" title="پاک کردن">🗑</button>
-      <button class="ide-btn" onclick="ideDownload()" title="دانلود">⬇</button>
-    </div>
-    <div class="ide-main">
-      <div class="ide-files" id="ide-files">
-        <button class="ide-file active" data-lang="html" title="HTML">🌐<span class="ide-file-tag">HTML</span></button>
-        <button class="ide-file" data-lang="css" title="CSS">🎨<span class="ide-file-tag">CSS</span></button>
-        <button class="ide-file" data-lang="js" title="JavaScript">⚡<span class="ide-file-tag">JS</span></button>
-        <button class="ide-file" data-lang="python" title="Python">🐍<span class="ide-file-tag">PY</span></button>
-        <button class="ide-file" data-lang="typescript" title="TypeScript">🅃<span class="ide-file-tag">TS</span></button>
-        <button class="ide-file" data-lang="sql" title="SQL">🗄<span class="ide-file-tag">SQL</span></button>
-      </div>
-      <div class="ide-editor-wrap">
-        <div class="ide-gutter ide-mono" id="ide-gutter">1</div>
-        <textarea id="ide-code" class="ide-mono" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" placeholder="// اینجا کد بنویس..."></textarea>
-      </div>
-      <div class="ide-right">
-        <div class="ide-tabs">
-          <button class="ide-tab active" id="ide-tab-output" onclick="ideSwitchTab('output')">خروجی</button>
-          <button class="ide-tab" id="ide-tab-ai" onclick="ideSwitchTab('ai')">دستیار AI</button>
+  <!-- ============ CODE CHAT (محیط کد) ============ -->
+  <div id="code-chat-screen">
+    <div class="cc-artifact" id="cc-artifact">
+      <div class="cc-art-head">
+        <div class="cc-art-tabs">
+          <button class="cc-art-tab active" id="cc-tab-preview" onclick="ccSwitchArtTab('preview')">👁 پیش‌نمایش</button>
+          <button class="cc-art-tab" id="cc-tab-code" onclick="ccSwitchArtTab('code')">&lt;/&gt; کد</button>
         </div>
-        <div class="ide-tab-body">
-          <div class="ide-panel" id="ide-panel-output">
-            <iframe id="ide-iframe" sandbox="allow-scripts allow-modals allow-popups allow-forms"></iframe>
-            <div class="ide-console" id="ide-console">
-              <div class="ide-console-head">
-                <span>کنسول</span>
-                <button class="ide-console-clear" onclick="ideClearConsole()" title="پاک کردن کنسول">🗑</button>
-              </div>
-              <div id="ide-console-body"><div class="ide-log-empty">خروجی console.log اینجا نمایش داده می‌شود…</div></div>
-            </div>
-          </div>
-          <div class="ide-panel hidden" id="ide-panel-ai">
-            <div id="ide-chat">
-              <div class="ide-msg ai">سلام! من دستیار کد تو هستم. هر سوالی درباره‌ی کدت داری بپرس یا از دکمه‌ی «بپرس از AI» استفاده کن. 💜</div>
-            </div>
-            <div class="ide-chat-input">
-              <textarea id="ide-chat-text" rows="1" placeholder="سوالت درباره‌ی کد را بنویس…"></textarea>
-              <button class="ide-chat-send" id="ide-chat-send" onclick="ideSendChat()" title="ارسال">↑</button>
-            </div>
-          </div>
+        <div class="cc-art-title" id="cc-art-title">کد</div>
+        <button class="cc-art-btn" id="cc-art-copy" onclick="ccCopyArtifact()">کپی</button>
+        <button class="cc-art-close" onclick="ccCloseArtifact()" title="بستن">✕</button>
+      </div>
+      <div class="cc-art-body">
+        <iframe id="cc-art-iframe" sandbox="allow-scripts allow-modals allow-popups allow-forms"></iframe>
+        <pre id="cc-art-code" class="hidden"></pre>
+      </div>
+    </div>
+    <div class="cc-main">
+      <div class="cc-header">
+        <button class="cc-back" onclick="closeCodeChat()" title="بازگشت">→</button>
+        <div class="cc-title">✦ محیط کد</div>
+        <div class="cc-header-sp"></div>
+        <select id="cc-model" class="cc-model" title="مدل Claude">
+          <option value="claude-sonnet-5">Claude Sonnet 5</option>
+          <option value="claude-opus-4-8">Claude Opus 4.8</option>
+          <option value="claude-fable-5">Claude Fable 5</option>
+        </select>
+        <button class="cc-new" onclick="ccNewChat()" title="گفتگوی جدید">＋</button>
+      </div>
+      <div class="cc-messages" id="cc-messages"></div>
+      <div class="cc-input-wrap">
+        <div class="cc-input-box">
+          <textarea id="cc-input" rows="1" placeholder="از Claude بخواه برایت کد بنویسد…"></textarea>
+          <button class="cc-send" id="cc-send" onclick="ccSend()" title="ارسال">↑</button>
         </div>
       </div>
     </div>
   </div>
-  <div class="ide-toast" id="ide-toast"></div>
 
   <script type="module">
     const WORKER_URL = "https://planning-ai.motanjf.workers.dev";
@@ -2406,412 +2333,272 @@ ${allQA}
 
     /* ============ START ============ */
     /* ============================================================
-       CODE IDE  (محیط کد) — all regular/global functions, no class
+       CODE CHAT (محیط کد) — clean Claude code assistant
        ============================================================ */
-    const IDE_LANGS = ["html","css","js","python","typescript","sql"];
-    const IDE_SYS = "تو یک دستیار برنامه‌نویس خبره هستی. همیشه به زبان فارسی و روان پاسخ بده. توضیحاتت کوتاه، دقیق و کاربردی باشد. هر زمان کد می‌نویسی، حتماً آن را داخل بلوک ```زبان ... ``` بگذار (مثلاً ```html یا ```js یا ```css یا ```python). کدِ کامل و قابل اجرا بده.";
-    const IDE_DEFAULTS = {
-      html: '<!DOCTYPE html>\n<html>\n<head>\n  <meta charset="utf-8">\n  <style>\n    body { font-family: sans-serif; text-align: center; padding: 40px; }\n    h1 { color: #7c6ef7; }\n  </style>\n</head>\n<body>\n  <h1>سلام دنیا! 👋</h1>\n  <button onclick="console.log(\'کلیک شد!\')">کلیک کن</button>\n</body>\n</html>',
-      css: 'body {\n  font-family: sans-serif;\n  background: #7c6ef7;\n  color: white;\n  padding: 24px;\n}\n.box {\n  padding: 20px;\n  margin-top: 16px;\n  border-radius: 12px;\n  background: rgba(255,255,255,0.15);\n}',
-      js: 'console.log("سلام از جاوااسکریپت!");\n\nconst nums = [1, 2, 3, 4, 5];\nconst sum = nums.reduce((a, b) => a + b, 0);\nconsole.log("مجموع:", sum);',
-      python: '# پایتون در مرورگر اجرا نمی‌شود (فقط نمایش)\nprint("سلام دنیا")\n\nfor i in range(3):\n    print("عدد:", i)',
-      typescript: 'const message: string = "سلام تایپ‌اسکریپت";\nconsole.log(message);\n\nfunction add(a: number, b: number): number {\n  return a + b;\n}',
-      sql: 'SELECT name, age\nFROM users\nWHERE age > 18\nORDER BY age DESC;'
-    };
+    const CC_SYS =
+      "تو یک برنامه‌نویس فول‌استک خبره هستی. کوتاه و به زبان فارسی توضیح بده. " +
+      "وقتی کاربر چیزی می‌خواهد، کد کامل و قابل اجرا بده و حتماً داخل بلوک ```html یا ```css یا ```js بگذار. " +
+      "برای هر صفحه، بازی یا کامپوننت وب، همه‌ی HTML و CSS و JavaScript را در یک بلوک ```html واحد و کامل قرار بده " +
+      "تا مستقیم در مرورگر اجرا شود. توضیح اضافی و طولانی نده؛ فقط چند جمله‌ی کوتاه و بعد کد.";
 
-    let ideCurrentLang = "html";
-    let ideFiles = {};
-    let ideChatHistory = [];        // last 10 messages: {role:'user'|'assistant', content}
-    let _ideConsoleReady = false;
-    let _ideSaveTimer = null;
+    let ccHistory = [];
+    let ccBusy = false;
+    let ccArt = { code: "", lang: "", title: "", label: "" };
 
-    function ideLoadFiles() {
-      ideFiles = lsGet("ide_files") || {};
-      for (const l of IDE_LANGS) {
-        if (typeof ideFiles[l] !== "string") ideFiles[l] = IDE_DEFAULTS[l] || "";
-      }
-    }
-    function ideSaveCurrent() {
-      ideFiles[ideCurrentLang] = $("ide-code").value;
-      lsSet("ide_files", ideFiles);
-    }
-    function ideSaveCurrentDebounced() {
-      clearTimeout(_ideSaveTimer);
-      _ideSaveTimer = setTimeout(ideSaveCurrent, 600);
-    }
-
-    function ideToast(msg) {
-      const t = $("ide-toast");
-      t.textContent = msg;
-      t.classList.add("show");
-      clearTimeout(t._t);
-      t._t = setTimeout(() => t.classList.remove("show"), 1600);
-    }
-
-    function ideUpdateGutter() {
-      const ta = $("ide-code");
-      const count = ta.value.split("\n").length;
-      let s = "";
-      for (let i = 1; i <= count; i++) s += i + "\n";
-      const g = $("ide-gutter");
-      g.textContent = s;
-      g.scrollTop = ta.scrollTop;
-    }
-
-    function ideSetLang(lang) {
-      if (!IDE_LANGS.includes(lang)) return;
-      // save the code we're leaving
-      ideFiles[ideCurrentLang] = $("ide-code").value;
-      lsSet("ide_files", ideFiles);
-      ideCurrentLang = lang;
-      $("ide-code").value = ideFiles[lang] != null ? ideFiles[lang] : "";
-      $("ide-lang").value = lang;
-      document.querySelectorAll("#ide-files .ide-file").forEach(b =>
-        b.classList.toggle("active", b.dataset.lang === lang));
-      ideUpdateGutter();
-      $("ide-code").focus();
-    }
-
-    function openIDE() {
-      ideLoadFiles();
-      $("ide-lang").value = ideCurrentLang;
-      $("ide-code").value = ideFiles[ideCurrentLang] != null ? ideFiles[ideCurrentLang] : "";
-      document.querySelectorAll("#ide-files .ide-file").forEach(b =>
-        b.classList.toggle("active", b.dataset.lang === ideCurrentLang));
-      ideUpdateGutter();
-      $("code-ide").classList.add("open");
+    function openCodeChat() {
+      $("code-chat-screen").classList.add("open");
       closeSidebar();
-      setTimeout(() => $("ide-code").focus(), 60);
+      if (!ccHistory.length) ccRenderEmpty();
+      setTimeout(() => $("cc-input").focus(), 60);
     }
-    window.closeIDE = function() {
-      ideSaveCurrent();
-      $("code-ide").classList.remove("open");
+    window.closeCodeChat = function() {
+      if ($("cc-artifact").classList.contains("show")) { window.ccCloseArtifact(); return; }
+      $("code-chat-screen").classList.remove("open");
+    };
+    window.ccNewChat = function() {
+      ccHistory = [];
+      window.ccCloseArtifact();
+      ccRenderEmpty();
+      $("cc-input").focus();
     };
 
-    /* ---- console interceptor + output ---- */
-    function ideConsoleScript() {
-      return '<script>(function(){' +
-        'function fmt(a){try{return (typeof a==="object"&&a!==null)?JSON.stringify(a):String(a);}catch(e){return String(a);}}' +
-        'function send(level,args){try{window.parent.postMessage({type:"ide-console",level:level,msg:Array.prototype.map.call(args,fmt).join(" ")},"*");}catch(e){}}' +
-        'var o={log:console.log,error:console.error,warn:console.warn,info:console.info};' +
-        'console.log=function(){send("log",arguments);o.log.apply(console,arguments);};' +
-        'console.info=function(){send("log",arguments);o.info.apply(console,arguments);};' +
-        'console.error=function(){send("error",arguments);o.error.apply(console,arguments);};' +
-        'console.warn=function(){send("warn",arguments);o.warn.apply(console,arguments);};' +
-        'window.onerror=function(m,s,l,c,e){send("error",[m+" (line "+l+")"]);return false;};' +
-        'window.addEventListener("unhandledrejection",function(ev){send("error",["Unhandled: "+((ev.reason&&ev.reason.message)||ev.reason)]);});' +
-        '})();<\/script>';
+    function ccRenderEmpty() {
+      $("cc-messages").innerHTML =
+        '<div class="cc-empty">' +
+          '<h2>✦ محیط کد</h2>' +
+          '<p>از Claude بخواه برایت کد بسازد. وقتی کد آماده شد یک کارت می‌بینی که با کلیک روی آن هم می‌توانی کد را کپی کنی و هم پیش‌نمایش زنده‌اش را ببینی.</p>' +
+          '<div class="cc-chips">' +
+            '<button class="cc-chip" onclick="ccExample(this)">یک صفحه‌ی فرود مدرن بساز</button>' +
+            '<button class="cc-chip" onclick="ccExample(this)">یک ماشین‌حساب زیبا با HTML</button>' +
+            '<button class="cc-chip" onclick="ccExample(this)">بازی حدس عدد بساز</button>' +
+          '</div>' +
+        '</div>';
     }
+    window.ccExample = function(el) {
+      $("cc-input").value = el.textContent;
+      window.ccSend();
+    };
 
-    function ideInitConsoleListener() {
-      if (_ideConsoleReady) return;
-      _ideConsoleReady = true;
-      window.addEventListener("message", function(e) {
-        const d = e.data;
-        if (d && d.type === "ide-console") ideAddConsole(d.level, d.msg);
-      });
-    }
-
-    function ideAddConsole(level, msg) {
-      const body = $("ide-console-body");
-      const empty = body.querySelector(".ide-log-empty");
+    function ccAppendUser(text) {
+      const empty = $("cc-messages").querySelector(".cc-empty");
       if (empty) empty.remove();
-      const div = document.createElement("div");
-      div.className = "ide-log " + (level === "error" ? "error" : level === "warn" ? "warn" : "log");
-      const prefix = level === "error" ? "✖ " : level === "warn" ? "⚠ " : "› ";
-      div.textContent = prefix + msg;
-      body.appendChild(div);
-      $("ide-console").scrollTop = $("ide-console").scrollHeight;
+      const row = document.createElement("div");
+      row.className = "cc-msg user";
+      const b = document.createElement("div");
+      b.className = "cc-bubble";
+      b.textContent = text;
+      row.appendChild(b);
+      $("cc-messages").appendChild(row);
+      $("cc-messages").scrollTop = $("cc-messages").scrollHeight;
     }
-    window.ideClearConsole = function() {
-      $("ide-console-body").innerHTML = '<div class="ide-log-empty">خروجی console.log اینجا نمایش داده می‌شود…</div>';
-    };
-
-    function ideCssSample() {
-      return '<div style="padding:16px;font-family:sans-serif">' +
-        '<h1>عنوان نمونه</h1>' +
-        '<p class="text">یک پاراگراف نمونه برای تست استایل شما.</p>' +
-        '<button class="btn">دکمه‌ی نمونه</button>' +
-        '<div class="box">جعبه‌ی نمونه</div></div>';
-    }
-    function ideNotRunnablePage(lang, code) {
-      const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-      const names = { python: "Python", typescript: "TypeScript", sql: "SQL", bash: "Bash" };
-      return '<body style="margin:0;font-family:sans-serif;background:#0d0e14;color:#e6e6ef">' +
-        '<div style="padding:14px 16px;background:#14151f;border-bottom:1px solid #23253a;color:#f5c451;font-size:13px">⚠ کدِ ' +
-        (names[lang] || lang) + ' در مرورگر قابل اجرا نیست — فقط نمایش داده می‌شود.</div>' +
-        '<pre style="margin:0;padding:16px;color:#c7c8e0;font-family:ui-monospace,monospace;font-size:13px;white-space:pre-wrap;direction:ltr;text-align:left">' +
-        esc(code) + '</pre></body>';
+    function ccAppendAI() {
+      const row = document.createElement("div");
+      row.className = "cc-msg ai";
+      row.innerHTML = '<div class="cc-bubble"><div class="cc-bubble-content cc-cursor"></div></div>';
+      $("cc-messages").appendChild(row);
+      $("cc-messages").scrollTop = $("cc-messages").scrollHeight;
+      return row;
     }
 
-    window.ideRun = function() {
-      ideSaveCurrent();
-      ideSwitchTab("output");
-      window.ideClearConsole();
-      const lang = ideCurrentLang;
-      const code = $("ide-code").value;
-      const iframe = $("ide-iframe");
-      const cs = ideConsoleScript();
-
-      if (lang === "html") {
-        iframe.srcdoc = cs + code;
-      } else if (lang === "css") {
-        iframe.srcdoc = cs + '<style>' + code + '</style>' + ideCssSample();
-      } else if (lang === "js") {
-        iframe.srcdoc = cs +
-          '<body style="font-family:sans-serif;color:#222;padding:14px;margin:0">' +
-          '<script type="module">' + code + '<\/script></body>';
-      } else {
-        iframe.srcdoc = ideNotRunnablePage(lang, code);
-        ideAddConsole("warn", "زبان «" + lang + "» در مرورگر اجرا نمی‌شود.");
-      }
-    };
-
-    window.ideSwitchTab = function(tab) {
-      const isOut = tab === "output";
-      $("ide-tab-output").classList.toggle("active", isOut);
-      $("ide-tab-ai").classList.toggle("active", !isOut);
-      $("ide-panel-output").classList.toggle("hidden", !isOut);
-      $("ide-panel-ai").classList.toggle("hidden", isOut);
-      if (!isOut) setTimeout(() => $("ide-chat-text").focus(), 50);
-    };
-
-    window.ideCopy = function() {
-      navigator.clipboard.writeText($("ide-code").value)
-        .then(() => ideToast("کپی شد ✅"))
-        .catch(() => ideToast("کپی نشد"));
-    };
-    window.ideClear = function() {
-      $("ide-code").value = "";
-      ideSaveCurrent();
-      ideUpdateGutter();
-      $("ide-code").focus();
-    };
-    window.ideDownload = function() {
-      const ext = { html:"html", css:"css", js:"js", python:"py", typescript:"ts", sql:"sql" }[ideCurrentLang] || "txt";
-      const blob = new Blob([$("ide-code").value], { type: "text/plain" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "code." + ext;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    };
-
-    /* ---- AI chat ---- */
-    function ideTrimHistory() {
-      if (ideChatHistory.length > 10) ideChatHistory = ideChatHistory.slice(-10);
+    function ccTextNode(t) {
+      const d = document.createElement("div");
+      d.className = "cc-text";
+      d.textContent = t;
+      return d;
+    }
+    function ccLabelFor(lang) {
+      const l = (lang || "").toLowerCase();
+      const labels = { html:"HTML", css:"CSS", js:"JavaScript", javascript:"JavaScript",
+        python:"Python", py:"Python", json:"JSON", ts:"TypeScript", typescript:"TypeScript", sql:"SQL", bash:"Bash" };
+      return labels[l] || (lang ? lang.toUpperCase() : "کد");
+    }
+    function ccGuessName(code) {
+      const m = code.match(/<title>([^<]+)<\/title>/i);
+      if (m && m[1].trim()) return m[1].trim();
+      const h = code.match(/<h1[^>]*>([^<]+)<\/h1>/i);
+      if (h && h[1].trim()) return h[1].trim();
+      return "کد";
+    }
+    function ccAppendCard(container, lang, code) {
+      const label = ccLabelFor(lang);
+      const name = ccGuessName(code);
+      const lines = code.split("\n").length;
+      const card = document.createElement("div");
+      card.className = "cc-card";
+      card.innerHTML =
+        '<span class="cc-card-ic">&lt;/&gt;</span>' +
+        '<div class="cc-card-meta"><div class="cc-card-title">' + escHtml(name) + '</div>' +
+        '<div class="cc-card-sub">' + escHtml(label) + ' · ' + lines + ' خط</div></div>' +
+        '<span class="cc-card-arrow">‹</span>';
+      const title = name + " · " + label;
+      card.addEventListener("click", () => ccOpenArtifact(code, (lang || "").toLowerCase(), title, label));
+      container.appendChild(card);
+    }
+    function ccAppendPendingCard(container, lang) {
+      const card = document.createElement("div");
+      card.className = "cc-card pending";
+      card.innerHTML =
+        '<span class="cc-card-ic">&lt;/&gt;</span>' +
+        '<div class="cc-card-meta"><div class="cc-card-title">در حال نوشتن کد…</div>' +
+        '<div class="cc-card-sub">' + escHtml(ccLabelFor(lang)) + '</div></div>';
+      container.appendChild(card);
     }
 
-    function ideExtractText(data) {
-      if (!data) return "";
-      if (data.error) throw new Error(typeof data.error === "string" ? data.error : (data.error.message || "خطای سرور"));
-      if (Array.isArray(data.content)) return data.content.map(b => b.text || "").join("");           // Claude
-      const g = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts;
-      if (Array.isArray(g)) return g.map(p => p.text || "").join("");                                  // Gemini
-      if (data.choices && data.choices[0] && data.choices[0].message) return data.choices[0].message.content || "";
-      if (typeof data.text === "string") return data.text;
-      return "";
-    }
-
-    async function ideCallClaude() {
-      const messages = ideChatHistory.map(m => ({ role: m.role, content: m.content }));
-      const res = await fetch(WORKER_URL + "/claude", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-5", max_tokens: 4000, system: IDE_SYS, messages, stream: false })
-      });
-      if (!res.ok) throw new Error("Claude " + res.status);
-      return ideExtractText(await res.json());
-    }
-
-    async function ideCallGemini() {
-      const contents = ideChatHistory.map(m => ({
-        role: m.role === "assistant" ? "model" : "user",
-        parts: [{ text: m.content }]
-      }));
-      // دستورالعمل سیستم را داخل اولین پیام کاربر می‌گذاریم (مثل endpoint سالم /script)
-      // تا به systemInstruction وابسته نباشیم.
-      const firstUser = contents.find(c => c.role === "user");
-      if (firstUser) firstUser.parts[0].text = IDE_SYS + "\n\n---\n\n" + firstUser.parts[0].text;
-      // gemini-2.5-pro یک مدل thinking است؛ توکن خروجی باید بزرگ باشد تا پاسخ خالی برنگردد
-      // (مثل endpoint /script که با 8192 کار می‌کند)
-      const res = await fetch(WORKER_URL + "/gemini-chat", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents,
-          generationConfig: { temperature: 0.7, topP: 0.95, maxOutputTokens: 8192 }
-        })
-      });
-      let data = null;
-      try { data = await res.json(); } catch (_) {}
-      if (res.status === 404)
-        throw new Error("سرویس Gemini پیدا نشد — endpoint /gemini-chat هنوز روی worker دیپلوی نشده.");
-      if (!res.ok) {
-        const em = (data && (data.error && (data.error.message || data.error))) || ("HTTP " + res.status);
-        throw new Error("Gemini: " + em);
-      }
-      const text = ideExtractText(data);
-      if (!text.trim()) {
-        const fr = data && data.candidates && data.candidates[0] && data.candidates[0].finishReason;
-        throw new Error("پاسخ خالی از Gemini" + (fr ? " (" + fr + ")" : ""));
-      }
-      return text;
-    }
-
-    async function ideCallAI() {
-      const model = $("ide-model").value;
-      if (model === "claude") return ideCallClaude();
-      // Gemini اصلی است؛ خطای واقعی نمایش داده می‌شود (بدون fallback خودکار به Claude)
-      return ideCallGemini();
-    }
-
-    function ideShowTyping() {
-      const wrap = $("ide-chat");
-      const div = document.createElement("div");
-      div.className = "ide-typing";
-      div.textContent = "در حال نوشتن…";
-      wrap.appendChild(div);
-      wrap.scrollTop = wrap.scrollHeight;
-      return div;
-    }
-
-    function ideApplyCode(code, lang) {
-      const map = { html:"html", css:"css", js:"js", javascript:"js", jsx:"js",
-        python:"python", py:"python", ts:"typescript", typescript:"typescript", sql:"sql", bash:"sql" };
-      const target = map[(lang || "").toLowerCase()] || ideCurrentLang;
-      if (target !== ideCurrentLang) ideSetLang(target);
-      $("ide-code").value = code;
-      ideSaveCurrent();
-      ideUpdateGutter();
-      ideToast("کد اعمال شد ✅");
-      window.ideRun();
-    }
-
-    function ideRenderAI(text) {
-      const frag = document.createDocumentFragment();
+    function ccRenderInto(container, text) {
+      container.innerHTML = "";
       const re = /```(\w*)\n?([\s\S]*?)```/g;
       let last = 0, m;
       while ((m = re.exec(text)) !== null) {
-        if (m.index > last) {
-          const span = document.createElement("span");
-          span.textContent = text.slice(last, m.index);
-          frag.appendChild(span);
-        }
-        const lang = (m[1] || "").toLowerCase();
-        const code = m[2].replace(/\n$/, "");
-        const pre = document.createElement("pre");
-        const c = document.createElement("code");
-        c.textContent = code;
-        pre.appendChild(c);
-        frag.appendChild(pre);
-        const btn = document.createElement("button");
-        btn.className = "ide-apply";
-        btn.textContent = "⬇ اعمال کد در ویرایشگر";
-        btn.addEventListener("click", () => ideApplyCode(code, lang));
-        frag.appendChild(btn);
+        if (m.index > last) { const t = text.slice(last, m.index).trim(); if (t) container.appendChild(ccTextNode(t)); }
+        ccAppendCard(container, m[1] || "code", m[2].replace(/\n$/, ""));
         last = re.lastIndex;
       }
-      if (last < text.length) {
-        const span = document.createElement("span");
-        span.textContent = text.slice(last);
-        frag.appendChild(span);
-      }
-      return frag;
-    }
-
-    function ideAppendMsg(role, text) {
-      const wrap = $("ide-chat");
-      const div = document.createElement("div");
-      div.className = "ide-msg " + (role === "user" ? "user" : "ai");
-      if (role === "user") div.textContent = text;
-      else div.appendChild(ideRenderAI(text));
-      wrap.appendChild(div);
-      wrap.scrollTop = wrap.scrollHeight;
-      return div;
-    }
-
-    async function ideSubmitChat(userText) {
-      ideAppendMsg("user", userText);
-      ideChatHistory.push({ role: "user", content: userText });
-      ideTrimHistory();
-      const typing = ideShowTyping();
-      $("ide-chat-send").disabled = true;
-      try {
-        const reply = await ideCallAI();
-        typing.remove();
-        ideChatHistory.push({ role: "assistant", content: reply });
-        ideTrimHistory();
-        ideAppendMsg("ai", reply);
-      } catch (e) {
-        typing.remove();
-        ideAppendMsg("ai", "⚠ خطا در ارتباط با هوش مصنوعی: " + (e.message || e));
-      } finally {
-        $("ide-chat-send").disabled = false;
-        $("ide-chat").scrollTop = $("ide-chat").scrollHeight;
+      const rest = text.slice(last);
+      const openIdx = rest.indexOf("```");
+      if (openIdx !== -1) {
+        const before = rest.slice(0, openIdx).trim();
+        if (before) container.appendChild(ccTextNode(before));
+        const partial = rest.slice(openIdx + 3);
+        const lang = (partial.split("\n")[0] || "").trim();
+        ccAppendPendingCard(container, lang);
+      } else {
+        const t = rest.trim();
+        if (t) container.appendChild(ccTextNode(t));
       }
     }
 
-    window.ideSendChat = function() {
-      const ta = $("ide-chat-text");
-      const text = ta.value.trim();
+    function ccSetBubble(row, text, streaming) {
+      const content = row.querySelector(".cc-bubble-content");
+      ccRenderInto(content, text);
+      content.classList.toggle("cc-cursor", !!streaming);
+      $("cc-messages").scrollTop = $("cc-messages").scrollHeight;
+    }
+
+    async function ccStreamClaude(model, row) {
+      const messages = ccHistory.map(m => ({ role: m.role, content: m.content }));
+      const res = await fetch(WORKER_URL + "/claude", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model, max_tokens: 8000, system: CC_SYS, messages, stream: true })
+      });
+      if (!res.ok) {
+        let em = "خطا " + res.status;
+        try { const j = await res.json(); em = (j.error && (j.error.message || j.error)) || em; } catch (_) {}
+        throw new Error(em);
+      }
+      if (!res.body) {
+        const j = await res.json().catch(() => null);
+        const t = j && Array.isArray(j.content) ? j.content.map(b => b.text || "").join("") : "";
+        ccSetBubble(row, t, false);
+        return t;
+      }
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = "", full = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const parts = buf.split("\n");
+        buf = parts.pop();
+        for (const line of parts) {
+          const s = line.trim();
+          if (!s.startsWith("data:")) continue;
+          const payload = s.slice(5).trim();
+          if (!payload || payload === "[DONE]") continue;
+          let json;
+          try { json = JSON.parse(payload); } catch (_) { continue; }
+          if (json.type === "content_block_delta" && json.delta && json.delta.type === "text_delta") {
+            full += json.delta.text;
+            ccSetBubble(row, full, true);
+          } else if (json.type === "error") {
+            throw new Error((json.error && json.error.message) || "خطای API");
+          }
+        }
+      }
+      ccSetBubble(row, full, false);
+      return full;
+    }
+
+    window.ccSend = async function() {
+      if (ccBusy) return;
+      const inp = $("cc-input");
+      const text = inp.value.trim();
       if (!text) return;
-      ta.value = "";
-      ta.style.height = "auto";
-      ideSubmitChat(text);
-    };
-
-    window.ideAskAI = function() {
-      const code = $("ide-code").value.trim();
-      ideSwitchTab("ai");
-      if (!code) { $("ide-chat-text").focus(); return; }
-      const q = "این کد (" + ideCurrentLang + ") را بررسی کن، اگر مشکلی دارد بگو و در صورت نیاز نسخه‌ی بهتر و کامل بده:\n```" + ideCurrentLang + "\n" + code + "\n```";
-      ideSubmitChat(q);
-    };
-
-    /* ---- editor keybindings ---- */
-    function ideEditorKeydown(e) {
-      const ta = e.target;
-      if (e.key === "Tab") {
-        e.preventDefault();
-        const s = ta.selectionStart, en = ta.selectionEnd;
-        ta.value = ta.value.slice(0, s) + "  " + ta.value.slice(en);
-        ta.selectionStart = ta.selectionEnd = s + 2;
-        ideUpdateGutter();
-      } else if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-        e.preventDefault();
-        window.ideRun();
-      } else if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S")) {
-        e.preventDefault();
-        ideSaveCurrent();
-        ideToast("ذخیره شد 💾");
+      inp.value = ""; inp.style.height = "auto";
+      ccAppendUser(text);
+      ccHistory.push({ role: "user", content: text });
+      if (ccHistory.length > 20) ccHistory = ccHistory.slice(-20);
+      ccBusy = true; $("cc-send").disabled = true;
+      const row = ccAppendAI();
+      try {
+        const model = $("cc-model").value;
+        const full = await ccStreamClaude(model, row);
+        if (full.trim()) {
+          ccHistory.push({ role: "assistant", content: full });
+          if (ccHistory.length > 20) ccHistory = ccHistory.slice(-20);
+        } else {
+          ccSetBubble(row, "پاسخی دریافت نشد. دوباره تلاش کن.", false);
+        }
+      } catch (e) {
+        ccSetBubble(row, "⚠ خطا در ارتباط با Claude: " + (e.message || e), false);
+      } finally {
+        ccBusy = false; $("cc-send").disabled = false;
       }
+    };
+
+    /* ---- artifact preview (تصویر ۱) ---- */
+    function ccCanPreview(lang) { return ["html", "css", "js", "javascript"].includes(lang); }
+    function ccPreviewSrc(code, lang) {
+      if (lang === "css")
+        return '<style>' + code + '</style><div style="font-family:sans-serif;padding:18px"><h1>عنوان نمونه</h1><p>یک پاراگراف نمونه برای تست استایل.</p><button>دکمه‌ی نمونه</button></div>';
+      if (lang === "js" || lang === "javascript")
+        return '<body style="font-family:sans-serif;padding:16px;color:#222"><script>' + code + '<\/script></body>';
+      return code; // html
     }
 
-    /* ---- init IDE (runs once) ---- */
-    function ideInit() {
-      ideLoadFiles();
-      ideInitConsoleListener();
-
-      $("ide-open-btn").addEventListener("click", openIDE);
-      $("ide-lang").addEventListener("change", e => ideSetLang(e.target.value));
-      document.querySelectorAll("#ide-files .ide-file").forEach(b =>
-        b.addEventListener("click", () => ideSetLang(b.dataset.lang)));
-
-      const ta = $("ide-code");
-      ta.addEventListener("input", () => { ideUpdateGutter(); ideSaveCurrentDebounced(); });
-      ta.addEventListener("scroll", () => { $("ide-gutter").scrollTop = ta.scrollTop; });
-      ta.addEventListener("keydown", ideEditorKeydown);
-
-      const ct = $("ide-chat-text");
-      ct.addEventListener("input", () => {
-        ct.style.height = "auto";
-        ct.style.height = Math.min(ct.scrollHeight, 110) + "px";
-      });
-      ct.addEventListener("keydown", e => {
-        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); window.ideSendChat(); }
-      });
+    function ccOpenArtifact(code, lang, title, label) {
+      ccArt = { code, lang, title, label };
+      $("cc-art-title").textContent = title;
+      $("cc-art-code").textContent = code;
+      const canPrev = ccCanPreview(lang);
+      $("cc-tab-preview").style.display = canPrev ? "" : "none";
+      if (canPrev) {
+        $("cc-art-iframe").srcdoc = ccPreviewSrc(code, lang);
+        window.ccSwitchArtTab("preview");
+      } else {
+        window.ccSwitchArtTab("code");
+      }
+      $("cc-artifact").classList.add("show");
     }
-    ideInit();
+    window.ccSwitchArtTab = function(tab) {
+      const prev = tab === "preview";
+      $("cc-tab-preview").classList.toggle("active", prev);
+      $("cc-tab-code").classList.toggle("active", !prev);
+      $("cc-art-iframe").classList.toggle("hidden", !prev);
+      $("cc-art-code").classList.toggle("hidden", prev);
+    };
+    window.ccCloseArtifact = function() {
+      $("cc-artifact").classList.remove("show");
+      $("cc-art-iframe").srcdoc = "";
+    };
+    window.ccCopyArtifact = function() {
+      navigator.clipboard.writeText(ccArt.code).then(() => {
+        const b = $("cc-art-copy"); const o = b.textContent;
+        b.textContent = "✓ کپی شد"; setTimeout(() => { b.textContent = o; }, 1500);
+      }).catch(() => {});
+    };
 
+    (function ccInit() {
+      $("ide-open-btn").addEventListener("click", openCodeChat);
+      const inp = $("cc-input");
+      inp.addEventListener("input", () => {
+        inp.style.height = "auto";
+        inp.style.height = Math.min(inp.scrollHeight, 160) + "px";
+      });
+      inp.addEventListener("keydown", e => {
+        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); window.ccSend(); }
+      });
+    })();
     checkSavedUser();
 
     /* ── ARTIFACT PANEL ── */
