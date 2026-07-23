@@ -371,6 +371,191 @@
       .sidebar-close { display: block; }
       .menu-btn { display: block; }
       .ai-toggles { display: none; }       /* hide inline toggles on phone */
+    }
+
+    /* ============================================================
+       CODE IDE  (محیط کد)
+       ============================================================ */
+    #ide-open-btn { color: #7c6ef7; }
+    #ide-open-btn:hover { background: rgba(124,110,247,0.12); color: #7c6ef7; }
+    #ide-open-btn svg { color: #7c6ef7; }
+
+    #code-ide {
+      position: fixed; inset: 0; z-index: 400; display: none;
+      flex-direction: column; direction: ltr;
+      background: #0d0e14; color: #e6e6ef;
+      font-family: 'Vazirmatn', sans-serif;
+    }
+    #code-ide.open { display: flex; }
+    #code-ide, #code-ide * { box-sizing: border-box; }
+    .ide-mono { font-family: ui-monospace, 'SF Mono', 'Cascadia Code', 'JetBrains Mono', Consolas, monospace; }
+
+    /* Top bar */
+    .ide-topbar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px; background: #14151f;
+      border-bottom: 1px solid #23253a; flex-shrink: 0;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+    }
+    .ide-topbar::-webkit-scrollbar { height: 0; }
+    .ide-back {
+      display: flex; align-items: center; gap: 6px;
+      background: none; border: none; color: #b7b8cc;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      padding: 7px 10px; border-radius: 8px; font-family: inherit; white-space: nowrap;
+    }
+    .ide-back:hover { background: #23253a; color: #fff; }
+    .ide-select {
+      background: #1c1e2e; color: #e6e6ef; border: 1px solid #2c2f47;
+      border-radius: 8px; padding: 7px 10px; font-size: 13px; font-family: inherit;
+      cursor: pointer; outline: none; white-space: nowrap;
+    }
+    .ide-select:focus { border-color: #7c6ef7; }
+    .ide-topbar-spacer { flex: 1; min-width: 8px; }
+    .ide-btn {
+      background: #1c1e2e; color: #d7d8ec; border: 1px solid #2c2f47;
+      border-radius: 8px; padding: 7px 11px; font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: inherit; white-space: nowrap; transition: background .15s, border-color .15s;
+    }
+    .ide-btn:hover { background: #262943; border-color: #3a3d5c; }
+    .ide-btn.ide-run { background: #7c6ef7; border-color: #7c6ef7; color: #fff; }
+    .ide-btn.ide-run:hover { background: #6b5df0; }
+    .ide-btn.ide-ai { background: rgba(124,110,247,0.15); border-color: #4a3fb0; color: #b9b0ff; }
+    .ide-btn.ide-ai:hover { background: rgba(124,110,247,0.28); }
+
+    /* Main layout */
+    .ide-main { flex: 1; display: flex; min-height: 0; }
+
+    /* Left file rail */
+    .ide-files {
+      width: 52px; flex-shrink: 0; background: #101119;
+      border-right: 1px solid #23253a; display: flex; flex-direction: column;
+      align-items: center; padding: 10px 0; gap: 4px;
+    }
+    .ide-file {
+      width: 40px; height: 40px; border-radius: 9px; border: none;
+      background: none; color: #7b7d99; font-size: 18px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      position: relative; transition: background .15s, color .15s;
+    }
+    .ide-file:hover { background: #1c1e2e; color: #c7c8e0; }
+    .ide-file.active { background: rgba(124,110,247,0.18); color: #fff; }
+    .ide-file.active::before {
+      content: ""; position: absolute; left: -10px; top: 8px; bottom: 8px;
+      width: 3px; border-radius: 2px; background: #7c6ef7;
+    }
+    .ide-file-tag {
+      position: absolute; bottom: 1px; right: 2px; font-size: 8px;
+      font-weight: 700; letter-spacing: .3px; color: inherit; opacity: .8;
+    }
+
+    /* Editor */
+    .ide-editor-wrap {
+      flex: 1; min-width: 0; display: flex; position: relative;
+      background: #0d0e14; overflow: hidden;
+    }
+    .ide-gutter {
+      flex-shrink: 0; padding: 12px 8px 12px 0; text-align: right;
+      color: #4a4c66; font-size: 13.5px; line-height: 20px;
+      user-select: none; overflow: hidden; direction: ltr;
+      min-width: 42px; border-right: 1px solid #1a1c28;
+    }
+    #ide-code {
+      flex: 1; min-width: 0; resize: none; border: none; outline: none;
+      background: transparent; color: #e6e6ef;
+      padding: 12px 14px; font-size: 13.5px; line-height: 20px;
+      direction: ltr; text-align: left; white-space: pre; overflow: auto;
+      tab-size: 2; -moz-tab-size: 2; caret-color: #7c6ef7;
+    }
+    #ide-code::placeholder { color: #4a4c66; }
+
+    /* Right panel */
+    .ide-right {
+      width: 42%; max-width: 640px; min-width: 280px; flex-shrink: 0;
+      display: flex; flex-direction: column; background: #101119;
+      border-left: 1px solid #23253a;
+    }
+    .ide-tabs { display: flex; border-bottom: 1px solid #23253a; flex-shrink: 0; }
+    .ide-tab {
+      flex: 1; background: none; border: none; color: #7b7d99;
+      padding: 11px 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+      font-family: inherit; border-bottom: 2px solid transparent;
+    }
+    .ide-tab:hover { color: #c7c8e0; }
+    .ide-tab.active { color: #fff; border-bottom-color: #7c6ef7; }
+    .ide-tab-body { flex: 1; min-height: 0; position: relative; }
+    .ide-panel { position: absolute; inset: 0; display: flex; flex-direction: column; }
+    .ide-panel.hidden { display: none; }
+
+    /* Output */
+    #ide-iframe {
+      flex: 1; min-height: 0; width: 100%; border: none; background: #fff;
+    }
+    .ide-console {
+      height: 150px; flex-shrink: 0; overflow-y: auto; background: #0b0c12;
+      border-top: 1px solid #23253a; padding: 6px 0;
+      font-family: ui-monospace, monospace; font-size: 12px; direction: ltr;
+    }
+    .ide-console-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 2px 10px 6px; color: #6b6d88; font-size: 11px; font-weight: 700;
+      letter-spacing: .5px; text-transform: uppercase;
+    }
+    .ide-console-clear { background: none; border: none; color: #6b6d88; cursor: pointer; font-size: 14px; }
+    .ide-console-clear:hover { color: #fff; }
+    .ide-log { padding: 2px 10px; border-bottom: 1px solid rgba(255,255,255,0.03); white-space: pre-wrap; word-break: break-word; }
+    .ide-log.log { color: #c7c8e0; }
+    .ide-log.error { color: #ff7b7b; background: rgba(255,80,80,0.06); }
+    .ide-log.warn { color: #f5c451; background: rgba(245,196,81,0.05); }
+    .ide-log-empty { padding: 10px; color: #4a4c66; font-style: italic; }
+
+    /* AI chat */
+    #ide-chat {
+      flex: 1; min-height: 0; overflow-y: auto; padding: 12px;
+      display: flex; flex-direction: column; gap: 10px; direction: rtl;
+    }
+    .ide-msg { max-width: 92%; padding: 9px 12px; border-radius: 12px; font-size: 13.5px; line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+    .ide-msg.user { align-self: flex-start; background: #262943; color: #ececfb; border-bottom-left-radius: 4px; }
+    .ide-msg.ai { align-self: flex-end; background: #1a1c28; color: #d7d8ec; border: 1px solid #23253a; border-bottom-right-radius: 4px; }
+    .ide-msg pre { background: #0b0c12; border: 1px solid #23253a; border-radius: 8px; padding: 10px; margin: 8px 0; overflow-x: auto; direction: ltr; text-align: left; font-size: 12.5px; }
+    .ide-msg code { font-family: ui-monospace, monospace; }
+    .ide-msg .ide-apply {
+      display: inline-flex; align-items: center; gap: 5px; margin-top: 6px;
+      background: #7c6ef7; color: #fff; border: none; border-radius: 7px;
+      padding: 6px 12px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: 'Vazirmatn', sans-serif;
+    }
+    .ide-msg .ide-apply:hover { background: #6b5df0; }
+    .ide-typing { align-self: flex-end; color: #6b6d88; font-size: 13px; padding: 4px 10px; }
+    .ide-chat-input { display: flex; gap: 8px; padding: 10px; border-top: 1px solid #23253a; flex-shrink: 0; direction: rtl; }
+    #ide-chat-text {
+      flex: 1; resize: none; background: #1c1e2e; border: 1px solid #2c2f47;
+      border-radius: 10px; color: #e6e6ef; padding: 9px 12px; font-family: 'Vazirmatn', sans-serif;
+      font-size: 13.5px; line-height: 1.6; outline: none; max-height: 110px; direction: rtl; text-align: right;
+    }
+    #ide-chat-text:focus { border-color: #7c6ef7; }
+    .ide-chat-send {
+      width: 40px; flex-shrink: 0; background: #7c6ef7; border: none; border-radius: 10px;
+      color: #fff; font-size: 18px; cursor: pointer; align-self: flex-end; height: 40px;
+    }
+    .ide-chat-send:hover { background: #6b5df0; }
+    .ide-chat-send:disabled { opacity: .5; cursor: default; }
+
+    .ide-toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: #23253a; color: #fff; padding: 9px 18px; border-radius: 20px;
+      font-size: 13px; z-index: 420; opacity: 0; transition: opacity .2s; pointer-events: none;
+    }
+    .ide-toast.show { opacity: 1; }
+
+    @media (max-width: 760px) {
+      .ide-main { flex-direction: column; }
+      .ide-files { width: 100%; flex-direction: row; justify-content: flex-start;
+        border-right: none; border-bottom: 1px solid #23253a; padding: 6px 8px; gap: 4px; overflow-x: auto; }
+      .ide-file.active::before { left: 8px; right: 8px; top: auto; bottom: -6px; width: auto; height: 3px; }
+      .ide-editor-wrap { flex: 1; min-height: 180px; }
+      .ide-right { width: 100%; max-width: none; height: 46%; min-height: 200px;
+        border-left: none; border-top: 1px solid #23253a; }
+    }
   </style>
 </head>
 <body>
@@ -401,6 +586,10 @@
       <button class="new-chat-btn" id="new-chat-btn">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         چت جدید
+      </button>
+      <button class="new-chat-btn" id="ide-open-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        محیط کد
       </button>
       <div class="chat-list" id="chat-list">
         <!-- chat items will be inserted here -->
@@ -601,6 +790,76 @@
       <button class="img-modal-btn" id="img-modal-copy" style="background:var(--bg3);color:var(--text);">📋 کپی</button>
     </div>
   </div>
+
+  <!-- ============ CODE IDE (محیط کد) ============ -->
+  <div id="code-ide">
+    <div class="ide-topbar">
+      <button class="ide-back" onclick="closeIDE()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        بازگشت
+      </button>
+      <select id="ide-lang" class="ide-select" title="زبان">
+        <option value="html">HTML</option>
+        <option value="css">CSS</option>
+        <option value="js">JavaScript</option>
+        <option value="python">Python</option>
+        <option value="typescript">TypeScript</option>
+        <option value="sql">SQL</option>
+      </select>
+      <select id="ide-model" class="ide-select" title="مدل هوش مصنوعی">
+        <option value="gemini">Gemini 2.5 Pro</option>
+        <option value="claude">Claude</option>
+      </select>
+      <button class="ide-btn ide-run" onclick="ideRun()">▶ اجرا</button>
+      <button class="ide-btn ide-ai" onclick="ideAskAI()">✨ بپرس از AI</button>
+      <div class="ide-topbar-spacer"></div>
+      <button class="ide-btn" onclick="ideCopy()" title="کپی">📋</button>
+      <button class="ide-btn" onclick="ideClear()" title="پاک کردن">🗑</button>
+      <button class="ide-btn" onclick="ideDownload()" title="دانلود">⬇</button>
+    </div>
+    <div class="ide-main">
+      <div class="ide-files" id="ide-files">
+        <button class="ide-file active" data-lang="html" title="HTML">🌐<span class="ide-file-tag">HTML</span></button>
+        <button class="ide-file" data-lang="css" title="CSS">🎨<span class="ide-file-tag">CSS</span></button>
+        <button class="ide-file" data-lang="js" title="JavaScript">⚡<span class="ide-file-tag">JS</span></button>
+        <button class="ide-file" data-lang="python" title="Python">🐍<span class="ide-file-tag">PY</span></button>
+        <button class="ide-file" data-lang="typescript" title="TypeScript">🅃<span class="ide-file-tag">TS</span></button>
+        <button class="ide-file" data-lang="sql" title="SQL">🗄<span class="ide-file-tag">SQL</span></button>
+      </div>
+      <div class="ide-editor-wrap">
+        <div class="ide-gutter ide-mono" id="ide-gutter">1</div>
+        <textarea id="ide-code" class="ide-mono" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" placeholder="// اینجا کد بنویس..."></textarea>
+      </div>
+      <div class="ide-right">
+        <div class="ide-tabs">
+          <button class="ide-tab active" id="ide-tab-output" onclick="ideSwitchTab('output')">خروجی</button>
+          <button class="ide-tab" id="ide-tab-ai" onclick="ideSwitchTab('ai')">دستیار AI</button>
+        </div>
+        <div class="ide-tab-body">
+          <div class="ide-panel" id="ide-panel-output">
+            <iframe id="ide-iframe" sandbox="allow-scripts allow-modals allow-popups allow-forms"></iframe>
+            <div class="ide-console" id="ide-console">
+              <div class="ide-console-head">
+                <span>کنسول</span>
+                <button class="ide-console-clear" onclick="ideClearConsole()" title="پاک کردن کنسول">🗑</button>
+              </div>
+              <div id="ide-console-body"><div class="ide-log-empty">خروجی console.log اینجا نمایش داده می‌شود…</div></div>
+            </div>
+          </div>
+          <div class="ide-panel hidden" id="ide-panel-ai">
+            <div id="ide-chat">
+              <div class="ide-msg ai">سلام! من دستیار کد تو هستم. هر سوالی درباره‌ی کدت داری بپرس یا از دکمه‌ی «بپرس از AI» استفاده کن. 💜</div>
+            </div>
+            <div class="ide-chat-input">
+              <textarea id="ide-chat-text" rows="1" placeholder="سوالت درباره‌ی کد را بنویس…"></textarea>
+              <button class="ide-chat-send" id="ide-chat-send" onclick="ideSendChat()" title="ارسال">↑</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ide-toast" id="ide-toast"></div>
 
   <script type="module">
     const WORKER_URL = "https://planning-ai.motanjf.workers.dev";
@@ -2146,6 +2405,403 @@ ${allQA}
     }
 
     /* ============ START ============ */
+    /* ============================================================
+       CODE IDE  (محیط کد) — all regular/global functions, no class
+       ============================================================ */
+    const IDE_LANGS = ["html","css","js","python","typescript","sql"];
+    const IDE_SYS = "تو یک دستیار برنامه‌نویس خبره هستی. همیشه به زبان فارسی و روان پاسخ بده. توضیحاتت کوتاه، دقیق و کاربردی باشد. هر زمان کد می‌نویسی، حتماً آن را داخل بلوک ```زبان ... ``` بگذار (مثلاً ```html یا ```js یا ```css یا ```python). کدِ کامل و قابل اجرا بده.";
+    const IDE_DEFAULTS = {
+      html: '<!DOCTYPE html>\n<html>\n<head>\n  <meta charset="utf-8">\n  <style>\n    body { font-family: sans-serif; text-align: center; padding: 40px; }\n    h1 { color: #7c6ef7; }\n  </style>\n</head>\n<body>\n  <h1>سلام دنیا! 👋</h1>\n  <button onclick="console.log(\'کلیک شد!\')">کلیک کن</button>\n</body>\n</html>',
+      css: 'body {\n  font-family: sans-serif;\n  background: #7c6ef7;\n  color: white;\n  padding: 24px;\n}\n.box {\n  padding: 20px;\n  margin-top: 16px;\n  border-radius: 12px;\n  background: rgba(255,255,255,0.15);\n}',
+      js: 'console.log("سلام از جاوااسکریپت!");\n\nconst nums = [1, 2, 3, 4, 5];\nconst sum = nums.reduce((a, b) => a + b, 0);\nconsole.log("مجموع:", sum);',
+      python: '# پایتون در مرورگر اجرا نمی‌شود (فقط نمایش)\nprint("سلام دنیا")\n\nfor i in range(3):\n    print("عدد:", i)',
+      typescript: 'const message: string = "سلام تایپ‌اسکریپت";\nconsole.log(message);\n\nfunction add(a: number, b: number): number {\n  return a + b;\n}',
+      sql: 'SELECT name, age\nFROM users\nWHERE age > 18\nORDER BY age DESC;'
+    };
+
+    let ideCurrentLang = "html";
+    let ideFiles = {};
+    let ideChatHistory = [];        // last 10 messages: {role:'user'|'assistant', content}
+    let _ideConsoleReady = false;
+    let _ideSaveTimer = null;
+
+    function ideLoadFiles() {
+      ideFiles = lsGet("ide_files") || {};
+      for (const l of IDE_LANGS) {
+        if (typeof ideFiles[l] !== "string") ideFiles[l] = IDE_DEFAULTS[l] || "";
+      }
+    }
+    function ideSaveCurrent() {
+      ideFiles[ideCurrentLang] = $("ide-code").value;
+      lsSet("ide_files", ideFiles);
+    }
+    function ideSaveCurrentDebounced() {
+      clearTimeout(_ideSaveTimer);
+      _ideSaveTimer = setTimeout(ideSaveCurrent, 600);
+    }
+
+    function ideToast(msg) {
+      const t = $("ide-toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      clearTimeout(t._t);
+      t._t = setTimeout(() => t.classList.remove("show"), 1600);
+    }
+
+    function ideUpdateGutter() {
+      const ta = $("ide-code");
+      const count = ta.value.split("\n").length;
+      let s = "";
+      for (let i = 1; i <= count; i++) s += i + "\n";
+      const g = $("ide-gutter");
+      g.textContent = s;
+      g.scrollTop = ta.scrollTop;
+    }
+
+    function ideSetLang(lang) {
+      if (!IDE_LANGS.includes(lang)) return;
+      // save the code we're leaving
+      ideFiles[ideCurrentLang] = $("ide-code").value;
+      lsSet("ide_files", ideFiles);
+      ideCurrentLang = lang;
+      $("ide-code").value = ideFiles[lang] != null ? ideFiles[lang] : "";
+      $("ide-lang").value = lang;
+      document.querySelectorAll("#ide-files .ide-file").forEach(b =>
+        b.classList.toggle("active", b.dataset.lang === lang));
+      ideUpdateGutter();
+      $("ide-code").focus();
+    }
+
+    function openIDE() {
+      ideLoadFiles();
+      $("ide-lang").value = ideCurrentLang;
+      $("ide-code").value = ideFiles[ideCurrentLang] != null ? ideFiles[ideCurrentLang] : "";
+      document.querySelectorAll("#ide-files .ide-file").forEach(b =>
+        b.classList.toggle("active", b.dataset.lang === ideCurrentLang));
+      ideUpdateGutter();
+      $("code-ide").classList.add("open");
+      closeSidebar();
+      setTimeout(() => $("ide-code").focus(), 60);
+    }
+    window.closeIDE = function() {
+      ideSaveCurrent();
+      $("code-ide").classList.remove("open");
+    };
+
+    /* ---- console interceptor + output ---- */
+    function ideConsoleScript() {
+      return '<script>(function(){' +
+        'function fmt(a){try{return (typeof a==="object"&&a!==null)?JSON.stringify(a):String(a);}catch(e){return String(a);}}' +
+        'function send(level,args){try{window.parent.postMessage({type:"ide-console",level:level,msg:Array.prototype.map.call(args,fmt).join(" ")},"*");}catch(e){}}' +
+        'var o={log:console.log,error:console.error,warn:console.warn,info:console.info};' +
+        'console.log=function(){send("log",arguments);o.log.apply(console,arguments);};' +
+        'console.info=function(){send("log",arguments);o.info.apply(console,arguments);};' +
+        'console.error=function(){send("error",arguments);o.error.apply(console,arguments);};' +
+        'console.warn=function(){send("warn",arguments);o.warn.apply(console,arguments);};' +
+        'window.onerror=function(m,s,l,c,e){send("error",[m+" (line "+l+")"]);return false;};' +
+        'window.addEventListener("unhandledrejection",function(ev){send("error",["Unhandled: "+((ev.reason&&ev.reason.message)||ev.reason)]);});' +
+        '})();<\/script>';
+    }
+
+    function ideInitConsoleListener() {
+      if (_ideConsoleReady) return;
+      _ideConsoleReady = true;
+      window.addEventListener("message", function(e) {
+        const d = e.data;
+        if (d && d.type === "ide-console") ideAddConsole(d.level, d.msg);
+      });
+    }
+
+    function ideAddConsole(level, msg) {
+      const body = $("ide-console-body");
+      const empty = body.querySelector(".ide-log-empty");
+      if (empty) empty.remove();
+      const div = document.createElement("div");
+      div.className = "ide-log " + (level === "error" ? "error" : level === "warn" ? "warn" : "log");
+      const prefix = level === "error" ? "✖ " : level === "warn" ? "⚠ " : "› ";
+      div.textContent = prefix + msg;
+      body.appendChild(div);
+      $("ide-console").scrollTop = $("ide-console").scrollHeight;
+    }
+    window.ideClearConsole = function() {
+      $("ide-console-body").innerHTML = '<div class="ide-log-empty">خروجی console.log اینجا نمایش داده می‌شود…</div>';
+    };
+
+    function ideCssSample() {
+      return '<div style="padding:16px;font-family:sans-serif">' +
+        '<h1>عنوان نمونه</h1>' +
+        '<p class="text">یک پاراگراف نمونه برای تست استایل شما.</p>' +
+        '<button class="btn">دکمه‌ی نمونه</button>' +
+        '<div class="box">جعبه‌ی نمونه</div></div>';
+    }
+    function ideNotRunnablePage(lang, code) {
+      const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const names = { python: "Python", typescript: "TypeScript", sql: "SQL", bash: "Bash" };
+      return '<body style="margin:0;font-family:sans-serif;background:#0d0e14;color:#e6e6ef">' +
+        '<div style="padding:14px 16px;background:#14151f;border-bottom:1px solid #23253a;color:#f5c451;font-size:13px">⚠ کدِ ' +
+        (names[lang] || lang) + ' در مرورگر قابل اجرا نیست — فقط نمایش داده می‌شود.</div>' +
+        '<pre style="margin:0;padding:16px;color:#c7c8e0;font-family:ui-monospace,monospace;font-size:13px;white-space:pre-wrap;direction:ltr;text-align:left">' +
+        esc(code) + '</pre></body>';
+    }
+
+    window.ideRun = function() {
+      ideSaveCurrent();
+      ideSwitchTab("output");
+      window.ideClearConsole();
+      const lang = ideCurrentLang;
+      const code = $("ide-code").value;
+      const iframe = $("ide-iframe");
+      const cs = ideConsoleScript();
+
+      if (lang === "html") {
+        iframe.srcdoc = cs + code;
+      } else if (lang === "css") {
+        iframe.srcdoc = cs + '<style>' + code + '</style>' + ideCssSample();
+      } else if (lang === "js") {
+        iframe.srcdoc = cs +
+          '<body style="font-family:sans-serif;color:#222;padding:14px;margin:0">' +
+          '<script type="module">' + code + '<\/script></body>';
+      } else {
+        iframe.srcdoc = ideNotRunnablePage(lang, code);
+        ideAddConsole("warn", "زبان «" + lang + "» در مرورگر اجرا نمی‌شود.");
+      }
+    };
+
+    window.ideSwitchTab = function(tab) {
+      const isOut = tab === "output";
+      $("ide-tab-output").classList.toggle("active", isOut);
+      $("ide-tab-ai").classList.toggle("active", !isOut);
+      $("ide-panel-output").classList.toggle("hidden", !isOut);
+      $("ide-panel-ai").classList.toggle("hidden", isOut);
+      if (!isOut) setTimeout(() => $("ide-chat-text").focus(), 50);
+    };
+
+    window.ideCopy = function() {
+      navigator.clipboard.writeText($("ide-code").value)
+        .then(() => ideToast("کپی شد ✅"))
+        .catch(() => ideToast("کپی نشد"));
+    };
+    window.ideClear = function() {
+      $("ide-code").value = "";
+      ideSaveCurrent();
+      ideUpdateGutter();
+      $("ide-code").focus();
+    };
+    window.ideDownload = function() {
+      const ext = { html:"html", css:"css", js:"js", python:"py", typescript:"ts", sql:"sql" }[ideCurrentLang] || "txt";
+      const blob = new Blob([$("ide-code").value], { type: "text/plain" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "code." + ext;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    };
+
+    /* ---- AI chat ---- */
+    function ideTrimHistory() {
+      if (ideChatHistory.length > 10) ideChatHistory = ideChatHistory.slice(-10);
+    }
+
+    function ideExtractText(data) {
+      if (!data) return "";
+      if (data.error) throw new Error(typeof data.error === "string" ? data.error : (data.error.message || "خطای سرور"));
+      if (Array.isArray(data.content)) return data.content.map(b => b.text || "").join("");           // Claude
+      const g = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts;
+      if (Array.isArray(g)) return g.map(p => p.text || "").join("");                                  // Gemini
+      if (data.choices && data.choices[0] && data.choices[0].message) return data.choices[0].message.content || "";
+      if (typeof data.text === "string") return data.text;
+      return "";
+    }
+
+    async function ideCallClaude() {
+      const messages = ideChatHistory.map(m => ({ role: m.role, content: m.content }));
+      const res = await fetch(WORKER_URL + "/claude", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "claude-sonnet-5", max_tokens: 4000, system: IDE_SYS, messages, stream: false })
+      });
+      if (!res.ok) throw new Error("Claude " + res.status);
+      return ideExtractText(await res.json());
+    }
+
+    async function ideCallGemini() {
+      const contents = ideChatHistory.map(m => ({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content }]
+      }));
+      const res = await fetch(WORKER_URL + "/gemini-chat", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents,
+          systemInstruction: { parts: [{ text: IDE_SYS }] },
+          generationConfig: { temperature: 0.7, maxOutputTokens: 4000 }
+        })
+      });
+      if (!res.ok) throw new Error("gemini-chat " + res.status);
+      const text = ideExtractText(await res.json());
+      if (!text.trim()) throw new Error("پاسخ خالی از Gemini");
+      return text;
+    }
+
+    async function ideCallAI() {
+      const model = $("ide-model").value;
+      if (model === "claude") return ideCallClaude();
+      try {
+        return await ideCallGemini();
+      } catch (e) {
+        // fallback to Claude if /gemini-chat is missing or fails
+        ideToast("Gemini در دسترس نبود — استفاده از Claude");
+        return ideCallClaude();
+      }
+    }
+
+    function ideShowTyping() {
+      const wrap = $("ide-chat");
+      const div = document.createElement("div");
+      div.className = "ide-typing";
+      div.textContent = "در حال نوشتن…";
+      wrap.appendChild(div);
+      wrap.scrollTop = wrap.scrollHeight;
+      return div;
+    }
+
+    function ideApplyCode(code, lang) {
+      const map = { html:"html", css:"css", js:"js", javascript:"js", jsx:"js",
+        python:"python", py:"python", ts:"typescript", typescript:"typescript", sql:"sql", bash:"sql" };
+      const target = map[(lang || "").toLowerCase()] || ideCurrentLang;
+      if (target !== ideCurrentLang) ideSetLang(target);
+      $("ide-code").value = code;
+      ideSaveCurrent();
+      ideUpdateGutter();
+      ideToast("کد اعمال شد ✅");
+      window.ideRun();
+    }
+
+    function ideRenderAI(text) {
+      const frag = document.createDocumentFragment();
+      const re = /```(\w*)\n?([\s\S]*?)```/g;
+      let last = 0, m;
+      while ((m = re.exec(text)) !== null) {
+        if (m.index > last) {
+          const span = document.createElement("span");
+          span.textContent = text.slice(last, m.index);
+          frag.appendChild(span);
+        }
+        const lang = (m[1] || "").toLowerCase();
+        const code = m[2].replace(/\n$/, "");
+        const pre = document.createElement("pre");
+        const c = document.createElement("code");
+        c.textContent = code;
+        pre.appendChild(c);
+        frag.appendChild(pre);
+        const btn = document.createElement("button");
+        btn.className = "ide-apply";
+        btn.textContent = "⬇ اعمال کد در ویرایشگر";
+        btn.addEventListener("click", () => ideApplyCode(code, lang));
+        frag.appendChild(btn);
+        last = re.lastIndex;
+      }
+      if (last < text.length) {
+        const span = document.createElement("span");
+        span.textContent = text.slice(last);
+        frag.appendChild(span);
+      }
+      return frag;
+    }
+
+    function ideAppendMsg(role, text) {
+      const wrap = $("ide-chat");
+      const div = document.createElement("div");
+      div.className = "ide-msg " + (role === "user" ? "user" : "ai");
+      if (role === "user") div.textContent = text;
+      else div.appendChild(ideRenderAI(text));
+      wrap.appendChild(div);
+      wrap.scrollTop = wrap.scrollHeight;
+      return div;
+    }
+
+    async function ideSubmitChat(userText) {
+      ideAppendMsg("user", userText);
+      ideChatHistory.push({ role: "user", content: userText });
+      ideTrimHistory();
+      const typing = ideShowTyping();
+      $("ide-chat-send").disabled = true;
+      try {
+        const reply = await ideCallAI();
+        typing.remove();
+        ideChatHistory.push({ role: "assistant", content: reply });
+        ideTrimHistory();
+        ideAppendMsg("ai", reply);
+      } catch (e) {
+        typing.remove();
+        ideAppendMsg("ai", "⚠ خطا در ارتباط با هوش مصنوعی: " + (e.message || e));
+      } finally {
+        $("ide-chat-send").disabled = false;
+        $("ide-chat").scrollTop = $("ide-chat").scrollHeight;
+      }
+    }
+
+    window.ideSendChat = function() {
+      const ta = $("ide-chat-text");
+      const text = ta.value.trim();
+      if (!text) return;
+      ta.value = "";
+      ta.style.height = "auto";
+      ideSubmitChat(text);
+    };
+
+    window.ideAskAI = function() {
+      const code = $("ide-code").value.trim();
+      ideSwitchTab("ai");
+      if (!code) { $("ide-chat-text").focus(); return; }
+      const q = "این کد (" + ideCurrentLang + ") را بررسی کن، اگر مشکلی دارد بگو و در صورت نیاز نسخه‌ی بهتر و کامل بده:\n```" + ideCurrentLang + "\n" + code + "\n```";
+      ideSubmitChat(q);
+    };
+
+    /* ---- editor keybindings ---- */
+    function ideEditorKeydown(e) {
+      const ta = e.target;
+      if (e.key === "Tab") {
+        e.preventDefault();
+        const s = ta.selectionStart, en = ta.selectionEnd;
+        ta.value = ta.value.slice(0, s) + "  " + ta.value.slice(en);
+        ta.selectionStart = ta.selectionEnd = s + 2;
+        ideUpdateGutter();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        window.ideRun();
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S")) {
+        e.preventDefault();
+        ideSaveCurrent();
+        ideToast("ذخیره شد 💾");
+      }
+    }
+
+    /* ---- init IDE (runs once) ---- */
+    function ideInit() {
+      ideLoadFiles();
+      ideInitConsoleListener();
+
+      $("ide-open-btn").addEventListener("click", openIDE);
+      $("ide-lang").addEventListener("change", e => ideSetLang(e.target.value));
+      document.querySelectorAll("#ide-files .ide-file").forEach(b =>
+        b.addEventListener("click", () => ideSetLang(b.dataset.lang)));
+
+      const ta = $("ide-code");
+      ta.addEventListener("input", () => { ideUpdateGutter(); ideSaveCurrentDebounced(); });
+      ta.addEventListener("scroll", () => { $("ide-gutter").scrollTop = ta.scrollTop; });
+      ta.addEventListener("keydown", ideEditorKeydown);
+
+      const ct = $("ide-chat-text");
+      ct.addEventListener("input", () => {
+        ct.style.height = "auto";
+        ct.style.height = Math.min(ct.scrollHeight, 110) + "px";
+      });
+      ct.addEventListener("keydown", e => {
+        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); window.ideSendChat(); }
+      });
+    }
+    ideInit();
+
     checkSavedUser();
 
     /* ── ARTIFACT PANEL ── */
