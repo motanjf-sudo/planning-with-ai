@@ -2557,12 +2557,15 @@ ${allQA}
     }
 
     async function ccCallGroq(model, row) {
+      // Groq رایگان سقف ۸۰۰۰ توکن در دقیقه دارد (ورودی + خروجی)؛
+      // پس فقط چند پیام آخر را می‌فرستیم و max_tokens را محدود نگه می‌داریم.
+      const recent = ccHistory.slice(-6);
       const messages = [{ role: "system", content: CC_SYS }].concat(
-        ccHistory.map(m => ({ role: m.role, content: m.content }))
+        recent.map(m => ({ role: m.role, content: m.content }))
       );
       const res = await fetch(WORKER_URL + "/groq", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model, messages, temperature: 0.6, max_tokens: 8000 })
+        body: JSON.stringify({ model, messages, temperature: 0.6, max_tokens: 3500 })
       });
       let data = null;
       try { data = await res.json(); } catch (_) {}
