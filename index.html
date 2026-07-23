@@ -2628,30 +2628,40 @@ ${allQA}
         role: m.role === "assistant" ? "model" : "user",
         parts: [{ text: m.content }]
       }));
+      // دستورالعمل سیستم را داخل اولین پیام کاربر می‌گذاریم (مثل endpoint سالم /script)
+      // تا به systemInstruction وابسته نباشیم.
+      const firstUser = contents.find(c => c.role === "user");
+      if (firstUser) firstUser.parts[0].text = IDE_SYS + "\n\n---\n\n" + firstUser.parts[0].text;
+      // gemini-2.5-pro یک مدل thinking است؛ توکن خروجی باید بزرگ باشد تا پاسخ خالی برنگردد
+      // (مثل endpoint /script که با 8192 کار می‌کند)
       const res = await fetch(WORKER_URL + "/gemini-chat", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents,
-          systemInstruction: { parts: [{ text: IDE_SYS }] },
-          generationConfig: { temperature: 0.7, maxOutputTokens: 4000 }
+          generationConfig: { temperature: 0.7, topP: 0.95, maxOutputTokens: 8192 }
         })
       });
-      if (!res.ok) throw new Error("gemini-chat " + res.status);
-      const text = ideExtractText(await res.json());
-      if (!text.trim()) throw new Error("پاسخ خالی از Gemini");
+      let data = null;
+      try { data = await res.json(); } catch (_) {}
+      if (res.status === 404)
+        throw new Error("سرویس Gemini پیدا نشد — endpoint /gemini-chat هنوز روی worker دیپلوی نشده.");
+      if (!res.ok) {
+        const em = (data && (data.error && (data.error.message || data.error))) || ("HTTP " + res.status);
+        throw new Error("Gemini: " + em);
+      }
+      const text = ideExtractText(data);
+      if (!text.trim()) {
+        const fr = data && data.candidates && data.candidates[0] && data.candidates[0].finishReason;
+        throw new Error("پاسخ خالی از Gemini" + (fr ? " (" + fr + ")" : ""));
+      }
       return text;
     }
 
     async function ideCallAI() {
       const model = $("ide-model").value;
       if (model === "claude") return ideCallClaude();
-      try {
-        return await ideCallGemini();
-      } catch (e) {
-        // fallback to Claude if /gemini-chat is missing or fails
-        ideToast("Gemini در دسترس نبود — استفاده از Claude");
-        return ideCallClaude();
-      }
+      // Gemini اصلی است؛ خطای واقعی نمایش داده می‌شود (بدون fallback خودکار به Claude)
+      return ideCallGemini();
     }
 
     function ideShowTyping() {
