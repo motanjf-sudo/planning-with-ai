@@ -2448,7 +2448,7 @@ ${allQA}
       container.appendChild(card);
     }
 
-    function ccRenderInto(container, text) {
+    function ccRenderInto(container, text, isFinal) {
       container.innerHTML = "";
       const re = /```(\w*)\n?([\s\S]*?)```/g;
       let last = 0, m;
@@ -2463,8 +2463,20 @@ ${allQA}
         const before = rest.slice(0, openIdx).trim();
         if (before) container.appendChild(ccTextNode(before));
         const partial = rest.slice(openIdx + 3);
-        const lang = (partial.split("\n")[0] || "").trim();
-        ccAppendPendingCard(container, lang);
+        if (isFinal) {
+          // پاسخ تمام شده ولی بلوک کد بسته نشده (به سقف توکن خورده) →
+          // همان کد ناقص را به‌صورت کارت واقعی نشان بده تا گیر نکند
+          const nl = partial.indexOf("\n");
+          const lang = (nl === -1 ? partial : partial.slice(0, nl)).trim();
+          const code = nl === -1 ? "" : partial.slice(nl + 1);
+          ccAppendCard(container, lang || "code", code);
+          const note = ccTextNode("⚠ کد طولانی بود و ناقص ماند. بنویس «ادامه بده» تا بقیه‌اش را بدهم.");
+          note.style.cssText = "color:#c77;font-size:12.5px;margin-top:6px";
+          container.appendChild(note);
+        } else {
+          const lang = (partial.split("\n")[0] || "").trim();
+          ccAppendPendingCard(container, lang);
+        }
       } else {
         const t = rest.trim();
         if (t) container.appendChild(ccTextNode(t));
@@ -2473,7 +2485,7 @@ ${allQA}
 
     function ccSetBubble(row, text, streaming) {
       const content = row.querySelector(".cc-bubble-content");
-      ccRenderInto(content, text);
+      ccRenderInto(content, text, !streaming); // !streaming = پاسخ نهایی
       content.classList.toggle("cc-cursor", !!streaming);
       $("cc-messages").scrollTop = $("cc-messages").scrollHeight;
     }
@@ -2482,7 +2494,7 @@ ${allQA}
       const messages = ccHistory.map(m => ({ role: m.role, content: m.content }));
       const res = await fetch(WORKER_URL + "/claude", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model, max_tokens: 8000, system: CC_SYS, messages, stream: true })
+        body: JSON.stringify({ model, max_tokens: 16000, system: CC_SYS, messages, stream: true })
       });
       if (!res.ok) {
         let em = "خطا " + res.status;
@@ -2537,7 +2549,7 @@ ${allQA}
       if (firstUser) firstUser.parts[0].text = CC_SYS + "\n\n---\n\n" + firstUser.parts[0].text;
       const res = await fetch(WORKER_URL + "/gemini-chat", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model, contents, generationConfig: { temperature: 0.7, topP: 0.95, maxOutputTokens: 8192 } })
+        body: JSON.stringify({ model, contents, generationConfig: { temperature: 0.7, topP: 0.95, maxOutputTokens: 32000 } })
       });
       let data = null;
       try { data = await res.json(); } catch (_) {}
