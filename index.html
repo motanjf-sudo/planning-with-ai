@@ -1720,15 +1720,15 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
               // Filter out <think>...</think> blocks
               let text = full + delta;
               full = text;
-              // Remove think blocks for display
-              const display = full.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+              // بلوک‌های فکر (reasoning) را پنهان کن — هم بسته‌شده هم بازِ ناتمام حین استریم
+              const display = full.replace(/<think>[\s\S]*?<\/think>/gi, "").replace(/<think>[\s\S]*$/i, "").trim();
               updateStreamingBubble(bubble, display);
             } catch { }
           }
         }
 
-        // Final display text without think blocks
-        const displayFull = full.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+        // Final display text without think blocks (closed or unclosed)
+        const displayFull = full.replace(/<think>[\s\S]*?<\/think>/gi, "").replace(/<think>[\s\S]*$/i, "").trim();
         finalizeStreamingBubble(bubble, displayFull);
         if (displayFull) {
           const msgDiv = bubble.querySelector(".msg-text");
@@ -2340,10 +2340,18 @@ ${allQA}
        CODE CHAT (محیط کد) — clean Claude code assistant
        ============================================================ */
     const CC_SYS =
-      "تو یک برنامه‌نویس فول‌استک خبره هستی. کوتاه و به زبان فارسی توضیح بده. " +
-      "وقتی کاربر چیزی می‌خواهد، کد کامل و قابل اجرا بده و حتماً داخل بلوک ```html یا ```css یا ```js بگذار. " +
+      "تو یک برنامه‌نویس فول‌استک و طراح UI/UX خبره و باتجربه هستی. قبل از نوشتن کد، اول با دقت درباره‌ی معماری، ساختار درست، " +
+      "حالت‌های خاص (edge cases)، دسترس‌پذیری و بهترین روش فکر کن؛ سپس یک راه‌حل کامل، تمیز، بهینه و آماده‌ی استفاده بنویس. " +
+      "کد باید کامل و قابل اجرا باشد — نه ناقص، نه placeholder، نه «// بقیه را خودت بنویس». " +
+      "\n\nطراحی و گرافیک (خیلی مهم): هر خروجی وب را همیشه با بهترین و زیباترین گرافیک ممکن بساز. " +
+      "بسته به موضوع یک سبک مناسب انتخاب کن (مدرن، کلاسیک، یا مینیمال) و یک پالت رنگی هماهنگ و حرفه‌ای به کار ببر " +
+      "(مدرن: گرادیانت‌های زیبا و شیشه‌ای/glassmorphism؛ کلاسیک: رنگ‌های شیک و متین؛ مینیمال: تمیز با فضای خالی زیاد). " +
+      "همیشه: تایپوگرافی خوب و فونت مناسب، فاصله‌گذاری و چیدمان اصولی، گوشه‌های گرد، سایه‌های ملایم، " +
+      "انیمیشن و ترنزیشن‌های نرم، حالت hover، و طراحی کاملاً واکنش‌گرا (responsive) برای موبایل و دسکتاپ. " +
+      "هیچ‌وقت خروجی ساده و بدون استایل و زشت نده؛ همیشه ظاهر حرفه‌ای و چشم‌نواز تحویل بده. " +
+      "\n\nکوتاه و به زبان فارسی توضیح بده و کد را داخل بلوک ```html یا ```css یا ```js بگذار. " +
       "برای هر صفحه، بازی یا کامپوننت وب، همه‌ی HTML و CSS و JavaScript را در یک بلوک ```html واحد و کامل قرار بده " +
-      "تا مستقیم در مرورگر اجرا شود. توضیح اضافی و طولانی نده؛ فقط چند جمله‌ی کوتاه و بعد کد.";
+      "تا مستقیم در مرورگر اجرا شود. کیفیت، درستی و زیبایی مهم‌تر از سرعت است.";
 
     let ccHistory = [];
     let ccBusy = false;
@@ -2492,9 +2500,13 @@ ${allQA}
 
     async function ccStreamClaude(model, row) {
       const messages = ccHistory.map(m => ({ role: m.role, content: m.content }));
+      // تفکر گسترده فقط برای مدل‌های کدنویسی Claude (نه Fable) — کیفیت کد را بالا می‌برد
+      const deepThink = (model === "claude-opus-4-8" || model === "claude-sonnet-5");
+      const body = { model, max_tokens: deepThink ? 24000 : 16000, system: CC_SYS, messages, stream: true };
+      if (deepThink) body.thinking = { type: "enabled", budget_tokens: 8000 };
       const res = await fetch(WORKER_URL + "/claude", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model, max_tokens: 16000, system: CC_SYS, messages, stream: true })
+        body: JSON.stringify(body)
       });
       if (!res.ok) {
         let em = "خطا " + res.status;
@@ -2503,13 +2515,19 @@ ${allQA}
       }
       if (!res.body) {
         const j = await res.json().catch(() => null);
-        const t = j && Array.isArray(j.content) ? j.content.map(b => b.text || "").join("") : "";
+        const t = j && Array.isArray(j.content) ? j.content.filter(b => b.type === "text").map(b => b.text || "").join("") : "";
         ccSetBubble(row, t, false);
         return t;
       }
       const reader = res.body.getReader();
       const dec = new TextDecoder();
-      let buf = "", full = "";
+      let buf = "", full = "", gotText = false, showedThinking = false;
+      const showThinking = () => {
+        const c = row.querySelector(".cc-bubble-content");
+        c.innerHTML = '<div class="cc-text" style="color:var(--text3)">🧠 در حال فکر عمیق روی کد…</div>';
+        c.classList.add("cc-cursor");
+        $("cc-messages").scrollTop = $("cc-messages").scrollHeight;
+      };
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -2523,9 +2541,14 @@ ${allQA}
           if (!payload || payload === "[DONE]") continue;
           let json;
           try { json = JSON.parse(payload); } catch (_) { continue; }
-          if (json.type === "content_block_delta" && json.delta && json.delta.type === "text_delta") {
-            full += json.delta.text;
-            ccSetBubble(row, full, true);
+          if (json.type === "content_block_delta" && json.delta) {
+            if (json.delta.type === "thinking_delta") {
+              if (!gotText && !showedThinking) { showedThinking = true; showThinking(); }
+            } else if (json.delta.type === "text_delta") {
+              gotText = true;
+              full += json.delta.text;
+              ccSetBubble(row, full, true);
+            }
           } else if (json.type === "error") {
             throw new Error((json.error && json.error.message) || "خطای API");
           }
@@ -2585,11 +2608,16 @@ ${allQA}
       try { data = await res.json(); } catch (_) {}
       if (res.status === 404) throw new Error("سرویس Groq پیدا نشد — /groq روی worker نیست.");
       if (!res.ok) {
-        const em = (data && data.error && (data.error.message || data.error)) || ("HTTP " + res.status);
-        throw new Error(em);
+        const raw = (data && data.error && (data.error.message || data.error)) || ("HTTP " + res.status);
+        // سقف رایگان Groq (۸۰۰۰ توکن/دقیقه) — پیام واضح‌تر بده
+        if (res.status === 429 || /rate limit|tokens per minute|TPM/i.test(String(raw))) {
+          throw new Error("سقف رایگان Groq پر شد (۸۰۰۰ توکن در دقیقه). چند ثانیه صبر کن، یا برای پروژه‌های بزرگ از Claude / Gemini استفاده کن.");
+        }
+        throw new Error(raw);
       }
       let text = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "";
-      text = text.replace(/<think>[\s\S]*?<\/think>/gi, "").trim(); // حذف بخش تفکر مدل‌های reasoning
+      // حذف بخش تفکر مدل‌های reasoning (بسته‌شده و بازِ ناتمام)
+      text = text.replace(/<think>[\s\S]*?<\/think>/gi, "").replace(/<think>[\s\S]*$/i, "").trim();
       if (!text) throw new Error("پاسخ خالی");
       ccSetBubble(row, text, false);
       return text;
