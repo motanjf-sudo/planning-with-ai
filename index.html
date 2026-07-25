@@ -2795,56 +2795,92 @@ ${allQA}
       return ccClaudeOnce(sel, userText); // Claude
     }
 
-    // تأکیدِ همیشگی روی کیفیت — در هر پیامِ بازبینی/رفع تکرار می‌شود
+    // تأکیدِ همیشگی روی کیفیت — در هر پاس تکرار می‌شود
     const CC_EMPH =
       "همیشه یادت باشد: بهترین و زیباترین گرافیکِ ممکن، جذاب‌ترین انیمیشن‌های مدرن/کلاسیک، " +
       "کاملاً بدون باگ، و کلی آپشن و قابلیتِ باحال و کاربردی.";
-    function ccReviewPrompt(code, round, total) {
-      return "(بازبینیِ دورِ " + round + " از " + total + ") این کدی است که خودت نوشتی. حالا در نقشِ یک بازبینِ ارشد با نهایتِ دقت آن را وارسی کن و همه‌ی " +
-        "باگ‌ها، خطاهای نحوی، متغیر/تابعِ تعریف‌نشده، id/کلاسِ ناهماهنگ، مشکلات منطقی و حالت‌های خاصِ مدیریت‌نشده را رفع کن تا کاملاً بدون باگ شود. " +
-        "در همین حین کد را ارتقا بده: گرافیک را زیباتر و حرفه‌ای‌تر کن، انیمیشن‌ها را جذاب‌تر کن، و چند آپشن/قابلیتِ باحالِ بیشتر اضافه کن. " + CC_EMPH + " " +
-        "سپس کلِ کدِ کاملِ اصلاح‌شده را در یک بلوک ```html بده. فقط یک جمله توضیح کوتاه.\n\n```html\n" + code + "\n```";
+    const CC_KEEP =
+      " هرچیزِ خوبِ موجود (منطق، آپشن‌ها، گرافیک و انیمیشن‌ها) را دست‌نخورده و سالم نگه‌دار و چیزی را خراب یا حذف نکن. " +
+      "کد باید کاملاً بدون باگ و آماده‌ی اجرا بماند. کلِ کدِ کاملِ به‌روزشده را در یک بلوک ```html بده. فقط یک جمله‌ی کوتاه توضیح.\n\n```html\n";
+
+    // --- پاس‌های تخصصیِ متمرکز (هر پاس فقط روی یک جنبه) ---
+    function ccPassOptions(code) {
+      return "(پاسِ ۱ — آپشن‌ها و قابلیت‌ها) فقط و فقط روی «افزودنِ آپشن و قابلیت» تمرکز کن. چند آپشن و قابلیتِ باحال، خلاقانه و واقعاً کاربردی اضافه کن " +
+        "(مثلِ حالت شب/روز، منوی تنظیمات، سطوح سختی، امتیاز/رکورد با localStorage، افکت صوتی، میان‌بر کیبورد، دکمه‌ها و کنترل‌های تعاملی، حالت تمام‌صفحه و …) که به موضوعِ برنامه بخورند. " +
+        CC_EMPH + CC_KEEP + code + "\n```";
     }
-    function ccFixPrompt(code, errors) {
-      return "این کد را واقعاً در مرورگر اجرا کردم و این خطاهای واقعیِ کنسول را داد:\n- " + errors.join("\n- ") +
-        "\n\nلطفاً دقیقاً همین خطاها و هر باگِ مرتبطِ دیگری را برطرف کن تا اجرا کاملاً تمیز و بدون خطا شود، و در همین حال گرافیک و انیمیشن و آپشن‌ها را در بهترین حالت نگه‌دار. " + CC_EMPH + " " +
-        "کلِ کدِ کاملِ اصلاح‌شده را دوباره در یک بلوک ```html بده. فقط یک جمله توضیح کوتاه.\n\n```html\n" + code + "\n```";
+    function ccPassAnimation(code) {
+      return "(پاسِ ۲ — انیمیشن‌ها) فقط و فقط روی «انیمیشن‌ها» تمرکز کن و آن‌ها را فوق‌العاده جذاب و حرفه‌ای کن: " +
+        "انیمیشنِ ورودِ پلکانی، ترنزیشن‌های نرم با cubic-bezier، micro-interaction روی hover/کلیک، افکت‌های glow و گرادیانتِ متحرک، " +
+        "و در جای مناسب افکت‌های ذرات/canvas یا انیمیشنِ وابسته به اسکرول. حرکت را با prefers-reduced-motion محترم بشمار. " +
+        CC_EMPH + CC_KEEP + code + "\n```";
+    }
+    function ccPassGraphics(code) {
+      return "(پاسِ ۳ — گرافیک) فقط و فقط روی «گرافیک و ظاهر» تمرکز کن و آن را در حدِ یک سایتِ برنده‌ی جایزه‌ی Awwwards زیبا کن: " +
+        "پالتِ رنگیِ هماهنگ و شیک، glassmorphism، گرادیانت‌های غنی، سایه‌های عمیقِ چندلایه، تایپوگرافیِ درشت و باشخصیت، " +
+        "فاصله‌گذاریِ منظم، گوشه‌های گرد و آیکون‌های SVG. " + CC_EMPH + CC_KEEP + code + "\n```";
+    }
+    function ccBugPrompt(code, errors) {
+      const head = errors && errors.length
+        ? "(پاسِ ۴ — رفعِ باگ) این کد را واقعاً در مرورگر اجرا کردم و این خطاهای واقعیِ کنسول را داد:\n- " + errors.join("\n- ") +
+          "\n\nدقیقاً همین خطاها و هر باگِ مرتبطِ دیگری را برطرف کن تا اجرا کاملاً تمیز و بی‌خطا شود."
+        : "(پاسِ ۴ — رفعِ باگ) این کد را در مرورگر اجرا کردم و خطای کنسولی نداد. حالا کلِ کد را عمیق وارسی کن و هر باگِ پنهان، حالتِ خاصِ مدیریت‌نشده، " +
+          "متغیر/تابعِ تعریف‌نشده، id/کلاسِ ناهماهنگ یا مشکلِ منطقی را پیدا و رفع کن تا کاملاً بی‌نقص شود.";
+      return head + " گرافیک، انیمیشن و آپشن‌ها را در بهترین حالت حفظ کن. " + CC_EMPH + CC_KEEP + code + "\n```";
     }
 
-    // یک دورِ «اجرا → در صورت خطا رفع» روی کد؛ کد و متنِ به‌روز را برمی‌گرداند
+    // یک دورِ «اجرا → در صورت خطا رفع» روی کد (برای اجرای تمیزِ نهایی)
     async function ccRunFixOnce(sel, row, code, bestText, label) {
       let errs = [];
-      try { errs = await ccRunAndCollectErrors(code); } catch (_) { return { code, bestText, clean: true }; }
-      if (!errs.length) return { code, bestText, clean: true };
+      try { errs = await ccRunAndCollectErrors(code); } catch (_) { return { code, bestText }; }
+      if (!errs.length) return { code, bestText };
       ccStatus(row, "🔧 " + label + " — رفعِ " + errs.length + " خطای واقعی…");
       try {
-        const fixed = await ccReviseOnce(sel, ccFixPrompt(code, errs));
+        const fixed = await ccReviseOnce(sel, ccBugPrompt(code, errs));
         const fc = ccExtractHtml(fixed);
-        if (fc) return { code: fc, bestText: fixed, clean: false };
+        if (fc) return { code: fc, bestText: fixed };
       } catch (_) {}
-      return { code, bestText, clean: false };
+      return { code, bestText };
     }
 
-    // خطِ لوله‌ی بررسی خودکار: ۲ دورِ کاملِ «بازبینی + تست/رفع» و در پایان یک اجرای تمیز
+    // ترتیبِ پاس‌ها: آپشن → انیمیشن → گرافیک → رفعِ باگ (با تستِ واقعی) — ۳ دور = ۱۲ اصلاح
+    const CC_PASSES = [
+      { key: "options",   icon: "🎛️", label: "افزودنِ آپشن‌ها", build: ccPassOptions },
+      { key: "animation", icon: "✨", label: "بهبودِ انیمیشن‌ها", build: ccPassAnimation },
+      { key: "graphics",  icon: "🎨", label: "بهبودِ گرافیک",     build: ccPassGraphics },
+      { key: "bug",       icon: "🐞", label: "تست و رفعِ باگ" },
+    ];
+
     async function ccAutoCheck(sel, row, initialText) {
       let bestText = initialText;
       let code = ccExtractHtml(initialText);
       if (!code) return bestText; // کدی برای تست نبود
-      const ROUNDS = 2;
+      const ROUNDS = 3;
+      let step = 0;
+      const totalSteps = ROUNDS * CC_PASSES.length; // ۱۲
       for (let r = 1; r <= ROUNDS; r++) {
-        // (الف) بازبینی و ارتقا
-        try {
-          ccStatus(row, "🔍 بازبینی و ارتقای کد… (دور " + r + " از " + ROUNDS + ")");
-          const reviewed = await ccReviseOnce(sel, ccReviewPrompt(code, r, ROUNDS));
-          const rc = ccExtractHtml(reviewed);
-          if (rc) { code = rc; bestText = reviewed; }
-        } catch (_) { /* بازبینی شکست خورد → با کدِ فعلی ادامه بده */ }
-        // (ب) اجرای واقعی و رفعِ خطا
-        ccStatus(row, "▶ اجرا و تستِ کد در مرورگر… (دور " + r + " از " + ROUNDS + ")");
-        const res = await ccRunFixOnce(sel, row, code, bestText, "دور " + r);
-        code = res.code; bestText = res.bestText;
+        for (const pass of CC_PASSES) {
+          step++;
+          const tag = " (" + step + "/" + totalSteps + " · دور " + r + ")";
+          let userText;
+          if (pass.key === "bug") {
+            ccStatus(row, pass.icon + " " + pass.label + " — اجرای واقعی…" + tag);
+            let errs = [];
+            try { errs = await ccRunAndCollectErrors(code); } catch (_) {}
+            ccStatus(row, pass.icon + " " + pass.label + (errs.length ? " — رفعِ " + errs.length + " خطا…" : " — سخت‌سازی…") + tag);
+            userText = ccBugPrompt(code, errs);
+          } else {
+            ccStatus(row, pass.icon + " " + pass.label + "…" + tag);
+            userText = pass.build(code);
+          }
+          try {
+            const out = await ccReviseOnce(sel, userText);
+            const oc = ccExtractHtml(out);
+            if (oc) { code = oc; bestText = out; }
+          } catch (_) { /* این پاس شکست خورد → با کدِ فعلی ادامه بده */ }
+        }
       }
-      // اجرای تمیزِ نهایی — اگر هنوز خطایی مانده بود، یک رفعِ آخر
+      // اجرای تمیزِ نهایی — تضمینِ اینکه خروجی بی‌خطا اجرا می‌شود
       ccStatus(row, "✔ اجرای نهاییِ کد…");
       const fin = await ccRunFixOnce(sel, row, code, bestText, "نهایی");
       bestText = fin.bestText;
