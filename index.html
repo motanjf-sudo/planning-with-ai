@@ -411,6 +411,13 @@
       width: 34px; height: 34px; border-radius: 10px; cursor: pointer; font-size: 18px; line-height: 1;
     }
     .cc-new:hover { background: var(--bg3); color: var(--text); }
+    .cc-auto {
+      display: inline-flex; align-items: center; gap: 5px; cursor: pointer; user-select: none;
+      font-size: 12px; color: var(--text2); background: var(--bg3);
+      border: 1px solid var(--border); border-radius: 10px; padding: 6px 9px; white-space: nowrap;
+    }
+    .cc-auto input { accent-color: #7c6ef7; width: 14px; height: 14px; cursor: pointer; margin: 0; }
+    @media (max-width: 560px) { .cc-auto span { display: none; } }
 
     .cc-messages { flex: 1; overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column; gap: 14px; }
     .cc-empty { margin: auto; text-align: center; color: var(--text2); max-width: 400px; padding: 20px; }
@@ -781,6 +788,10 @@
           <option value="gemini:gemini-3.6-flash">Gemini 3.6 Flash</option>
           <option value="groq:qwen/qwen3.6-27b">Qwen 3.6 (Groq)</option>
         </select>
+        <label class="cc-auto" id="cc-auto-wrap" title="قبل از نمایش، مدل کد را بازبینی می‌کند و کد واقعاً در مرورگر اجرا و خطاهایش خودکار رفع می‌شود (فقط Gemini و Claude)">
+          <input type="checkbox" id="cc-auto" checked>
+          <span>🔍 بررسی خودکار</span>
+        </label>
         <button class="cc-new" onclick="ccNewChat()" title="گفتگوی جدید">＋</button>
       </div>
       <div class="cc-messages" id="cc-messages"></div>
@@ -2353,6 +2364,10 @@ ${allQA}
       "ری‌اکشن‌های ظریف روی hover و کلیک (micro-interactions)، افکت‌های درخشش/glow، گرادیانت متحرک، " +
       "و در جای مناسب انیمیشن‌های وابسته به اسکرول (IntersectionObserver) یا افکت‌های canvas/ذرات. " +
       "انیمیشن‌ها باید نرم، مدرن و باکلاس باشند — نه زیاده‌روی و آزاردهنده. حرکت را با prefers-reduced-motion محترم بشمار. " +
+      "\n\n■ قابلیت‌ها و آپشن‌ها (مهم): برنامه را پرامکانات و باحال بساز. هرجا معنا داشت، آپشن‌ها و کنترل‌های کاربردی اضافه کن — " +
+      "مثل حالت شب/روز (dark/light)، تنظیمات قابل‌تغییر، اسلایدر و سوییچ و دکمه‌های تعاملی، ذخیره‌ی وضعیت در localStorage، " +
+      "میان‌برهای کیبورد، جلوه‌های صوتی یا هپتیک ساده در جای مناسب، و ریزجزئیاتی که تجربه را لذت‌بخش و کامل کنند. " +
+      "برنامه باید حس یک محصولِ واقعی و تمام‌وکمال بدهد، نه یک نمونه‌ی خام. " +
       "\n\n■ فنی: از CSS مدرن استفاده کن (flex/grid، متغیرهای CSS، clamp برای تایپوگرافی واکنش‌گرا) و طراحی کاملاً " +
       "responsive برای موبایل و دسکتاپ بده. همه‌چیز باید درون یک بلوک ```html واحد و مستقل باشد " +
       "(HTML + CSS + JavaScript همه با هم) تا مستقیم در مرورگر اجرا شود، بدون وابستگی خارجی به‌جز فونت اختیاری. " +
@@ -2677,6 +2692,165 @@ ${allQA}
       return text;
     }
 
+    /* ============================================================
+       بررسی خودکار: (الف) بازبینیِ خودِ مدل  +  (ب) اجرای واقعی در مرورگر و رفعِ خطا
+       فقط برای Gemini و Claude (نه Groq/Qwen به‌خاطر سقفِ توکنِ دقیقه‌ای).
+       ============================================================ */
+    let ccNonce = 0;
+
+    // نمایش یک خط وضعیت داخل حباب (بدون از بین بردن نتیجه‌ی نهایی)
+    function ccStatus(row, msg) {
+      const c = row.querySelector(".cc-bubble-content");
+      if (!c) return;
+      c.classList.add("cc-cursor");
+      c.innerHTML = '<div class="cc-text" style="color:var(--text3)">' + escHtml(msg) + '</div>';
+      $("cc-messages").scrollTop = $("cc-messages").scrollHeight;
+    }
+
+    // استخراجِ اولین بلوک کدِ قابل‌اجرا (ترجیحاً html)
+    function ccExtractHtml(text) {
+      if (!text) return null;
+      let m = /```html\n?([\s\S]*?)```/i.exec(text);
+      if (m && m[1].trim()) return m[1].replace(/\n$/, "");
+      // اگر html برچسب نخورده بود، هر بلوکی که شبیه HTML باشد
+      const re = /```(\w*)\n?([\s\S]*?)```/g, cands = [];
+      let x;
+      while ((x = re.exec(text)) !== null) cands.push(x[2].replace(/\n$/, ""));
+      for (const c of cands) if (/<\/?[a-z][\s\S]*>/i.test(c)) return c;
+      return null;
+    }
+
+    // تزریقِ «هارنسِ» گرفتنِ خطا در ابتدای سند تست
+    function ccInjectHarness(html, harness) {
+      if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, (m) => m + harness);
+      if (/<html[^>]*>/i.test(html)) return html.replace(/<html[^>]*>/i, (m) => m + "<head>" + harness + "</head>");
+      if (/<body[^>]*>/i.test(html)) return html.replace(/<body[^>]*>/i, (m) => m + harness);
+      return harness + html;
+    }
+
+    // (ب) کد را واقعاً در یک iframe مخفی اجرا کن و خطاهای واقعیِ کنسول را جمع کن
+    function ccRunAndCollectErrors(html) {
+      return new Promise((resolve) => {
+        const nonce = "cc_" + (++ccNonce);
+        const errors = [];
+        const harness =
+          "<scr" + "ipt>(function(){var N='" + nonce + "';" +
+          "function s(m){try{parent.postMessage({__cctest:N,msg:String(m).slice(0,300)},'*')}catch(e){}}" +
+          "window.addEventListener('error',function(e){s((e.message||'خطای اجرا')+(e.lineno?(' [خط '+e.lineno+']'):''))});" +
+          "window.addEventListener('unhandledrejection',function(e){s('Promise رد شد: '+((e.reason&&(e.reason.message||e.reason))||''))});" +
+          "var _e=console.error;console.error=function(){try{s('console.error: '+Array.prototype.slice.call(arguments).map(String).join(' '))}catch(x){}if(_e)_e.apply(console,arguments)};" +
+          "window.addEventListener('load',function(){setTimeout(function(){s('__done__')},500)});" +
+          "setTimeout(function(){s('__done__')},2800);" +
+          "})();</scr" + "ipt>";
+        const ifr = document.createElement("iframe");
+        ifr.setAttribute("sandbox", "allow-scripts allow-modals");
+        ifr.style.cssText = "position:fixed;left:-99999px;top:0;width:1024px;height:768px;border:0;visibility:hidden";
+        let done = false;
+        const finish = () => {
+          if (done) return; done = true;
+          window.removeEventListener("message", onMsg);
+          if (ifr.parentNode) ifr.parentNode.removeChild(ifr);
+          resolve(errors);
+        };
+        const onMsg = (ev) => {
+          const d = ev.data;
+          if (!d || d.__cctest !== nonce) return;
+          if (d.msg === "__done__") { finish(); return; }
+          if (errors.length < 8 && errors.indexOf(d.msg) === -1) errors.push(d.msg);
+        };
+        window.addEventListener("message", onMsg);
+        try { ifr.srcdoc = ccInjectHarness(html, harness); } catch (_) { finish(); return; }
+        document.body.appendChild(ifr);
+        setTimeout(finish, 3800); // سقفِ سخت
+      });
+    }
+
+    // یک فراخوانیِ تک‌مرحله‌ای (بدون آلوده‌کردنِ تاریخچه) برای پاس‌های بازبینی/رفع
+    async function ccGeminiOnce(model, userText) {
+      const res = await fetch(WORKER_URL + "/gemini-chat", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model,
+          contents: [{ role: "user", parts: [{ text: CC_SYS_PRO + "\n\n---\n\n" + userText }] }],
+          generationConfig: { temperature: 0.6, topP: 0.95, maxOutputTokens: 32000 }
+        })
+      });
+      let data = null; try { data = await res.json(); } catch (_) {}
+      if (!res.ok) throw new Error((data && data.error && (data.error.message || data.error)) || ("HTTP " + res.status));
+      return ccExtractGemini(data);
+    }
+    async function ccClaudeOnce(model, userText) {
+      const deep = (model === "claude-opus-4-8" || model === "claude-sonnet-5");
+      const body = { model, max_tokens: deep ? 32000 : 16000, system: CC_SYS_PRO, messages: [{ role: "user", content: userText }] };
+      if (deep) { body.thinking = { type: "adaptive" }; body.output_config = { effort: "xhigh" }; }
+      const res = await fetch(WORKER_URL + "/claude", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body)
+      });
+      let data = null; try { data = await res.json(); } catch (_) {}
+      if (!res.ok) throw new Error((data && data.error && (data.error.message || data.error)) || ("HTTP " + res.status));
+      return Array.isArray(data.content) ? data.content.filter(b => b.type === "text").map(b => b.text || "").join("") : "";
+    }
+    function ccReviseOnce(sel, userText) {
+      if (sel.startsWith("gemini:")) return ccGeminiOnce(sel.slice(7), userText);
+      return ccClaudeOnce(sel, userText); // Claude
+    }
+
+    // تأکیدِ همیشگی روی کیفیت — در هر پیامِ بازبینی/رفع تکرار می‌شود
+    const CC_EMPH =
+      "همیشه یادت باشد: بهترین و زیباترین گرافیکِ ممکن، جذاب‌ترین انیمیشن‌های مدرن/کلاسیک، " +
+      "کاملاً بدون باگ، و کلی آپشن و قابلیتِ باحال و کاربردی.";
+    function ccReviewPrompt(code, round, total) {
+      return "(بازبینیِ دورِ " + round + " از " + total + ") این کدی است که خودت نوشتی. حالا در نقشِ یک بازبینِ ارشد با نهایتِ دقت آن را وارسی کن و همه‌ی " +
+        "باگ‌ها، خطاهای نحوی، متغیر/تابعِ تعریف‌نشده، id/کلاسِ ناهماهنگ، مشکلات منطقی و حالت‌های خاصِ مدیریت‌نشده را رفع کن تا کاملاً بدون باگ شود. " +
+        "در همین حین کد را ارتقا بده: گرافیک را زیباتر و حرفه‌ای‌تر کن، انیمیشن‌ها را جذاب‌تر کن، و چند آپشن/قابلیتِ باحالِ بیشتر اضافه کن. " + CC_EMPH + " " +
+        "سپس کلِ کدِ کاملِ اصلاح‌شده را در یک بلوک ```html بده. فقط یک جمله توضیح کوتاه.\n\n```html\n" + code + "\n```";
+    }
+    function ccFixPrompt(code, errors) {
+      return "این کد را واقعاً در مرورگر اجرا کردم و این خطاهای واقعیِ کنسول را داد:\n- " + errors.join("\n- ") +
+        "\n\nلطفاً دقیقاً همین خطاها و هر باگِ مرتبطِ دیگری را برطرف کن تا اجرا کاملاً تمیز و بدون خطا شود، و در همین حال گرافیک و انیمیشن و آپشن‌ها را در بهترین حالت نگه‌دار. " + CC_EMPH + " " +
+        "کلِ کدِ کاملِ اصلاح‌شده را دوباره در یک بلوک ```html بده. فقط یک جمله توضیح کوتاه.\n\n```html\n" + code + "\n```";
+    }
+
+    // یک دورِ «اجرا → در صورت خطا رفع» روی کد؛ کد و متنِ به‌روز را برمی‌گرداند
+    async function ccRunFixOnce(sel, row, code, bestText, label) {
+      let errs = [];
+      try { errs = await ccRunAndCollectErrors(code); } catch (_) { return { code, bestText, clean: true }; }
+      if (!errs.length) return { code, bestText, clean: true };
+      ccStatus(row, "🔧 " + label + " — رفعِ " + errs.length + " خطای واقعی…");
+      try {
+        const fixed = await ccReviseOnce(sel, ccFixPrompt(code, errs));
+        const fc = ccExtractHtml(fixed);
+        if (fc) return { code: fc, bestText: fixed, clean: false };
+      } catch (_) {}
+      return { code, bestText, clean: false };
+    }
+
+    // خطِ لوله‌ی بررسی خودکار: ۲ دورِ کاملِ «بازبینی + تست/رفع» و در پایان یک اجرای تمیز
+    async function ccAutoCheck(sel, row, initialText) {
+      let bestText = initialText;
+      let code = ccExtractHtml(initialText);
+      if (!code) return bestText; // کدی برای تست نبود
+      const ROUNDS = 2;
+      for (let r = 1; r <= ROUNDS; r++) {
+        // (الف) بازبینی و ارتقا
+        try {
+          ccStatus(row, "🔍 بازبینی و ارتقای کد… (دور " + r + " از " + ROUNDS + ")");
+          const reviewed = await ccReviseOnce(sel, ccReviewPrompt(code, r, ROUNDS));
+          const rc = ccExtractHtml(reviewed);
+          if (rc) { code = rc; bestText = reviewed; }
+        } catch (_) { /* بازبینی شکست خورد → با کدِ فعلی ادامه بده */ }
+        // (ب) اجرای واقعی و رفعِ خطا
+        ccStatus(row, "▶ اجرا و تستِ کد در مرورگر… (دور " + r + " از " + ROUNDS + ")");
+        const res = await ccRunFixOnce(sel, row, code, bestText, "دور " + r);
+        code = res.code; bestText = res.bestText;
+      }
+      // اجرای تمیزِ نهایی — اگر هنوز خطایی مانده بود، یک رفعِ آخر
+      ccStatus(row, "✔ اجرای نهاییِ کد…");
+      const fin = await ccRunFixOnce(sel, row, code, bestText, "نهایی");
+      bestText = fin.bestText;
+      return bestText;
+    }
+
     window.ccSend = async function() {
       if (ccBusy) return;
       const inp = $("cc-input");
@@ -2694,7 +2868,13 @@ ${allQA}
         if (sel.startsWith("gemini:")) full = await ccCallGemini(sel.slice(7), row);
         else if (sel.startsWith("groq:")) full = await ccCallGroq(sel.slice(5), row);
         else full = await ccStreamClaude(sel, row);
+        // بررسی خودکار فقط برای Gemini/Claude و وقتی تیکِ آن روشن است و کدی وجود دارد
+        const autoOn = $("cc-auto") && $("cc-auto").checked && !sel.startsWith("groq:");
+        if (autoOn && full && ccExtractHtml(full)) {
+          full = await ccAutoCheck(sel, row, full);
+        }
         if (full.trim()) {
+          ccSetBubble(row, full, false);
           ccHistory.push({ role: "assistant", content: full });
           if (ccHistory.length > 20) ccHistory = ccHistory.slice(-20);
         } else {
