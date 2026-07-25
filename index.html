@@ -2359,6 +2359,43 @@ ${allQA}
       "\n\nاول دو-سه جمله‌ی کوتاه فارسی توضیح بده، سپس کدِ کامل را داخل یک بلوک ```html بگذار. " +
       "هیچ‌وقت خروجی ساده، بی‌استایل یا زشت نده. کیفیت، درستی و زیبایی مهم‌تر از سرعت است.";
 
+    // نمونه‌ی «کالیبر» — سطح کیفیتی که مدل باید به آن برسد یا بهتر از آن باشد (فقط الگوست، نباید کپی شود).
+    const CC_EXEMPLAR =
+      ":root{--accent:#22d3ee;--accent2:#a855f7}\n" +
+      "body{margin:0;min-height:100vh;display:grid;place-items:center;color:#fff;\n" +
+      "  font-family:'Vazirmatn','Segoe UI',system-ui,sans-serif;\n" +
+      "  background:linear-gradient(135deg,#0f172a,#3b0764,#7c3aed,#0ea5e9);\n" +
+      "  background-size:400% 400%;animation:bg 18s ease infinite}\n" +
+      "@keyframes bg{0%{background-position:0 50%}50%{background-position:100% 50%}100%{background-position:0 50%}}\n" +
+      ".card{backdrop-filter:blur(18px);background:rgba(255,255,255,.08);\n" +
+      "  border:1px solid rgba(255,255,255,.18);border-radius:24px;padding:clamp(24px,5vw,48px);\n" +
+      "  box-shadow:0 24px 70px rgba(0,0,0,.45);animation:rise .9s cubic-bezier(.2,.8,.2,1) both}\n" +
+      "@keyframes rise{from{opacity:0;transform:translateY(42px) scale(.96)}to{opacity:1;transform:none}}\n" +
+      "h1{font-size:clamp(2rem,6vw,3.4rem);font-weight:800;\n" +
+      "  background:linear-gradient(90deg,#fff,var(--accent));-webkit-background-clip:text;color:transparent}\n" +
+      ".btn{border:0;border-radius:14px;padding:14px 28px;font-weight:700;cursor:pointer;\n" +
+      "  color:#0f172a;background:linear-gradient(90deg,var(--accent),var(--accent2));\n" +
+      "  transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s;box-shadow:0 0 0 rgba(34,211,238,0)}\n" +
+      ".btn:hover{transform:translateY(-3px) scale(1.05);box-shadow:0 14px 44px rgba(34,211,238,.6)}\n" +
+      "/* ورودِ پلکانی: هر آیتم animation-delay بیشتری بگیرد */\n" +
+      ".item{animation:rise .7s cubic-bezier(.2,.8,.2,1) both}\n" +
+      ".item:nth-child(2){animation-delay:.09s}.item:nth-child(3){animation-delay:.18s}";
+
+    // نسخه‌ی «حرفه‌ای» با نمونه‌ی کالیبر و چک‌لیست سخت‌گیرانه — برای Gemini و Claude (بودجه‌ی توکن دارند).
+    const CC_SYS_PRO =
+      CC_SYS +
+      "\n\n★ سطح کیفیتی که الزامی است (بسیار مهم): خروجی معمولی و ساده مردود است. کیفیت باید در حدِ یک سایتِ برنده‌ی " +
+      "جایزه در Awwwards باشد. این تکنیک‌ها را واقعاً پیاده‌سازی کن، نه اینکه فقط اسم ببری:\n" +
+      "• پس‌زمینه‌ی گرادیانتِ متحرک (background-size حدود 300–400% + keyframes) یا mesh-gradient یا افکت نور/بلور.\n" +
+      "• کارت‌های glassmorphism با backdrop-filter: blur، حاشیه‌ی نیمه‌شفاف و سایه‌های عمیقِ چندلایه.\n" +
+      "• انیمیشن ورودِ پلکانی برای عناصر (opacity + translateY + scale) با easing حرفه‌ای cubic-bezier(.2,.8,.2,1) و animation-delay پلکانی.\n" +
+      "• micro-interaction روی hover: بالاآمدن، بزرگ‌شدن ملایم، درخشش/glow و تغییر رنگ نرم.\n" +
+      "• تایپوگرافی درشت و باشخصیت با clamp()، عنوان‌های gradient-text، و فضای خالیِ سخاوتمندانه.\n" +
+      "• رنگ‌های اکسنتِ درخشان با کنتراست خوب و پالت هماهنگ.\n\n" +
+      "نمونه‌ی سطحِ کیفیت (فقط الگوی کالیبر است — کپی نکن، برای هر درخواست طرحِ تازه و بهتر بساز):\n" +
+      CC_EXEMPLAR +
+      "\n\nهر خروجی باید حداقل هم‌سطحِ این نمونه یا بهتر باشد. اگر طرحت ساده یا بی‌روح شد، دوباره فکر کن و ارتقایش بده تا خیره‌کننده شود.";
+
     let ccHistory = [];
     let ccBusy = false;
     let ccArt = { code: "", lang: "", title: "", label: "" };
@@ -2509,7 +2546,7 @@ ${allQA}
       // تفکر گسترده فقط برای مدل‌های کدنویسی Claude (نه Fable) — کیفیت کد را بالا می‌برد.
       // مدل‌های جدید فرمت adaptive + output_config.effort را می‌خواهند (نه budget_tokens).
       const deepThink = (model === "claude-opus-4-8" || model === "claude-sonnet-5");
-      const body = { model, max_tokens: deepThink ? 32000 : 16000, system: CC_SYS, messages, stream: true };
+      const body = { model, max_tokens: deepThink ? 32000 : 16000, system: CC_SYS_PRO, messages, stream: true };
       if (deepThink) {
         body.thinking = { type: "adaptive" };          // display پیش‌فرض omitted (متن فکر خالی)
         body.output_config = { effort: "xhigh" };       // بهترین سطح تفکر برای کدنویسی
@@ -2579,10 +2616,10 @@ ${allQA}
       }));
       // دستورالعمل سیستم را داخل اولین پیام کاربر می‌گذاریم (سازگار با Vertex)
       const firstUser = contents.find(c => c.role === "user");
-      if (firstUser) firstUser.parts[0].text = CC_SYS + "\n\n---\n\n" + firstUser.parts[0].text;
+      if (firstUser) firstUser.parts[0].text = CC_SYS_PRO + "\n\n---\n\n" + firstUser.parts[0].text;
       const res = await fetch(WORKER_URL + "/gemini-chat", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model, contents, generationConfig: { temperature: 0.7, topP: 0.95, maxOutputTokens: 32000 } })
+        body: JSON.stringify({ model, contents, generationConfig: { temperature: 0.9, topP: 0.95, maxOutputTokens: 32000 } })
       });
       let data = null;
       try { data = await res.json(); } catch (_) {}
@@ -2612,7 +2649,7 @@ ${allQA}
       );
       const res = await fetch(WORKER_URL + "/groq", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model, messages, temperature: 0.6, max_tokens: 3500 })
+        body: JSON.stringify({ model, messages, temperature: 0.75, max_tokens: 3500 })
       });
       let data = null;
       try { data = await res.json(); } catch (_) {}
