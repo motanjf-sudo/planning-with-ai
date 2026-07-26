@@ -1689,7 +1689,7 @@ Return ONLY the JS expression, no spaces around operators, nothing else.`,
             max_tokens: 3000,
             stream: true,
             messages: [
-              { role: "system", content: "You are an expert, highly capable Persian-language assistant. Always reply in natural, fluent, correct Persian (Farsi). Think briefly before answering, then give a precise, well-structured, genuinely useful response. Match length to the question: concise for simple ones, thorough only when the topic needs it. Use markdown when it aids clarity. Verify facts before stating them and never invent information; if unsure, say so plainly. If the user is wrong, correct them politely with the accurate answer. Be warm but not chatty. Use emojis very sparingly — usually none, at most a single one occasionally when it genuinely fits." },
+              { role: "system", content: "You are an expert, highly capable Persian-language assistant. Always reply in natural, fluent, correct Persian (Farsi). Think briefly before answering, then give a precise, well-structured, genuinely useful response. Match length to the question: concise for simple ones, thorough only when the topic needs it. Use markdown when it aids clarity. Verify facts before stating them and never invent information; if unsure, say so plainly. If the user is wrong, correct them politely with the accurate answer. Be warm but not chatty. Use emojis lightly and naturally — at most one per reply, and only in about half of your replies (roughly one emoji per two messages); never more than one, and never in serious or factual answers." },
               ...allMessages.slice(-3).filter(m => m.sender === currentUser || m.sender === "Claude").map(m => ({
                 role: m.sender === currentUser ? "user" : "assistant",
                 content: m.text || ""
@@ -2803,95 +2803,41 @@ ${allQA}
       " هرچیزِ خوبِ موجود (منطق، آپشن‌ها، گرافیک و انیمیشن‌ها) را دست‌نخورده و سالم نگه‌دار و چیزی را خراب یا حذف نکن. " +
       "کد باید کاملاً بدون باگ و آماده‌ی اجرا بماند. کلِ کدِ کاملِ به‌روزشده را در یک بلوک ```html بده. فقط یک جمله‌ی کوتاه توضیح.\n\n```html\n";
 
-    // --- پاس‌های تخصصیِ متمرکز (هر پاس فقط روی یک جنبه) ---
-    function ccPassOptions(code) {
-      return "(پاسِ ۱ — آپشن‌ها و قابلیت‌ها) فقط و فقط روی «افزودنِ آپشن و قابلیت» تمرکز کن. چند آپشن و قابلیتِ باحال، خلاقانه و واقعاً کاربردی اضافه کن " +
-        "(مثلِ حالت شب/روز، منوی تنظیمات، سطوح سختی، امتیاز/رکورد با localStorage، افکت صوتی، میان‌بر کیبورد، دکمه‌ها و کنترل‌های تعاملی، حالت تمام‌صفحه و …) که به موضوعِ برنامه بخورند. " +
-        CC_EMPH + CC_KEEP + code + "\n```";
-    }
-    function ccPassAnimation(code) {
-      return "(پاسِ ۲ — انیمیشن‌ها) فقط و فقط روی «انیمیشن‌ها» تمرکز کن و آن‌ها را فوق‌العاده جذاب و حرفه‌ای کن: " +
-        "انیمیشنِ ورودِ پلکانی، ترنزیشن‌های نرم با cubic-bezier، micro-interaction روی hover/کلیک، افکت‌های glow و گرادیانتِ متحرک، " +
-        "و در جای مناسب افکت‌های ذرات/canvas یا انیمیشنِ وابسته به اسکرول. حرکت را با prefers-reduced-motion محترم بشمار. " +
-        CC_EMPH + CC_KEEP + code + "\n```";
-    }
-    function ccPassGraphics(code) {
-      return "(پاسِ ۳ — گرافیک) فقط و فقط روی «گرافیک و ظاهر» تمرکز کن و آن را در حدِ یک سایتِ برنده‌ی جایزه‌ی Awwwards زیبا کن: " +
-        "پالتِ رنگیِ هماهنگ و شیک، glassmorphism، گرادیانت‌های غنی، سایه‌های عمیقِ چندلایه، تایپوگرافیِ درشت و باشخصیت، " +
-        "فاصله‌گذاریِ منظم، گوشه‌های گرد و آیکون‌های SVG. " + CC_EMPH + CC_KEEP + code + "\n```";
-    }
     function ccBugPrompt(code, errors) {
       const head = errors && errors.length
-        ? "(پاسِ ۴ — رفعِ باگ) این کد را واقعاً در مرورگر اجرا کردم و این خطاهای واقعیِ کنسول را داد:\n- " + errors.join("\n- ") +
+        ? "این کد را واقعاً در مرورگر اجرا کردم و این خطاهای واقعیِ کنسول را داد:\n- " + errors.join("\n- ") +
           "\n\nدقیقاً همین خطاها و هر باگِ مرتبطِ دیگری را برطرف کن تا اجرا کاملاً تمیز و بی‌خطا شود."
-        : "(پاسِ ۴ — رفعِ باگ) این کد را در مرورگر اجرا کردم و خطای کنسولی نداد. حالا کلِ کد را عمیق وارسی کن و هر باگِ پنهان، حالتِ خاصِ مدیریت‌نشده، " +
+        : "این کد را در مرورگر اجرا کردم و خطای کنسولی نداد. حالا کلِ کد را عمیق وارسی کن و هر باگِ پنهان، حالتِ خاصِ مدیریت‌نشده، " +
           "متغیر/تابعِ تعریف‌نشده، id/کلاسِ ناهماهنگ یا مشکلِ منطقی را پیدا و رفع کن تا کاملاً بی‌نقص شود.";
       return head + " گرافیک، انیمیشن و آپشن‌ها را در بهترین حالت حفظ کن. " + CC_EMPH + CC_KEEP + code + "\n```";
     }
 
-    // یک دورِ «اجرا → در صورت خطا رفع» روی کد (برای اجرای تمیزِ نهایی)
-    async function ccRunFixOnce(sel, row, code, bestText, label) {
-      let errs = [];
-      try { errs = await ccRunAndCollectErrors(code); } catch (_) { return { code, bestText }; }
-      if (!errs.length) return { code, bestText };
-      ccStatus(row, "🔧 " + label + " — رفعِ " + errs.length + " خطای واقعی…");
-      try {
-        const fixed = await ccReviseOnce(sel, ccBugPrompt(code, errs));
-        const fc = ccExtractHtml(fixed);
-        if (fc) return { code: fc, bestText: fixed };
-      } catch (_) {}
-      return { code, bestText };
+    // حلقه‌ی «اجرای واقعی → رفعِ باگ» تا وقتی اجرا کاملاً تمیز شود (با سقفِ امن)
+    async function ccVerifyUntilClean(sel, row, code, bestText, cap, label) {
+      for (let i = 0; i < cap; i++) {
+        ccStatus(row, "▶ اجرا و تستِ کد در مرورگر… (" + label + ")");
+        let errs = [];
+        try { errs = await ccRunAndCollectErrors(code); } catch (_) { break; }
+        if (!errs.length) { ccStatus(row, "✓ اجرا تمیز است (" + label + ")"); break; }
+        ccStatus(row, "🐞 رفعِ " + errs.length + " باگِ واقعی… (" + label + " · تلاشِ " + (i + 1) + ")");
+        try {
+          const fixed = await ccReviseOnce(sel, ccBugPrompt(code, errs));
+          const fc = ccExtractHtml(fixed);
+          if (!fc) break;
+          code = fc; bestText = fixed;
+        } catch (_) { break; }
+      }
+      return { code: code, bestText: bestText };
     }
 
-    // ترتیبِ پاس‌ها: آپشن → انیمیشن → گرافیک → رفعِ باگ (با تستِ واقعی) — ۳ دور = ۱۲ اصلاح
-    const CC_PASSES = [
-      { key: "options",   icon: "🎛️", label: "افزودنِ آپشن‌ها", build: ccPassOptions },
-      { key: "animation", icon: "✨", label: "بهبودِ انیمیشن‌ها", build: ccPassAnimation },
-      { key: "graphics",  icon: "🎨", label: "بهبودِ گرافیک",     build: ccPassGraphics },
-      { key: "bug",       icon: "🐞", label: "تست و رفعِ باگ" },
-    ];
-
+    // معماری: یک تولیدِ واحد با تمرکزِ کامل (قبلاً انجام شده) + تورِ ایمنیِ «اجرا تا تمیزی».
+    // اگر همان یک‌بار بی‌خطا بود، هیچ فراخوانیِ اضافه‌ای انجام نمی‌شود؛ فقط یک اجرای نامرئی برای اطمینان.
     async function ccAutoCheck(sel, row, initialText) {
       let bestText = initialText;
-      let code = ccExtractHtml(initialText);
+      const code = ccExtractHtml(initialText);
       if (!code) return bestText; // کدی برای تست نبود
-      const ROUNDS = 3;
-      // آپشن فقط در دورِ آخر اجرا می‌شود؛ بقیه‌ی پاس‌ها در همه‌ی دورها
-      const plan = [];
-      for (let r = 1; r <= ROUNDS; r++) {
-        for (const pass of CC_PASSES) {
-          if (pass.key === "options" && r !== ROUNDS) continue;
-          plan.push({ pass: pass, r: r });
-        }
-      }
-      const totalSteps = plan.length; // ۱۰
-      let step = 0;
-      for (const item of plan) {
-        const pass = item.pass, r = item.r;
-        step++;
-        const tag = " (" + step + "/" + totalSteps + " · دور " + r + ")";
-        let userText;
-        if (pass.key === "bug") {
-          ccStatus(row, pass.icon + " " + pass.label + " — اجرای واقعی…" + tag);
-          let errs = [];
-          try { errs = await ccRunAndCollectErrors(code); } catch (_) {}
-          ccStatus(row, pass.icon + " " + pass.label + (errs.length ? " — رفعِ " + errs.length + " خطا…" : " — سخت‌سازی…") + tag);
-          userText = ccBugPrompt(code, errs);
-        } else {
-          ccStatus(row, pass.icon + " " + pass.label + "…" + tag);
-          userText = pass.build(code);
-        }
-        try {
-          const out = await ccReviseOnce(sel, userText);
-          const oc = ccExtractHtml(out);
-          if (oc) { code = oc; bestText = out; }
-        } catch (_) { /* این پاس شکست خورد → با کدِ فعلی ادامه بده */ }
-      }
-      // اجرای تمیزِ نهایی — تضمینِ اینکه خروجی بی‌خطا اجرا می‌شود
-      ccStatus(row, "✔ اجرای نهاییِ کد…");
-      const fin = await ccRunFixOnce(sel, row, code, bestText, "نهایی");
-      bestText = fin.bestText;
-      return bestText;
+      const r = await ccVerifyUntilClean(sel, row, code, bestText, 5, "بی‌باگی");
+      return r.bestText;
     }
 
     window.ccSend = async function() {
